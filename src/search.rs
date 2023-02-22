@@ -23,7 +23,12 @@ pub async fn exec(query: &str) -> Result<(), Error> {
 
     for result in results {
         if Some("audio".to_string()) == result.r#type {
-            println!("{} | {}", result.text, result.subtext.unwrap_or_default());
+            println!(
+                "{} | {} | id: {}",
+                result.text.magenta(),
+                result.subtext.unwrap_or_default(),
+                result.guide_id.unwrap()
+            );
         }
     }
     Ok(())
