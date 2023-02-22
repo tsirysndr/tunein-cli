@@ -13,5 +13,5 @@ path = "src/main.rs"
 anyhow = "1.0.69"
 clap = "3.2.20"
 owo-colors = "3.5.0"
-tunein = "0.1.1"
+tunein = "0.1.2"
 tokio = { version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"] }

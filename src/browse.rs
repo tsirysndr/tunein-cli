@@ -18,8 +18,17 @@ pub async fn exec(category: Option<&str>) -> Result<(), Error> {
             if let Some(children) = result.children {
                 for child in children {
                     match child.playing {
-                        Some(playing) => println!("  {} | {}", child.text.magenta(), playing),
-                        None => println!("  {} | {}", child.text.magenta(), child.url.unwrap()),
+                        Some(playing) => println!(
+                            "  {} | {} | id: {}",
+                            child.text.magenta(),
+                            playing,
+                            child.guide_id.unwrap()
+                        ),
+                        None => {
+                            if let Some(guide_id) = child.guide_id {
+                                println!("  {} | {}", child.text.magenta(), guide_id);
+                            }
+                        }
                     }
                 }
             }
