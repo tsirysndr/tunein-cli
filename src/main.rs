@@ -3,6 +3,7 @@ use clap::{arg, Command};
 
 mod browse;
 mod play;
+mod playback;
 mod search;
 
 fn cli() -> Command<'static> {
