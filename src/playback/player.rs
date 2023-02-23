@@ -572,7 +572,20 @@ impl PlayerTrackLoader {
                         .header("Icy-MetaData", "1")
                         .body(hyper::Body::empty())
                         .unwrap();
-                    client.request(req).await.unwrap().into_body()
+                    let res = client.request(req).await.unwrap();
+                    let location = res.headers().get("location");
+                    match location {
+                        Some(location) => {
+                            let req = hyper::Request::builder()
+                                .method("GET")
+                                .uri(location.to_str().unwrap())
+                                .header("Icy-MetaData", "1")
+                                .body(hyper::Body::empty())
+                                .unwrap();
+                            client.request(req).await.unwrap().into_body()
+                        }
+                        None => res.into_body(),
+                    }
                 }
                 None => res.into_body(),
             };
@@ -596,8 +609,8 @@ impl PlayerTrackLoader {
                         .filter(|s| !s.starts_with("StreamTitle"))
                         .next()
                         .unwrap();
-                    let stream_title = stream_title.replace("'", "");
-                    println!("metadata: {}", stream_title);
+                    let _stream_title = stream_title.replace("'", "");
+                    //  println!("metadata: {}", stream_title);
                 }
 
                 file.write_all(&chunk).unwrap();
