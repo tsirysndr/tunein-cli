@@ -2,6 +2,13 @@
 name = "tunein-cli"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/tsirysndr/tunein-cli"
+license = "MIT"
+readme = "README.md"
+authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
+categories = ["command-line-utilities"]
+keywords = ["radio", "api", "tokio", "web", "tunein"]
+description = "Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨"
 
 [[bin]]
 name = "tunein"
