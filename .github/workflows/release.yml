@@ -42,13 +42,13 @@ jobs:
         run: |
           cd target/x86_64-unknown-linux-gnu/release
           tar czvf tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz tunein
-          shasum -a 512 tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz > tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz.sha512
+          shasum -a 256 tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz > tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz.sha256
       - name: Releasing assets
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         uses: softprops/action-gh-release@v1
         with:
           files: |
             target/x86_64-unknown-linux-gnu/release/tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz
-            target/x86_64-unknown-linux-gnu/release/tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz.sha512
+            target/x86_64-unknown-linux-gnu/release/tunein_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
