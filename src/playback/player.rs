@@ -554,7 +554,7 @@ impl PlayerTrackLoader {
 
         tokio::spawn(async move {
             let mut downloaded_size = 0;
-            let mut sent = false;
+            let mut ready = false;
             println!("headers: {:#?}", res.headers());
             let metaint = res.headers().get("icy-metaint");
             let location = res.headers().get("location");
@@ -603,9 +603,9 @@ impl PlayerTrackLoader {
 
                 file.write_all(&chunk).unwrap();
                 downloaded_size += chunk.len();
-                if downloaded_size > MINIMUM_DOWNLOAD_SIZE && !sent {
+                if downloaded_size > MINIMUM_DOWNLOAD_SIZE && !ready {
                     stream_tx.send(downloaded_size).unwrap();
-                    sent = true;
+                    ready = true;
                 }
                 async move {}
             })
