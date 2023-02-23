@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use futures_util::{future::FusedFuture, Future, StreamExt};
+use hyper_rustls::ConfigBuilderExt;
 use log::{error, trace};
 use parking_lot::Mutex;
 use std::{
@@ -532,7 +533,18 @@ impl PlayerTrackLoader {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let client = hyper::Client::new();
+        let tls = rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            .with_native_roots()
+            .with_no_client_auth();
+        // Prepare the HTTPS connector
+        let https = hyper_rustls::HttpsConnectorBuilder::new()
+            .with_tls_config(tls)
+            .https_or_http()
+            .enable_http1()
+            .build();
+
+        let client = hyper::client::Client::builder().build(https);
         let res = client.request(req).await.unwrap();
         let (stream_tx, mut stream_rx) = mpsc::unbounded_channel::<usize>();
         const MINIMUM_DOWNLOAD_SIZE: usize = 64 * 1024;
@@ -545,47 +557,59 @@ impl PlayerTrackLoader {
             let mut sent = false;
             println!("headers: {:#?}", res.headers());
             let metaint = res.headers().get("icy-metaint");
-            let _bitrate = res.headers().get("icy-br").unwrap();
+            let location = res.headers().get("location");
 
+            let mut data = vec![];
             let metaint = match metaint {
                 Some(metaint) => metaint.to_str().unwrap().parse::<usize>().unwrap(),
                 None => 0,
             };
 
-            let mut data = vec![];
-            res.into_body()
-                .for_each(|chunk| {
-                    let chunk = chunk.unwrap();
-                    data.extend_from_slice(&chunk);
-                    // parse metadata
-                    if metaint != 0 && data.len() >= (metaint + 128) {
-                        let metadata = &data[1..metaint + 128];
-                        let metadata = &metadata[metaint..];
-                        let metadata = String::from_utf8_lossy(metadata);
-                        // parse StreamTitle
-                        let stream_title = metadata
-                            .split(";")
-                            .filter(|s| s.starts_with("StreamTitle"))
-                            .next()
-                            .unwrap();
-                        let stream_title = stream_title
-                            .split("=")
-                            .filter(|s| !s.starts_with("StreamTitle"))
-                            .next()
-                            .unwrap();
-                        let stream_title = stream_title.replace("'", "");
-                        println!("metadata: {}", stream_title);
-                    }
+            let body = match location {
+                Some(location) => {
+                    let req = hyper::Request::builder()
+                        .method("GET")
+                        .uri(location.to_str().unwrap())
+                        .header("Icy-MetaData", "1")
+                        .body(hyper::Body::empty())
+                        .unwrap();
+                    client.request(req).await.unwrap().into_body()
+                }
+                None => res.into_body(),
+            };
 
-                    file.write_all(&chunk).unwrap();
-                    downloaded_size += chunk.len();
-                    if downloaded_size > MINIMUM_DOWNLOAD_SIZE && !sent {
-                        stream_tx.send(downloaded_size).unwrap();
-                        sent = true;
-                    }
-                    async move {}
-                })
-                .await;
+            body.for_each(|chunk| {
+                let chunk = chunk.unwrap();
+                data.extend_from_slice(&chunk);
+                // parse metadata
+                if metaint != 0 && data.len() >= (metaint + 128) {
+                    let metadata = &data[1..metaint + 128];
+                    let metadata = &metadata[metaint..];
+                    let metadata = String::from_utf8_lossy(metadata);
+                    // parse StreamTitle
+                    let stream_title = metadata
+                        .split(";")
+                        .filter(|s| s.starts_with("StreamTitle"))
+                        .next()
+                        .unwrap();
+                    let stream_title = stream_title
+                        .split("=")
+                        .filter(|s| !s.starts_with("StreamTitle"))
+                        .next()
+                        .unwrap();
+                    let stream_title = stream_title.replace("'", "");
+                    println!("metadata: {}", stream_title);
+                }
+
+                file.write_all(&chunk).unwrap();
+                downloaded_size += chunk.len();
+                if downloaded_size > MINIMUM_DOWNLOAD_SIZE && !sent {
+                    stream_tx.send(downloaded_size).unwrap();
+                    sent = true;
+                }
+                async move {}
+            })
+            .await;
         });
 
         println!("waiting for download to complete ...");
