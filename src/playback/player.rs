@@ -339,7 +339,6 @@ impl PlayerInternal {
         let ext = ext.to_string();
         match thread::spawn(move || handle.block_on(PlayerTrackLoader::load(&song, &ext))).join() {
             Ok(track) => {
-                println!("Loaded track");
                 return track;
             }
             Err(_) => {
@@ -612,9 +611,8 @@ impl PlayerTrackLoader {
             .await;
         });
 
-        println!("waiting for download to complete ...");
+        println!("buffering ...");
         stream_rx.recv().await;
-        println!("download complete ...");
 
         println!("temporary file_path: {}", file_path);
 
@@ -634,9 +632,6 @@ impl PlayerTrackLoader {
                 panic!("Failed to create decoder: {}", e);
             }
         };
-
-        println!(">> loaded ...");
-
         return Some(PlayerLoadedTrackData { decoder });
     }
 }
