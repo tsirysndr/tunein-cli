@@ -2,6 +2,7 @@ use anyhow::Error;
 use clap::{arg, Command};
 
 mod browse;
+mod decoder;
 mod play;
 mod reader;
 mod search;

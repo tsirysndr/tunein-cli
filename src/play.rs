@@ -2,11 +2,10 @@ use std::time::Duration;
 
 use anyhow::Error;
 use hyper_rustls::ConfigBuilderExt;
-use rodio::Decoder;
 use surf::{Client, Config, Url};
 use tunein::TuneInClient;
 
-use crate::reader::BodyReader;
+use crate::{decoder::Mp3Decoder, reader::BodyReader};
 
 pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let client = TuneInClient::new();
@@ -52,67 +51,72 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let stream_url = extract_stream_url(&url, playlist_type).await?;
     println!("{}", stream_url);
 
-    let req = hyper::Request::builder()
-        .method("GET")
-        .uri(stream_url)
-        .header("Icy-MetaData", "1")
-        .header("Range", "bytes=0-")
-        .body(hyper::Body::empty())
-        .unwrap();
+    /*
+       let req = hyper::Request::builder()
+           .method("GET")
+           .uri(stream_url)
+           .header("Icy-MetaData", "1")
+           .header("Range", "bytes=0-")
+           .body(hyper::Body::empty())
+           .unwrap();
 
-    let tls = rustls::ClientConfig::builder()
-        .with_safe_defaults()
-        .with_native_roots()
-        .with_no_client_auth();
-    // Prepare the HTTPS connector
-    let https = hyper_rustls::HttpsConnectorBuilder::new()
-        .with_tls_config(tls)
-        .https_or_http()
-        .enable_http1()
-        .build();
+       let tls = rustls::ClientConfig::builder()
+           .with_safe_defaults()
+           .with_native_roots()
+           .with_no_client_auth();
+       // Prepare the HTTPS connector
+       let https = hyper_rustls::HttpsConnectorBuilder::new()
+           .with_tls_config(tls)
+           .https_or_http()
+           .enable_http1()
+           .build();
 
-    let client = hyper::client::Client::builder().build(https);
-    let res = client.request(req).await.unwrap();
+       let client = hyper::client::Client::builder().build(https);
 
-    println!("headers: {:#?}", res.headers());
-    let _metaint = res.headers().get("icy-metaint");
-    let location = res.headers().get("location");
+    */
 
-    let body = match location {
-        Some(location) => {
-            let req = hyper::Request::builder()
-                .method("GET")
-                .uri(location.to_str().unwrap())
-                .header("Icy-MetaData", "1")
-                .header("Range", "bytes=0-")
-                .body(hyper::Body::empty())
-                .unwrap();
-            let res = client.request(req).await.unwrap();
-            let location = res.headers().get("location");
-            match location {
-                Some(location) => {
-                    let req = hyper::Request::builder()
-                        .method("GET")
-                        .uri(location.to_str().unwrap())
+    tokio::task::spawn_blocking(move || {
+        let client = reqwest::blocking::Client::new();
+
+        let response = client
+            .get(stream_url)
+            .header("Icy-MetaData", "1")
+            .send()
+            .unwrap();
+
+        // let res = client.request(req).await.unwrap();
+
+        println!("headers: {:#?}", response.headers());
+        let _metaint = response.headers().get("icy-metaint");
+        let location = response.headers().get("location");
+
+        let response = match location {
+            Some(location) => {
+                let response = client
+                    .get(location.to_str().unwrap())
+                    .header("Icy-MetaData", "1")
+                    .send()
+                    .unwrap();
+                let location = response.headers().get("location");
+                match location {
+                    Some(location) => client
+                        .get(location.to_str().unwrap())
                         .header("Icy-MetaData", "1")
-                        .header("Range", "bytes=0-")
-                        .body(hyper::Body::empty())
-                        .unwrap();
-                    client.request(req).await.unwrap().into_body()
+                        .send()
+                        .unwrap(),
+                    None => response,
                 }
-                None => res.into_body(),
             }
-        }
-        None => res.into_body(),
-    };
+            None => response,
+        };
 
-    let reader = Box::new(BodyReader::new(body));
-
-    let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-    let sink = rodio::Sink::try_new(&handle).unwrap();
-    let decoder = Decoder::new(reader).unwrap();
-    sink.append(decoder);
-    sink.sleep_until_end();
+        let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+        let sink = rodio::Sink::try_new(&handle).unwrap();
+        let decoder = Mp3Decoder::new(response).unwrap();
+        sink.append(decoder);
+        sink.sleep_until_end();
+    })
+    .await?;
 
     Ok(())
 }
