@@ -1,4 +1,4 @@
-use std::io::{Read, SeekFrom};
+use std::io::Read;
 use std::time::Duration;
 
 use minimp3::{Decoder, Frame};
@@ -29,9 +29,6 @@ where
             current_frame,
             current_frame_offset: 0,
         })
-    }
-    pub fn into_inner(self) -> R {
-        self.decoder.into_inner()
     }
 }
 
