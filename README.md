@@ -1,5 +1,22 @@
 # TuneIn CLI
 
+<p>
+  <a href="LICENSE" target="./LICENSE">
+    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
+  </a>
+  <a href="https://crates.io/crates/tunein-cli" target="_blank">
+    <img src="https://img.shields.io/crates/v/tunein-cli.svg" />
+  </a>
+  
+  <a href="https://crates.io/crates/tunein-cli" target="_blank">
+    <img src="https://img.shields.io/crates/dr/tunein-cli" />
+  </a>
+  
+  <a href="https://docs.rs/tunein-cli" target="_blank">
+    <img src="https://docs.rs/tunein-cli/badge.svg" />
+  </a>
+</p>
+
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
 You can search for stations, play them, and see what's currently playing.
 
