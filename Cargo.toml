@@ -26,25 +26,10 @@ tokio = { version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-mu
 pls = "0.2.2"
 m3u = "1.0.0"
 symphonia = { version = "0.5.1", features = ["aac", "alac", "mp3", "isomp4", "flac"] }
-hyper-rustls = "0.23.2"
-rustls = "0.20.7"
 hyper = { version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"] }
 surf = { version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
 futures-util = "0.3.26"
-bytes = "1.4.0"
-tempfile = "3.3.0"
-parking_lot = "0.12.1"
-thiserror = "1.0.38"
 url = "2.3.1"
-md5 = "0.7.0"
-mime_guess = "2.0.4"
-async-trait = "0.1.64"
-librespot-protocol = "0.4.2"
-log = "0.4.17"
 rodio  = { version = "0.16" }
-zerocopy = "0.6.1"
-rand = { version = "0.8.5", features = ["small_rng"] }
-rand_distr = "0.4.3"
-futures = "0.3.26"
 reqwest = { version = "0.11.14", features = ["blocking"] }
 minimp3 = "0.5.1"

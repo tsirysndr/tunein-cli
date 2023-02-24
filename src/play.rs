@@ -1,11 +1,10 @@
 use std::time::Duration;
 
 use anyhow::Error;
-use hyper_rustls::ConfigBuilderExt;
 use surf::{Client, Config, Url};
 use tunein::TuneInClient;
 
-use crate::{decoder::Mp3Decoder, reader::BodyReader};
+use crate::decoder::Mp3Decoder;
 
 pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let client = TuneInClient::new();
@@ -13,7 +12,7 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
         .get_station(name_or_id)
         .await
         .map_err(|e| Error::msg(e.to_string()))?;
-    let (url, playlist_type, media_type) = match results.is_empty() {
+    let (url, playlist_type, _) = match results.is_empty() {
         true => {
             let results = client
                 .search(name_or_id)
@@ -51,59 +50,20 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let stream_url = extract_stream_url(&url, playlist_type).await?;
     println!("{}", stream_url);
 
-    /*
-       let req = hyper::Request::builder()
-           .method("GET")
-           .uri(stream_url)
-           .header("Icy-MetaData", "1")
-           .header("Range", "bytes=0-")
-           .body(hyper::Body::empty())
-           .unwrap();
-
-       let tls = rustls::ClientConfig::builder()
-           .with_safe_defaults()
-           .with_native_roots()
-           .with_no_client_auth();
-       // Prepare the HTTPS connector
-       let https = hyper_rustls::HttpsConnectorBuilder::new()
-           .with_tls_config(tls)
-           .https_or_http()
-           .enable_http1()
-           .build();
-
-       let client = hyper::client::Client::builder().build(https);
-
-    */
-
     tokio::task::spawn_blocking(move || {
         let client = reqwest::blocking::Client::new();
 
-        let response = client
-            .get(stream_url)
-            .header("Icy-MetaData", "1")
-            .send()
-            .unwrap();
-
-        // let res = client.request(req).await.unwrap();
+        let response = client.get(stream_url).send().unwrap();
 
         println!("headers: {:#?}", response.headers());
-        let _metaint = response.headers().get("icy-metaint");
         let location = response.headers().get("location");
 
         let response = match location {
             Some(location) => {
-                let response = client
-                    .get(location.to_str().unwrap())
-                    .header("Icy-MetaData", "1")
-                    .send()
-                    .unwrap();
+                let response = client.get(location.to_str().unwrap()).send().unwrap();
                 let location = response.headers().get("location");
                 match location {
-                    Some(location) => client
-                        .get(location.to_str().unwrap())
-                        .header("Icy-MetaData", "1")
-                        .send()
-                        .unwrap(),
+                    Some(location) => client.get(location.to_str().unwrap()).send().unwrap(),
                     None => response,
                 }
             }
