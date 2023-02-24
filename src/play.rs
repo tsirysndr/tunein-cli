@@ -1,14 +1,12 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::Error;
+use hyper_rustls::ConfigBuilderExt;
+use rodio::Decoder;
 use surf::{Client, Config, Url};
 use tunein::TuneInClient;
 
-use crate::playback::{
-    audio_backend::{self, rodio::RodioSink},
-    config::AudioFormat,
-    player::{Player, PlayerCommand},
-};
+use crate::reader::BodyReader;
 
 pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let client = TuneInClient::new();
@@ -54,24 +52,67 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let stream_url = extract_stream_url(&url, playlist_type).await?;
     println!("{}", stream_url);
 
-    let audio_format = AudioFormat::default();
-    let backend = audio_backend::find(Some(RodioSink::NAME.to_string())).unwrap();
-    let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
-    let cmd_tx = Arc::new(std::sync::Mutex::new(cmd_tx));
-    let cmd_rx = Arc::new(std::sync::Mutex::new(cmd_rx));
-
-    let (player, _) = Player::new(move || backend(None, audio_format), cmd_tx.clone(), cmd_rx);
-
-    cmd_tx
-        .lock()
-        .unwrap()
-        .send(PlayerCommand::Load {
-            stream_url,
-            format: media_type,
-        })
+    let req = hyper::Request::builder()
+        .method("GET")
+        .uri(stream_url)
+        .header("Icy-MetaData", "1")
+        .header("Range", "bytes=0-")
+        .body(hyper::Body::empty())
         .unwrap();
 
-    player.await_end_of_track().await;
+    let tls = rustls::ClientConfig::builder()
+        .with_safe_defaults()
+        .with_native_roots()
+        .with_no_client_auth();
+    // Prepare the HTTPS connector
+    let https = hyper_rustls::HttpsConnectorBuilder::new()
+        .with_tls_config(tls)
+        .https_or_http()
+        .enable_http1()
+        .build();
+
+    let client = hyper::client::Client::builder().build(https);
+    let res = client.request(req).await.unwrap();
+
+    println!("headers: {:#?}", res.headers());
+    let _metaint = res.headers().get("icy-metaint");
+    let location = res.headers().get("location");
+
+    let body = match location {
+        Some(location) => {
+            let req = hyper::Request::builder()
+                .method("GET")
+                .uri(location.to_str().unwrap())
+                .header("Icy-MetaData", "1")
+                .header("Range", "bytes=0-")
+                .body(hyper::Body::empty())
+                .unwrap();
+            let res = client.request(req).await.unwrap();
+            let location = res.headers().get("location");
+            match location {
+                Some(location) => {
+                    let req = hyper::Request::builder()
+                        .method("GET")
+                        .uri(location.to_str().unwrap())
+                        .header("Icy-MetaData", "1")
+                        .header("Range", "bytes=0-")
+                        .body(hyper::Body::empty())
+                        .unwrap();
+                    client.request(req).await.unwrap().into_body()
+                }
+                None => res.into_body(),
+            }
+        }
+        None => res.into_body(),
+    };
+
+    let reader = Box::new(BodyReader::new(body));
+
+    let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+    let sink = rodio::Sink::try_new(&handle).unwrap();
+    let decoder = Decoder::new(reader).unwrap();
+    sink.append(decoder);
+    sink.sleep_until_end();
 
     Ok(())
 }

@@ -2702,6 +2702,7 @@ dependencies = [
  "bytes",
  "clap",
  "cpal",
+ "futures",
  "futures-util",
  "hyper",
  "hyper-rustls",
