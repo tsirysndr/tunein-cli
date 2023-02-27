@@ -5,6 +5,7 @@ mod browse;
 mod decoder;
 mod play;
 mod search;
+mod server;
 
 fn cli() -> Command<'static> {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
@@ -36,6 +37,11 @@ A simple CLI to listen to radio stations"#,
                 .about("Browse radio stations")
                 .arg(arg!([category] "The category (category name or id) to browse")),
         )
+        .subcommand(
+            Command::new("server")
+                .about("Start the server")
+                .arg(arg!([port] "The port to listen on").default_value("8090")),
+        )
 }
 
 #[tokio::main]
@@ -54,6 +60,11 @@ async fn main() -> Result<(), Error> {
         Some(("browse", args)) => {
             let category = args.value_of("category");
             browse::exec(category).await?;
+        }
+        Some(("server", args)) => {
+            let port = args.value_of("port").unwrap();
+            let port = port.parse::<u16>().unwrap();
+            server::exec(port).await?;
         }
         _ => unreachable!(),
     }

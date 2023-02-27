@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package tunein.v1alpha1;
+
+message GetCategoriesRequest {}
+
+message GetCategoriesResponse {}
+
+message BrowseCategoryRequest {
+  string category_id = 1;
+}
+
+message BrowseCategoryResponse {}
+
+message GetStationDetailsRequest {
+  string id = 1;
+}
+
+message GetStationDetailsResponse {}
+
+service BrowseService {
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse) {}
+  rpc BrowseCategory(BrowseCategoryRequest) returns (BrowseCategoryResponse) {}
+  rpc GetStationDetails(GetStationDetailsRequest) returns (GetStationDetailsResponse) {}
+}
