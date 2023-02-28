@@ -1,4 +1,6 @@
-use tunein::TuneInClient;
+use std::str::FromStr;
+
+use tunein::{types::Category, TuneInClient};
 use tunein_cli::api::tunein::v1alpha1::{
     browse_service_server::BrowseService, BrowseCategoryRequest, BrowseCategoryResponse,
     GetCategoriesRequest, GetCategoriesResponse, GetStationDetailsRequest,
@@ -23,6 +25,10 @@ impl BrowseService for Browse {
         &self,
         request: tonic::Request<GetCategoriesRequest>,
     ) -> Result<tonic::Response<GetCategoriesResponse>, tonic::Status> {
+        self.client
+            .browse(None)
+            .await
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
         Ok(tonic::Response::new(GetCategoriesResponse {}))
     }
 
@@ -30,6 +36,16 @@ impl BrowseService for Browse {
         &self,
         request: tonic::Request<BrowseCategoryRequest>,
     ) -> Result<tonic::Response<BrowseCategoryResponse>, tonic::Status> {
+        let req = request.into_inner();
+        let category_id = req.category_id;
+        let results = match Category::from_str(&category_id) {
+            Ok(category) => self
+                .client
+                .browse(Some(category))
+                .await
+                .map_err(|e| tonic::Status::internal(e.to_string()))?,
+            Err(e) => return Err(tonic::Status::internal(e.to_string())),
+        };
         Ok(tonic::Response::new(BrowseCategoryResponse {}))
     }
 

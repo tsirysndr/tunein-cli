@@ -81,7 +81,9 @@ impl PlaybackService for Playback {
                 )
             }
         };
-        let stream_url = extract_stream_url(&url, playlist_type).await.unwrap();
+        let stream_url = extract_stream_url(&url, playlist_type)
+            .await
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
         println!("{}", stream_url);
 
         self.cmd_tx.send(PlayerCommand::Play(stream_url)).unwrap();
