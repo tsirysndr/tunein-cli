@@ -3,7 +3,9 @@ use clap::{arg, Command};
 
 mod browse;
 mod decoder;
+mod extract;
 mod play;
+mod player;
 mod search;
 mod server;
 

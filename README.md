@@ -11,10 +11,6 @@
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/dr/tunein-cli" />
   </a>
-  
-  <a href="https://docs.rs/tunein-cli" target="_blank">
-    <img src="https://docs.rs/tunein-cli/badge.svg" />
-  </a>
 </p>
 
 A command line interface for [TuneIn Radio](https://tunein.com).<br />

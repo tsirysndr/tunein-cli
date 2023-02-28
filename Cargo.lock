@@ -3073,6 +3073,7 @@ dependencies = [
  "anyhow",
  "clap",
  "cpal",
+ "futures",
  "futures-util",
  "hyper",
  "m3u",

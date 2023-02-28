@@ -36,6 +36,7 @@ minimp3 = "0.5.1"
 tonic = "0.8.3"
 prost = "0.11.8"
 tonic-web = "0.4.0"
+futures = "0.3.26"
 
 
 [build-dependencies]
