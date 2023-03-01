@@ -16,6 +16,8 @@ jobs:
             archive: tar.gz tar.xz
 
     steps:
+      - name: Installing needed dependencies
+        run: brew install protobuf
       - name: Installing Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
