@@ -3,7 +3,10 @@
 pub struct GetCategoriesRequest {}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetCategoriesResponse {}
+pub struct GetCategoriesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub categories: ::prost::alloc::vec::Vec<super::super::objects::v1alpha1::Category>,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BrowseCategoryRequest {
@@ -12,7 +15,10 @@ pub struct BrowseCategoryRequest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BrowseCategoryResponse {}
+pub struct BrowseCategoryResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub categories: ::prost::alloc::vec::Vec<super::super::objects::v1alpha1::Category>,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetStationDetailsRequest {
@@ -21,7 +27,12 @@ pub struct GetStationDetailsRequest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetStationDetailsResponse {}
+pub struct GetStationDetailsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub station_link_details: ::prost::alloc::vec::Vec<
+        super::super::objects::v1alpha1::StationLinkDetails,
+    >,
+}
 /// Generated client implementations.
 pub mod browse_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]

@@ -3,5 +3,23 @@ syntax = "proto3";
 package objects.v1alpha1;
 
 message Station {
-  
+  string id = 1;
+  string name = 2;
+  string playing = 3;
+}
+
+message StationLinkDetails {
+  uint32 bitrate = 1;
+  string element = 2;
+  string is_ad_clipped_content_enabled = 3;
+  bool is_direct = 4;
+  string is_hls_advanced = 5;
+  string live_seek_stream = 6;
+  string media_type = 7;
+  uint32 player_height = 8;
+  uint32 player_width = 9;
+  string playlist_type = 10;
+  uint32 position = 11;
+  uint32 reliability = 12;
+  string url = 13;
 }

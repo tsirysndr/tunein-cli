@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package objects.v1alpha1;
 
-message Category {
+import "objects/v1alpha1/station.proto";
 
+message Category {
+  string id = 1;
+  string name = 2;
+  repeated objects.v1alpha1.Station stations = 3;
 }
