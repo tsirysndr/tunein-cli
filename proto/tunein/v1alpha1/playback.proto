@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package tunein.v1alpha1;
+
+message PlayOrPauseRequest {}
+
+message PlayOrPauseResponse {}
+
+message StopRequest {}
+
+message StopResponse {}
+
+message PlayRequest {
+  string station_name_or_id = 1;
+}
+
+message PlayResponse {}
+
+service PlaybackService {
+  rpc Play(PlayRequest) returns (PlayResponse) {}
+  rpc Stop(StopRequest) returns (StopResponse) {}
+  rpc PlayOrPause(PlayOrPauseRequest) returns (PlayOrPauseResponse) {}
+}

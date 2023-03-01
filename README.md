@@ -11,10 +11,6 @@
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/dr/tunein-cli" />
   </a>
-  
-  <a href="https://docs.rs/tunein-cli" target="_blank">
-    <img src="https://docs.rs/tunein-cli/badge.svg" />
-  </a>
 </p>
 
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
@@ -71,6 +67,18 @@ tunein play "alternativeradio.us"
 # Or by station ID
 tunein play s221580
 ```
+
+## API Documentation
+[https://buf.build/tsiry/tuneinserverapis/docs/main:tunein.v1alpha1](https://buf.build/tsiry/tuneinserverapis/docs/main:tunein.v1alpha1)
+
+You can start the server locally by running:
+```bash
+tunein server
+```
+
+and then use [Buf Studio](studio.buf.build/tsiry/tuneinserverapis?selectedProtocol=grpc-web&target=http%3A%2F%2Flocalhost%3A8090) to make requests to the server
+
+<img src="./api.png" />
 
 
 ## 📝 License

@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package tunein.v1alpha1;
+
+import "objects/v1alpha1/category.proto";
+import "objects/v1alpha1/station.proto";
+
+message GetCategoriesRequest {}
+
+message GetCategoriesResponse {
+  repeated objects.v1alpha1.Category categories = 1;
+}
+
+message BrowseCategoryRequest {
+  string category_id = 1;
+}
+
+message BrowseCategoryResponse {
+  repeated objects.v1alpha1.Category categories = 1;
+}
+
+message GetStationDetailsRequest {
+  string id = 1;
+}
+
+message GetStationDetailsResponse {
+  repeated objects.v1alpha1.StationLinkDetails station_link_details = 1;
+}
+
+service BrowseService {
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse) {}
+  rpc BrowseCategory(BrowseCategoryRequest) returns (BrowseCategoryResponse) {}
+  rpc GetStationDetails(GetStationDetailsRequest) returns (GetStationDetailsResponse) {}
+}
