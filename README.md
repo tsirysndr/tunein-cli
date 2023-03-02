@@ -76,7 +76,7 @@ You can start the server locally by running:
 tunein server
 ```
 
-and then use [Buf Studio](studio.buf.build/tsiry/tuneinserverapis?selectedProtocol=grpc-web&target=http%3A%2F%2Flocalhost%3A8090) to make requests to the server
+and then use [Buf Studio](https://studio.buf.build/tsiry/tuneinserverapis?selectedProtocol=grpc-web&target=http%3A%2F%2Flocalhost%3A8090) to make requests to the server
 
 <img src="./api.png" />
 
