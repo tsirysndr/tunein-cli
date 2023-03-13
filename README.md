@@ -20,6 +20,10 @@ You can search for stations, play them, and see what's currently playing.
 
 Compile from source:
 ```bash
+# Install dependencies
+brew install protobuf # macOS
+sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
+# Compile and install
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
 cargo install --path .
