@@ -1,7 +1,13 @@
+use std::time::Duration;
+
 use anyhow::Error;
+use owo_colors::OwoColorize;
+use termion::{clear, cursor};
 use tunein::TuneInClient;
 
 use crate::{decoder::Mp3Decoder, extract::extract_stream_url};
+
+const METER_CHAR: char = '█';
 
 pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let client = TuneInClient::new();
@@ -71,9 +77,25 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
         let sink = rodio::Sink::try_new(&handle).unwrap();
         let decoder = Mp3Decoder::new(response).unwrap();
         sink.append(decoder);
-        sink.sleep_until_end();
+
+        loop {
+            let level = sink.volume();
+            display_vu_meter(level);
+            std::thread::sleep(Duration::from_millis(10));
+        }
     })
     .await?;
 
     Ok(())
+}
+
+fn display_vu_meter(level: f32) {
+    print!("{}{}", clear::All, cursor::Goto(1, 1));
+    for i in 0..20 {
+        if (i as f32) / 20.0 <= level {
+            print!("{}", METER_CHAR.bright_yellow());
+        } else {
+            print!("{}", METER_CHAR.bright_yellow());
+        }
+    }
 }
