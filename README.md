@@ -18,24 +18,37 @@ You can search for stations, play them, and see what's currently playing.
 
 ## 🚚 Installation
 
-Compile from source:
+Compile from source, without Nix:
 ```bash
 # Install dependencies
 brew install protobuf # macOS
-sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
+sudo apt-get install -y libasound2-dev protobuf-compiler # Ubuntu/Debian
 # Compile and install
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
 cargo install --path .
 ```
 
+With Nix:
+```bash
+git clone https://github.com/tsirysndr/tunein-cli
+cd tunein-cli
+nix develop
+cargo install --path .
+```
+
 ### macOS/Linux
+Using [Homebrew](https://brew.sh):
 
 ```bash
 brew install tsirysndr/tap/tunein
 ```
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
+Using [Nix](https://nixos.org/nix/):
+```bash
+nix profile install github:tsirysndr/tunein-cli
+```
 ## 📦 Downloads
 - `Mac`: arm64: [tunein_v0.1.3_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.1.3_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_x86_64-apple-darwin.tar.gz)
 - `Linux`: [tunein_v0.1.3_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_x86_64-unknown-linux-gnu.tar.gz)
