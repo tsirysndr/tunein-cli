@@ -33,7 +33,7 @@ With Nix:
 ```bash
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
-nix develop
+nix --experimental-features "nix-command flakes" develop
 cargo install --path .
 ```
 
