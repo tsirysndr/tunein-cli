@@ -43,12 +43,14 @@ Using [Homebrew](https://brew.sh):
 ```bash
 brew install tsirysndr/tap/tunein
 ```
-Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
 Using [Nix](https://nixos.org/nix/):
 ```bash
 nix profile install github:tsirysndr/tunein-cli
 ```
+
+Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
+
 ## 📦 Downloads
 - `Mac`: arm64: [tunein_v0.1.3_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.1.3_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_x86_64-apple-darwin.tar.gz)
 - `Linux`: [tunein_v0.1.3_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.1.3/tunein_v0.1.3_x86_64-unknown-linux-gnu.tar.gz)
