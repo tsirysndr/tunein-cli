@@ -33,7 +33,7 @@ With Nix:
 ```bash
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
-nix --experimental-features "nix-command flakes" develop
+nix develop --experimental-features "nix-command flakes"
 cargo install --path .
 ```
 
@@ -46,7 +46,7 @@ brew install tsirysndr/tap/tunein
 
 Using [Nix](https://nixos.org/nix/):
 ```bash
-nix profile install github:tsirysndr/tunein-cli
+nix profile install --experimental-features "nix-command flakes" github:tsirysndr/tunein-cli
 ```
 
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
