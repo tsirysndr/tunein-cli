@@ -18,22 +18,37 @@ You can search for stations, play them, and see what's currently playing.
 
 ## 🚚 Installation
 
-Compile from source:
+Compile from source, without Nix:
 ```bash
 # Install dependencies
 brew install protobuf # macOS
-sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
+sudo apt-get install -y libasound2-dev protobuf-compiler # Ubuntu/Debian
 # Compile and install
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
 cargo install --path .
 ```
 
+With Nix:
+```bash
+git clone https://github.com/tsirysndr/tunein-cli
+cd tunein-cli
+nix develop
+cargo install --path .
+```
+
 ### macOS/Linux
+Using [Homebrew](https://brew.sh):
 
 ```bash
 brew install tsirysndr/tap/tunein
 ```
+
+Using [Nix](https://nixos.org/nix/):
+```bash
+nix profile install github:tsirysndr/tunein-cli
+```
+
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
 ## 📦 Downloads
