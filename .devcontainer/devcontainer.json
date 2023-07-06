@@ -5,7 +5,8 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
 	"features": {
-		"ghcr.io/devcontainers/features/github-cli:1": {}
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/nix:1": {}
 	},
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
@@ -24,7 +25,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo apt update && sudo apt install -y protobuf-compiler librust-alsa-sys-dev"
+	"postCreateCommand": "nix develop --experimental-features \"nix-command flakes\""
 
 	// Configure tool-specific properties.
 	// "customizations": {},
