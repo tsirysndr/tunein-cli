@@ -1,15 +1,17 @@
 # TuneIn CLI
 
 <p>
-  <a href="LICENSE" target="./LICENSE">
-    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
+  <a href="https://flakehub.com/flake/tsirysndr/tunein-cli" target="_blank">
+    <img src="https://img.shields.io/endpoint?url=https://flakehub.com/f/tsirysndr/tunein-cli/badge" />
   </a>
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/v/tunein-cli.svg" />
   </a>
-  
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/dr/tunein-cli" />
+  </a>
+  <a href="LICENSE" target="./LICENSE">
+    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
   </a>
 </p>
 
