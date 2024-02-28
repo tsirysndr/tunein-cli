@@ -1,7 +1,22 @@
 use std::time::Duration;
 
 use anyhow::Error;
+use serde::Deserialize;
 use surf::{Client, Config, Url};
+
+#[derive(Deserialize)]
+pub struct Header {
+    #[serde(rename = "Title")]
+    pub title: String,
+    #[serde(rename = "Subtitle")]
+    pub subtitle: String,
+}
+
+#[derive(Deserialize)]
+pub struct NowPlaying {
+    #[serde(rename = "Header")]
+    pub header: Header,
+}
 
 pub async fn extract_stream_url(url: &str, playlist_type: Option<String>) -> Result<String, Error> {
     match playlist_type {
@@ -36,4 +51,16 @@ pub async fn extract_stream_url(url: &str, playlist_type: Option<String>) -> Res
         },
         None => Ok(url.to_string()),
     }
+}
+
+pub async fn get_currently_playing(station: &str) -> Result<String, Error> {
+    let client = Client::new();
+    let url = format!("https://feed.tunein.com/profiles/{}/nowPlaying", station);
+    let response: NowPlaying = client
+        .get(Url::parse(&url)?)
+        .recv_json()
+        .await
+        .map_err(|e| Error::msg(e.to_string()))?;
+
+    Ok(response.header.subtitle)
 }

@@ -1,6 +1,7 @@
 use anyhow::Error;
 use clap::{arg, Command};
 
+mod app;
 mod browse;
 mod decoder;
 mod extract;
@@ -8,12 +9,13 @@ mod play;
 mod player;
 mod search;
 mod server;
+mod tui;
 
 fn cli() -> Command<'static> {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
     Command::new("tunein")
         .version(VESRION)
-        .author("Tsiry Sandratraina <tsiry.sndr@aol.com>")
+        .author("Tsiry Sandratraina <tsiry.sndr@fluentci.io>")
         .about(
             r#"
         ______              ____       _______   ____

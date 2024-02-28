@@ -1,13 +1,14 @@
-use std::time::Duration;
+use std::{thread, time::Duration};
 
 use anyhow::Error;
-use owo_colors::OwoColorize;
-use termion::{clear, cursor};
 use tunein::TuneInClient;
 
-use crate::{decoder::Mp3Decoder, extract::extract_stream_url};
-
-const METER_CHAR: char = '█';
+use crate::{
+    app::{App, State},
+    decoder::Mp3Decoder,
+    extract::{extract_stream_url, get_currently_playing},
+    tui,
+};
 
 pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     let client = TuneInClient::new();
@@ -15,7 +16,7 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
         .get_station(name_or_id)
         .await
         .map_err(|e| Error::msg(e.to_string()))?;
-    let (url, playlist_type, _) = match results.is_empty() {
+    let (url, playlist_type, _, id) = match results.is_empty() {
         true => {
             let results = client
                 .search(name_or_id)
@@ -36,9 +37,10 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
                         station.url.clone(),
                         station.playlist_type.clone(),
                         station.media_type.clone(),
+                        id.clone(),
                     )
                 }
-                None => ("".to_string(), None, "".to_string()),
+                None => ("".to_string(), None, "".to_string(), "".to_string()),
             }
         }
         false => {
@@ -47,18 +49,48 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
                 result.url.clone(),
                 result.playlist_type.clone(),
                 result.media_type.clone(),
+                name_or_id.to_string(),
             )
         }
     };
+    let now_playing = get_currently_playing(&id).await?;
     let stream_url = extract_stream_url(&url, playlist_type).await?;
     println!("{}", stream_url);
 
-    tokio::task::spawn_blocking(move || {
+    let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
+
+    let mut app = App::new();
+
+    thread::spawn(move || {
         let client = reqwest::blocking::Client::new();
 
         let response = client.get(stream_url).send().unwrap();
 
-        println!("headers: {:#?}", response.headers());
+        let headers = response.headers();
+        cmd_tx
+            .send(State {
+                name: headers
+                    .get("icy-name")
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                now_playing,
+                genre: headers
+                    .get("icy-genre")
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                description: headers
+                    .get("icy-description")
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                br: headers.get("icy-br").unwrap().to_str().unwrap().to_string(),
+            })
+            .unwrap();
         let location = response.headers().get("location");
 
         let response = match location {
@@ -79,23 +111,12 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
         sink.append(decoder);
 
         loop {
-            let level = sink.volume();
-            display_vu_meter(level);
             std::thread::sleep(Duration::from_millis(10));
         }
-    })
-    .await?;
+    });
 
-    Ok(())
-}
-
-fn display_vu_meter(level: f32) {
-    print!("{}{}", clear::All, cursor::Goto(1, 1));
-    for i in 0..20 {
-        if (i as f32) / 20.0 <= level {
-            print!("{}", METER_CHAR.bright_yellow());
-        } else {
-            print!("{}", METER_CHAR.bright_yellow());
-        }
-    }
+    let mut terminal = tui::init()?;
+    let app_result = app.run(&mut terminal, cmd_rx, &id).await;
+    tui::restore()?;
+    app_result
 }

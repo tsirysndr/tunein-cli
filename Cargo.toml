@@ -1,14 +1,14 @@
 [package]
-name = "tunein-cli"
-version = "0.1.3"
-edition = "2021"
-repository = "https://github.com/tsirysndr/tunein-cli"
-license = "MIT"
-readme = "README.md"
-authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
+authors = ["Tsiry Sandratraina <tsiry.sndr@fluentci.io>"]
 categories = ["command-line-utilities"]
-keywords = ["radio", "api", "tokio", "web", "tunein"]
 description = "Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨"
+edition = "2021"
+keywords = ["radio", "api", "tokio", "web", "tunein"]
+license = "MIT"
+name = "tunein-cli"
+readme = "README.md"
+repository = "https://github.com/tsirysndr/tunein-cli"
+version = "0.2.0"
 
 [[bin]]
 name = "tunein"
@@ -20,25 +20,27 @@ path = "src/main.rs"
 anyhow = "1.0.69"
 clap = "3.2.20"
 cpal = "0.14.0"
-owo-colors = "3.5.0"
-tunein = "0.1.2"
-tokio = { version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"] }
-pls = "0.2.2"
-m3u = "1.0.0"
-symphonia = { version = "0.5.1", features = ["aac", "alac", "mp3", "isomp4", "flac"] }
-hyper = { version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"] }
-surf = { version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
-futures-util = "0.3.26"
-url = "2.3.1"
-rodio  = { version = "0.16" }
-reqwest = { version = "0.11.14", features = ["blocking"] }
-minimp3 = "0.5.1"
-tonic = "0.8.3"
-prost = "0.11.8"
-tonic-web = "0.4.0"
+crossterm = "0.27.0"
 futures = "0.3.26"
+futures-util = "0.3.26"
+hyper = {version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"]}
+m3u = "1.0.0"
+minimp3 = "0.5.1"
+owo-colors = "3.5.0"
+pls = "0.2.2"
+prost = "0.11.8"
+ratatui = "0.26.1"
+reqwest = {version = "0.11.14", features = ["blocking"]}
+rodio = {version = "0.16"}
+serde = "1.0.197"
+surf = {version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
+symphonia = {version = "0.5.1", features = ["aac", "alac", "mp3", "isomp4", "flac"]}
 termion = "2.0.1"
-
+tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
+tonic = "0.8.3"
+tonic-web = "0.4.0"
+tunein = "0.1.2"
+url = "2.3.1"
 
 [build-dependencies]
 tonic-build = "0.8"

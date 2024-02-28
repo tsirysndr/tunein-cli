@@ -7,6 +7,9 @@
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/v/tunein-cli.svg" />
   </a>
+  <a href="https://flakestry.dev/flake/github/tsirysndr/tunein-cli" target="_blank">
+    <img src="https://flakestry.dev/api/badge/flake/github/tsirysdnr/tunein-cli" />
+  </a>
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/dr/tunein-cli" />
   </a>
@@ -17,6 +20,8 @@
 
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
 You can search for stations, play them, and see what's currently playing.
+
+![Made with VHS](https://vhs.charm.sh/vhs-4UhZFFRvVAuaZnapZUlp6R.gif)
 
 ## 🚚 Installation
 
