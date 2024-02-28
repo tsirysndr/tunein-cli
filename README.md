@@ -21,6 +21,8 @@
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
 You can search for stations, play them, and see what's currently playing.
 
+![Made with VHS](https://vhs.charm.sh/vhs-4UhZFFRvVAuaZnapZUlp6R.gif)
+
 ## 🚚 Installation
 
 Compile from source, without Nix:
