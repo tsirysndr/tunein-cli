@@ -42,17 +42,25 @@ export const build = async (src = ".") => {
         "build-essential",
         "libasound2-dev",
         "protobuf-compiler",
+        "gcc-aarch64-linux-gnu",
       ])
       .withDirectory("/app", context, { exclude })
       .withWorkdir("/app")
       .withMountedCache("/app/target", client.cacheVolume("target"))
       .withMountedCache("/root/cargo/registry", client.cacheVolume("registry"))
       .withMountedCache("/assets", client.cacheVolume("gh-release-assets"))
+      .withEnvVariable(
+        "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER",
+        Deno.env.get("TARGET") === "aarch64-unknown-linux-gnu"
+          ? "aarch64-linux-gnu-gcc"
+          : ""
+      )
       .withEnvVariable("TAG", Deno.env.get("TAG") || "latest")
       .withEnvVariable(
         "TARGET",
         Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu"
       )
+      .withExec(["sh", "-c", "rustup target add $TARGET"])
       .withExec(["sh", "-c", "cargo build --release --target $TARGET"])
       .withExec([
         "sh",
