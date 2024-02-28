@@ -33,7 +33,7 @@ export const build = async (src = ".") => {
     const ctr = client
       .pipeline(Job.build)
       .container()
-      .from("rust:1.73-bullseye")
+      .from("rust:1.76-bullseye")
       .withExec(["apt-get", "update"])
       .withExec([
         "apt-get",
