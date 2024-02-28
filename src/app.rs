@@ -1,6 +1,7 @@
 use std::{
     io,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
@@ -10,7 +11,7 @@ use ratatui::{
 };
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::tui;
+use crate::{extract::get_currently_playing, tui};
 
 #[derive(Debug, Default, Clone)]
 pub struct State {
@@ -46,12 +47,18 @@ impl App {
         &mut self,
         terminal: &mut tui::Tui,
         mut cmd_rx: UnboundedReceiver<State>,
+        id: &str,
     ) -> anyhow::Result<()> {
         let new_state = cmd_rx.recv().await.unwrap();
         self.state.lock().unwrap().update(new_state);
         while !self.exit {
+            let now_playing = get_currently_playing(id)
+                .await
+                .unwrap_or(self.state.lock().unwrap().now_playing.clone());
+            self.state.lock().unwrap().now_playing = now_playing;
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
+            std::thread::sleep(Duration::from_millis(500));
         }
         Ok(())
     }

@@ -116,7 +116,7 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     });
 
     let mut terminal = tui::init()?;
-    let app_result = app.run(&mut terminal, cmd_rx).await;
+    let app_result = app.run(&mut terminal, cmd_rx, &id).await;
     tui::restore()?;
     app_result
 }
