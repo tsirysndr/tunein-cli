@@ -6,7 +6,7 @@ readonly CYAN="$(tput setaf 6 2>/dev/null || echo '')"
 readonly NO_COLOR="$(tput sgr0 2>/dev/null || echo '')"
 
 # Define the release information
-RELEASE_URL="https://api.github.com/repos/tsirysndr/tunein/releases/latest"
+RELEASE_URL="https://api.github.com/repos/tsirysndr/tunein-cli/releases/latest"
 
 # Determine the operating system
 OS=$(uname -s)
