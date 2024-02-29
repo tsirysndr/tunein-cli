@@ -1,8 +1,4 @@
-use std::{
-    io,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{io, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
@@ -22,21 +18,15 @@ pub struct State {
     pub br: String,
 }
 
-impl State {
-    pub fn update(&mut self, state: State) {
-        *self = state;
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct App {
-    pub state: Arc<Mutex<State>>,
+    pub state: State,
     exit: bool,
 }
 
 impl App {
     pub fn new() -> Self {
-        let state = Arc::new(Mutex::new(State::default()));
+        let state = State::default();
         Self { state, exit: false }
     }
 }
@@ -50,12 +40,18 @@ impl App {
         id: &str,
     ) -> anyhow::Result<()> {
         let new_state = cmd_rx.recv().await.unwrap();
-        self.state.lock().unwrap().update(new_state);
+
         while !self.exit {
+            self.state = new_state.clone();
+
+            // Get current playing if available, otherwise use state's value
             let now_playing = get_currently_playing(id)
                 .await
-                .unwrap_or(self.state.lock().unwrap().now_playing.clone());
-            self.state.lock().unwrap().now_playing = now_playing;
+                .unwrap_or_else(|_| self.state.now_playing.clone());
+
+            // Update state with current playing
+            self.state.now_playing = now_playing;
+
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
             std::thread::sleep(Duration::from_millis(500));
@@ -85,13 +81,16 @@ impl App {
             areas[0],
         );
 
-        let state = self.state.lock().unwrap();
-
-        self.render_line("Station ", &state.name, areas[1], frame);
-        self.render_line("Now Playing ", &state.now_playing, areas[2], frame);
-        self.render_line("Genre ", &state.genre, areas[3], frame);
-        self.render_line("Description ", &state.description, areas[4], frame);
-        self.render_line("Bitrate ", &format!("{} kbps", &state.br), areas[5], frame);
+        self.render_line("Station ", &self.state.name, areas[1], frame);
+        self.render_line("Now Playing ", &self.state.now_playing, areas[2], frame);
+        self.render_line("Genre ", &self.state.genre, areas[3], frame);
+        self.render_line("Description ", &self.state.description, areas[4], frame);
+        self.render_line(
+            "Bitrate ",
+            &format!("{} kbps", &self.state.br),
+            areas[5],
+            frame,
+        );
     }
 
     fn render_line(&self, label: &str, value: &str, area: Rect, frame: &mut Frame) {
