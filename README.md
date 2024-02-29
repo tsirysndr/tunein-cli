@@ -47,6 +47,7 @@ cargo install --path .
 ### macOS/Linux
 
 Using Bash:
+
 ```bash
 curl -fsSL https://cdn.jsdelivr.net/gh/tsirysndr/tunein@main/install.sh | bash
 ```
