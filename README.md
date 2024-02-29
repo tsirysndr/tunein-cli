@@ -49,7 +49,7 @@ cargo install --path .
 Using Bash:
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/tsirysndr/tunein-cli@master/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/tsirysndr/tunein-cli@ab6a1ab/install.sh | bash
 ```
 
 Using [Homebrew](https://brew.sh):
