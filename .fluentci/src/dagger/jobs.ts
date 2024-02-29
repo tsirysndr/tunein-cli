@@ -62,10 +62,11 @@ export const build = async (src = ".") => {
       )
       .withExec(["sh", "-c", "rustup target add $TARGET"])
       .withExec(["sh", "-c", "cargo build --release --target $TARGET"])
+      .withExec(["sh", "-c", "cp target/${TARGET}/release/tunein ."])
       .withExec([
         "sh",
         "-c",
-        "tar czvf /assets/tunein_${TAG}_${TARGET}.tar.gz target/$TARGET/release/tunein",
+        "tar czvf /assets/tunein_${TAG}_${TARGET}.tar.gz tunein",
       ])
       .withExec([
         "sh",
