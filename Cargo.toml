@@ -30,7 +30,7 @@ owo-colors = "3.5.0"
 pls = "0.2.2"
 prost = "0.11.8"
 ratatui = "0.26.1"
-reqwest = {version = "0.11.14", features = ["blocking"]}
+reqwest = {version = "0.11.14", features = ["blocking", "rustls-tls"], default-features = false}
 rodio = {version = "0.16"}
 serde = "1.0.197"
 surf = {version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
