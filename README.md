@@ -26,6 +26,7 @@ You can search for stations, play them, and see what's currently playing.
 ## 🚚 Installation
 
 Compile from source, without Nix:
+
 ```bash
 # Install dependencies
 brew install protobuf # macOS
@@ -37,6 +38,7 @@ cargo install --path .
 ```
 
 With Nix:
+
 ```bash
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
@@ -59,6 +61,7 @@ brew install tsirysndr/tap/tunein
 ```
 
 Using [Nix](https://nixos.org/nix/):
+
 ```bash
 nix profile install --experimental-features "nix-command flakes" github:tsirysndr/tunein-cli
 ```
