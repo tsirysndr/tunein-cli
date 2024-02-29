@@ -9,11 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: x86_64-apple-darwin
-            extensions: tar.gz tar.gz.sha256
-          - target: aarch64-apple-darwin
-            extensions: tar.gz tar.gz.sha256
+        target:
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
 
     steps:
       - name: Setup Fluent CI CLI
@@ -43,11 +41,15 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          tar czvf tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz tunein
-          shasum -a 256 tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz > tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
+          tar czvf ../../../tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz tunein
+          shasum -a 256 ../../../tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz > ../../../tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
+          cd ../../../ && rm -rf target
       - name: Upload release assets
-        run: fluentci run github_pipeline release_upload
+        run: |
+          for ext in tar.gz tar.gz.sha256; do
+            export FILE=tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.$ext
+            fluentci run github_pipeline release_upload
+          done
         env:
           TAG: ${{ env.RELEASE_VERSION }}
-          FILE: target/${{ matrix.target }}/release/tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.${{ matrix.extensions }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
