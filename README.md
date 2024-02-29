@@ -45,6 +45,7 @@ cargo install --path .
 ```
 
 ### macOS/Linux
+
 Using [Homebrew](https://brew.sh):
 
 ```bash
