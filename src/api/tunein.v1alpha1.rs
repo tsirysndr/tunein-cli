@@ -29,15 +29,14 @@ pub struct GetStationDetailsRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetStationDetailsResponse {
     #[prost(message, repeated, tag = "1")]
-    pub station_link_details: ::prost::alloc::vec::Vec<
-        super::super::objects::v1alpha1::StationLinkDetails,
-    >,
+    pub station_link_details:
+        ::prost::alloc::vec::Vec<super::super::objects::v1alpha1::StationLinkDetails>,
 }
 /// Generated client implementations.
 pub mod browse_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct BrowseServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -81,9 +80,8 @@ pub mod browse_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             BrowseServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -106,15 +104,12 @@ pub mod browse_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetCategoriesRequest>,
         ) -> Result<tonic::Response<super::GetCategoriesResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/tunein.v1alpha1.BrowseService/GetCategories",
@@ -125,15 +120,12 @@ pub mod browse_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::BrowseCategoryRequest>,
         ) -> Result<tonic::Response<super::BrowseCategoryResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/tunein.v1alpha1.BrowseService/BrowseCategory",
@@ -144,15 +136,12 @@ pub mod browse_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetStationDetailsRequest>,
         ) -> Result<tonic::Response<super::GetStationDetailsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/tunein.v1alpha1.BrowseService/GetStationDetails",
@@ -200,10 +189,7 @@ pub mod browse_service_server {
                 send_compression_encodings: Default::default(),
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -231,10 +217,7 @@ pub mod browse_service_server {
         type Response = http::Response<tonic::body::BoxBody>;
         type Error = std::convert::Infallible;
         type Future = BoxFuture<Self::Response, Self::Error>;
-        fn poll_ready(
-            &mut self,
-            _cx: &mut Context<'_>,
-        ) -> Poll<Result<(), Self::Error>> {
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
             Poll::Ready(Ok(()))
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
@@ -243,23 +226,17 @@ pub mod browse_service_server {
                 "/tunein.v1alpha1.BrowseService/GetCategories" => {
                     #[allow(non_camel_case_types)]
                     struct GetCategoriesSvc<T: BrowseService>(pub Arc<T>);
-                    impl<
-                        T: BrowseService,
-                    > tonic::server::UnaryService<super::GetCategoriesRequest>
-                    for GetCategoriesSvc<T> {
+                    impl<T: BrowseService> tonic::server::UnaryService<super::GetCategoriesRequest>
+                        for GetCategoriesSvc<T>
+                    {
                         type Response = super::GetCategoriesResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetCategoriesRequest>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
-                            let fut = async move {
-                                (*inner).get_categories(request).await
-                            };
+                            let fut = async move { (*inner).get_categories(request).await };
                             Box::pin(fut)
                         }
                     }
@@ -270,11 +247,10 @@ pub mod browse_service_server {
                         let inner = inner.0;
                         let method = GetCategoriesSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -283,23 +259,17 @@ pub mod browse_service_server {
                 "/tunein.v1alpha1.BrowseService/BrowseCategory" => {
                     #[allow(non_camel_case_types)]
                     struct BrowseCategorySvc<T: BrowseService>(pub Arc<T>);
-                    impl<
-                        T: BrowseService,
-                    > tonic::server::UnaryService<super::BrowseCategoryRequest>
-                    for BrowseCategorySvc<T> {
+                    impl<T: BrowseService> tonic::server::UnaryService<super::BrowseCategoryRequest>
+                        for BrowseCategorySvc<T>
+                    {
                         type Response = super::BrowseCategoryResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::BrowseCategoryRequest>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
-                            let fut = async move {
-                                (*inner).browse_category(request).await
-                            };
+                            let fut = async move { (*inner).browse_category(request).await };
                             Box::pin(fut)
                         }
                     }
@@ -310,11 +280,10 @@ pub mod browse_service_server {
                         let inner = inner.0;
                         let method = BrowseCategorySvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -323,23 +292,18 @@ pub mod browse_service_server {
                 "/tunein.v1alpha1.BrowseService/GetStationDetails" => {
                     #[allow(non_camel_case_types)]
                     struct GetStationDetailsSvc<T: BrowseService>(pub Arc<T>);
-                    impl<
-                        T: BrowseService,
-                    > tonic::server::UnaryService<super::GetStationDetailsRequest>
-                    for GetStationDetailsSvc<T> {
+                    impl<T: BrowseService>
+                        tonic::server::UnaryService<super::GetStationDetailsRequest>
+                        for GetStationDetailsSvc<T>
+                    {
                         type Response = super::GetStationDetailsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetStationDetailsRequest>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
-                            let fut = async move {
-                                (*inner).get_station_details(request).await
-                            };
+                            let fut = async move { (*inner).get_station_details(request).await };
                             Box::pin(fut)
                         }
                     }
@@ -350,28 +314,23 @@ pub mod browse_service_server {
                         let inner = inner.0;
                         let method = GetStationDetailsSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }
@@ -423,8 +382,8 @@ pub struct PlayResponse {}
 /// Generated client implementations.
 pub mod playback_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct PlaybackServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -468,9 +427,8 @@ pub mod playback_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             PlaybackServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -493,53 +451,42 @@ pub mod playback_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::PlayRequest>,
         ) -> Result<tonic::Response<super::PlayResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/tunein.v1alpha1.PlaybackService/Play",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/tunein.v1alpha1.PlaybackService/Play");
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn stop(
             &mut self,
             request: impl tonic::IntoRequest<super::StopRequest>,
         ) -> Result<tonic::Response<super::StopResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/tunein.v1alpha1.PlaybackService/Stop",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/tunein.v1alpha1.PlaybackService/Stop");
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn play_or_pause(
             &mut self,
             request: impl tonic::IntoRequest<super::PlayOrPauseRequest>,
         ) -> Result<tonic::Response<super::PlayOrPauseResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/tunein.v1alpha1.PlaybackService/PlayOrPause",
@@ -587,10 +534,7 @@ pub mod playback_service_server {
                 send_compression_encodings: Default::default(),
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -618,10 +562,7 @@ pub mod playback_service_server {
         type Response = http::Response<tonic::body::BoxBody>;
         type Error = std::convert::Infallible;
         type Future = BoxFuture<Self::Response, Self::Error>;
-        fn poll_ready(
-            &mut self,
-            _cx: &mut Context<'_>,
-        ) -> Poll<Result<(), Self::Error>> {
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
             Poll::Ready(Ok(()))
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
@@ -630,14 +571,9 @@ pub mod playback_service_server {
                 "/tunein.v1alpha1.PlaybackService/Play" => {
                     #[allow(non_camel_case_types)]
                     struct PlaySvc<T: PlaybackService>(pub Arc<T>);
-                    impl<
-                        T: PlaybackService,
-                    > tonic::server::UnaryService<super::PlayRequest> for PlaySvc<T> {
+                    impl<T: PlaybackService> tonic::server::UnaryService<super::PlayRequest> for PlaySvc<T> {
                         type Response = super::PlayResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::PlayRequest>,
@@ -654,11 +590,10 @@ pub mod playback_service_server {
                         let inner = inner.0;
                         let method = PlaySvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -667,14 +602,9 @@ pub mod playback_service_server {
                 "/tunein.v1alpha1.PlaybackService/Stop" => {
                     #[allow(non_camel_case_types)]
                     struct StopSvc<T: PlaybackService>(pub Arc<T>);
-                    impl<
-                        T: PlaybackService,
-                    > tonic::server::UnaryService<super::StopRequest> for StopSvc<T> {
+                    impl<T: PlaybackService> tonic::server::UnaryService<super::StopRequest> for StopSvc<T> {
                         type Response = super::StopResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::StopRequest>,
@@ -691,11 +621,10 @@ pub mod playback_service_server {
                         let inner = inner.0;
                         let method = StopSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -704,23 +633,17 @@ pub mod playback_service_server {
                 "/tunein.v1alpha1.PlaybackService/PlayOrPause" => {
                     #[allow(non_camel_case_types)]
                     struct PlayOrPauseSvc<T: PlaybackService>(pub Arc<T>);
-                    impl<
-                        T: PlaybackService,
-                    > tonic::server::UnaryService<super::PlayOrPauseRequest>
-                    for PlayOrPauseSvc<T> {
+                    impl<T: PlaybackService> tonic::server::UnaryService<super::PlayOrPauseRequest>
+                        for PlayOrPauseSvc<T>
+                    {
                         type Response = super::PlayOrPauseResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::PlayOrPauseRequest>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
-                            let fut = async move {
-                                (*inner).play_or_pause(request).await
-                            };
+                            let fut = async move { (*inner).play_or_pause(request).await };
                             Box::pin(fut)
                         }
                     }
@@ -731,28 +654,23 @@ pub mod playback_service_server {
                         let inner = inner.0;
                         let method = PlayOrPauseSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            );
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }

@@ -1,9 +1,6 @@
 use std::str::FromStr;
 
-use tunein::{
-    types,
-    TuneInClient,
-};
+use tunein::{types, TuneInClient};
 use tunein_cli::api::{
     objects::v1alpha1::{Category, StationLinkDetails},
     tunein::v1alpha1::{
