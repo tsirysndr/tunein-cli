@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
     task::{Context, Poll},
     thread,
-    time::{Duration},
+    time::Duration,
 };
 
 use anyhow::Error;

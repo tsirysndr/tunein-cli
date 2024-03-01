@@ -8,11 +8,17 @@ license = "MIT"
 name = "tunein-cli"
 readme = "README.md"
 repository = "https://github.com/tsirysndr/tunein-cli"
-version = "0.2.1"
+version = "0.2.2"
 
 [[bin]]
 name = "tunein"
 path = "src/main.rs"
+
+[workspace.metadata.cross.target.aarch64-unknown-linux-gnu]
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH", 
+    "apt-get update && apt-get --assume-yes install libasound2-dev libasound2-dev:$CROSS_DEB_ARCH protobuf-compiler"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
