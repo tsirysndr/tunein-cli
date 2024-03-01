@@ -1,4 +1,7 @@
-# TuneIn CLI
+
+![Cover](./.github/assets/preview.png)
+
+# TuneIn CLI 📻 🎵 ✨
 
 <p>
   <a href="https://flakehub.com/flake/tsirysndr/tunein-cli" target="_blank">
