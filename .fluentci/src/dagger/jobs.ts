@@ -34,6 +34,8 @@ export const build = async (src = ".") => {
       .pipeline(Job.build)
       .container()
       .from("rust:1.76-bullseye")
+      .withExec(["dpkg", "--add-architecture", "armhf"])
+      .withExec(["dpkg", "--add-architecture", "arm64"])
       .withExec(["apt-get", "update"])
       .withExec([
         "apt-get",
@@ -42,7 +44,61 @@ export const build = async (src = ".") => {
         "build-essential",
         "libasound2-dev",
         "protobuf-compiler",
+      ])
+      .withExec([
+        "apt-get",
+        "-y",
+        "-qq",
+        "gcc-arm-linux-gnueabihf",
+        "libc6-armhf-cross",
+        "libc6-dev-armhf-cross",
         "gcc-aarch64-linux-gnu",
+        "libc6-arm64-cross",
+        "libc6-dev-arm64-cross",
+        "libc6-armel-cross",
+        "libc6-dev-armel-cross",
+        "binutils-arm-linux-gnueabi",
+        "gcc-arm-linux-gnueabi",
+        "libncurses5-dev",
+        "bison",
+        "flex",
+        "libssl-dev",
+        "bc",
+        "pkg-config",
+        "libudev-dev",
+      ])
+      .withExec(["mkdir", "-p", "/build/sysroot"])
+      .withExec([
+        "apt-get",
+        "download",
+        "libasound2:armhf",
+        "libasound2-dev:armhf",
+        "libasound2:arm64",
+        "libasound2-dev:arm64",
+      ])
+      .withExec([
+        "dpkg",
+        "-x",
+        "libasound2-dev_1.2.4-1.1_arm64.deb",
+        "/build/sysroot/",
+      ])
+      .withExec([
+        "dpkg",
+        "-x",
+        "libasound2_1.2.4-1.1_arm64.deb",
+        "/build/sysroot/",
+      ])
+      .withExec([
+        "dpkg",
+        "-x",
+        "libasound2-dev_1.2.4-1.1_armhf.deb",
+        "/build/sysroot/",
+      ])
+      .withExec([
+        "dpkg",
+        "-x",
+        "libasound2_1.2.4-1.1_armhf.deb",
+        "/build/sysroot/",
       ])
       .withDirectory("/app", context, { exclude })
       .withWorkdir("/app")
@@ -50,9 +106,15 @@ export const build = async (src = ".") => {
       .withMountedCache("/root/cargo/registry", client.cacheVolume("registry"))
       .withMountedCache("/assets", client.cacheVolume("gh-release-assets"))
       .withEnvVariable(
-        "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER",
+        "RUSTFLAGS",
         Deno.env.get("TARGET") === "aarch64-unknown-linux-gnu"
-          ? "aarch64-linux-gnu-gcc"
+          ? "-C linker=aarch64-linux-gnu-gcc -L/usr/aarch64-linux-gnu/lib -L/build/sysroot/usr/lib/aarch64-linux-gnu -L/build/sysroot/lib/aarch64-linux-gnu"
+          : ""
+      )
+      .withEnvVariable(
+        "RUSTFLAGS",
+        Deno.env.get("TARGET") === "armv7-unknown-linux-gnueabihf"
+          ? "-C linker=arm-linux-gnueabihf-gcc -L/usr/arm-linux-gnueabihf/lib -L/build/sysroot/usr/lib/arm-linux-gnueabihf -L/build/sysroot/lib/arm-linux-gnueabihf"
           : ""
       )
       .withEnvVariable("TAG", Deno.env.get("TAG") || "latest")
