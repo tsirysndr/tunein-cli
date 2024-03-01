@@ -28,6 +28,23 @@ export const test = async (src = ".", options: string[] = []) => {
 };
 
 export const build = async (src = ".") => {
+  let rustflags = "";
+  switch (Deno.env.get("TARGET")) {
+    case "aarch64-unknown-linux-gnu":
+      rustflags = `-C linker=aarch64-linux-gnu-gcc \
+        -L/usr/aarch64-linux-gnu/lib \
+        -L/build/sysroot/usr/lib/aarch64-linux-gnu \
+        -L/build/sysroot/lib/aarch64-linux-gnu`;
+      break;
+    case "armv7-unknown-linux-gnueabihf":
+      rustflags = `-C linker=arm-linux-gnueabihf-gcc \
+        -L/usr/arm-linux-gnueabihf/lib \
+        -L/build/sysroot/usr/lib/arm-linux-gnueabihf \
+        -L/build/sysroot/lib/arm-linux-gnueabihf`;
+      break;
+    default:
+      break;
+  }
   await connect(async (client: Client) => {
     const context = client.host().directory(src);
     const ctr = client
@@ -47,6 +64,7 @@ export const build = async (src = ".") => {
       ])
       .withExec([
         "apt-get",
+        "install",
         "-y",
         "-qq",
         "gcc-arm-linux-gnueabihf",
@@ -105,17 +123,16 @@ export const build = async (src = ".") => {
       .withMountedCache("/app/target", client.cacheVolume("target"))
       .withMountedCache("/root/cargo/registry", client.cacheVolume("registry"))
       .withMountedCache("/assets", client.cacheVolume("gh-release-assets"))
+      .withEnvVariable("RUSTFLAGS", rustflags)
       .withEnvVariable(
-        "RUSTFLAGS",
-        Deno.env.get("TARGET") === "aarch64-unknown-linux-gnu"
-          ? "-C linker=aarch64-linux-gnu-gcc -L/usr/aarch64-linux-gnu/lib -L/build/sysroot/usr/lib/aarch64-linux-gnu -L/build/sysroot/lib/aarch64-linux-gnu"
-          : ""
+        "PKG_CONFIG_ALLOW_CROSS",
+        Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu" ? "1" : "0"
       )
       .withEnvVariable(
-        "RUSTFLAGS",
-        Deno.env.get("TARGET") === "armv7-unknown-linux-gnueabihf"
-          ? "-C linker=arm-linux-gnueabihf-gcc -L/usr/arm-linux-gnueabihf/lib -L/build/sysroot/usr/lib/arm-linux-gnueabihf -L/build/sysroot/lib/arm-linux-gnueabihf"
-          : ""
+        "C_INCLUDE_PATH",
+        Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu"
+          ? "/build/sysroot/usr/include"
+          : "/usr/include"
       )
       .withEnvVariable("TAG", Deno.env.get("TAG") || "latest")
       .withEnvVariable(
@@ -134,9 +151,31 @@ export const build = async (src = ".") => {
         "sh",
         "-c",
         "shasum -a 256 /assets/tunein_${TAG}_${TARGET}.tar.gz > /assets/tunein_${TAG}_${TARGET}.tar.gz.sha256",
+      ])
+      .withExec(["sh", "-c", "cp /assets/tunein_${TAG}_${TARGET}.tar.gz ."])
+      .withExec([
+        "sh",
+        "-c",
+        "cp /assets/tunein_${TAG}_${TARGET}.tar.gz.sha256 .",
       ]);
 
     await ctr.stdout();
+
+    const exe = await ctr.file(
+      `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
+    );
+    await exe.export(
+      `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
+    );
+
+    const sha = await ctr.file(
+      `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get(
+        "TARGET"
+      )}.tar.gz.sha256`
+    );
+    await sha.export(
+      `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`
+    );
   });
   return "Done";
 };
