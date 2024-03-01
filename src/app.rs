@@ -90,7 +90,7 @@ impl App {
             // Update state with current playing
             self.now_playing = now_playing;
             terminal.draw(|frame| self.render_frame(frame)).unwrap();
-            std::thread::sleep(Duration::from_millis(500));
+            std::thread::sleep(Duration::from_millis(2000));
         }
     }
 
