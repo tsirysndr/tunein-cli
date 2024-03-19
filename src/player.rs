@@ -51,6 +51,7 @@ impl PlayerInternal {
     }
 
     fn handle_play(&mut self, url: String) -> Result<(), Error> {
+        let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
         let client = reqwest::blocking::Client::new();
 
         let response = client.get(url).send().unwrap();
@@ -74,7 +75,7 @@ impl PlayerInternal {
         self.stream = stream;
         self.sink = rodio::Sink::try_new(&handle).unwrap();
         self.handle = handle;
-        let decoder = Mp3Decoder::new(response).unwrap();
+        let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
         self.sink.append(decoder);
         self.sink.play();
         Ok(())

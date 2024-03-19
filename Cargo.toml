@@ -8,7 +8,7 @@ license = "MIT"
 name = "tunein-cli"
 readme = "README.md"
 repository = "https://github.com/tsirysndr/tunein-cli"
-version = "0.2.5"
+version = "0.2.6"
 
 [[bin]]
 name = "tunein"
@@ -16,8 +16,8 @@ path = "src/main.rs"
 
 [workspace.metadata.cross.target.aarch64-unknown-linux-gnu]
 pre-build = [
-    "dpkg --add-architecture $CROSS_DEB_ARCH", 
-    "apt-get update && apt-get --assume-yes install libasound2-dev libasound2-dev:$CROSS_DEB_ARCH protobuf-compiler"
+  "dpkg --add-architecture $CROSS_DEB_ARCH",
+  "apt-get update && apt-get --assume-yes install libasound2-dev libasound2-dev:$CROSS_DEB_ARCH protobuf-compiler",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -27,6 +27,7 @@ anyhow = "1.0.69"
 clap = "3.2.20"
 cpal = "0.14.0"
 crossterm = "0.27.0"
+derive_more = "0.99.17"
 futures = "0.3.26"
 futures-util = "0.3.26"
 hyper = {version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"]}
@@ -38,10 +39,12 @@ prost = "0.11.8"
 ratatui = "0.26.1"
 reqwest = {version = "0.11.14", features = ["blocking", "rustls-tls"], default-features = false}
 rodio = {version = "0.16"}
+rustfft = "6.2.0"
 serde = "1.0.197"
 surf = {version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
 symphonia = {version = "0.5.1", features = ["aac", "alac", "mp3", "isomp4", "flac"]}
 termion = "2.0.1"
+thiserror = "1.0.58"
 tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
 tonic = "0.8.3"
 tonic-web = "0.4.0"

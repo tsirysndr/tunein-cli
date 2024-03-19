@@ -3,13 +3,17 @@ use clap::{arg, Command};
 
 mod app;
 mod browse;
+mod cfg;
 mod decoder;
 mod extract;
+mod input;
+mod music;
 mod play;
 mod player;
 mod search;
 mod server;
 mod tui;
+mod visualization;
 
 fn cli() -> Command<'static> {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
