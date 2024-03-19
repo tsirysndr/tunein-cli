@@ -5,6 +5,7 @@ use tunein::TuneInClient;
 
 use crate::{
     app::{App, State},
+    cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
     extract::{extract_stream_url, get_currently_playing},
     tui,
@@ -58,8 +59,24 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
     println!("{}", stream_url);
 
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
+    let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
 
-    let mut app = App::new();
+    let ui = UiOptions {
+        scale: 1.0,
+        scatter: false,
+        no_reference: true,
+        no_ui: true,
+        no_braille: false,
+    };
+
+    let opts = SourceOptions {
+        channels: 2,
+        buffer: 1152,
+        sample_rate: 44100,
+        tune: None,
+    };
+
+    let mut app = App::new(&ui, &opts, frame_rx);
 
     thread::spawn(move || {
         let client = reqwest::blocking::Client::new();
@@ -107,7 +124,7 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
 
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
-        let decoder = Mp3Decoder::new(response).unwrap();
+        let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
         sink.append(decoder);
 
         loop {

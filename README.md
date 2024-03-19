@@ -72,8 +72,8 @@ nix profile install --experimental-features "nix-command flakes" github:tsirysnd
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
 ## 📦 Downloads
-- `Mac`: arm64: [tunein_v0.2.5_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.5/tunein_v0.2.5_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.2.5_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.5/tunein_v0.2.5_x86_64-apple-darwin.tar.gz)
-- `Linux`: [tunein_v0.2.5_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.5/tunein_v0.2.5_x86_64-unknown-linux-gnu.tar.gz)
+- `Mac`: arm64: [tunein_v0.2.6_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.6/tunein_v0.2.6_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.2.6_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.6/tunein_v0.2.6_x86_64-apple-darwin.tar.gz)
+- `Linux`: [tunein_v0.2.6_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.2.6/tunein_v0.2.6_x86_64-unknown-linux-gnu.tar.gz)
 ## 🚀 Usage
 ```
 USAGE:

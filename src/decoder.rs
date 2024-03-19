@@ -1,5 +1,5 @@
-use std::io::Read;
 use std::time::Duration;
+use std::{io::Read, sync::mpsc::Sender};
 
 use minimp3::{Decoder, Frame};
 use rodio::Source;
@@ -11,13 +11,14 @@ where
     decoder: Decoder<R>,
     current_frame: Frame,
     current_frame_offset: usize,
+    tx: Sender<Frame>,
 }
 
 impl<R> Mp3Decoder<R>
 where
     R: Read,
 {
-    pub fn new(mut data: R) -> Result<Self, R> {
+    pub fn new(mut data: R, tx: Sender<Frame>) -> Result<Self, R> {
         if !is_mp3(data.by_ref()) {
             return Err(data);
         }
@@ -28,6 +29,7 @@ where
             decoder,
             current_frame,
             current_frame_offset: 0,
+            tx,
         })
     }
 }
@@ -67,7 +69,13 @@ where
     fn next(&mut self) -> Option<i16> {
         if self.current_frame_offset == self.current_frame.data.len() {
             match self.decoder.next_frame() {
-                Ok(frame) => self.current_frame = frame,
+                Ok(frame) => {
+                    match self.tx.send(frame.clone()) {
+                        Ok(_) => {}
+                        Err(_) => return None,
+                    }
+                    self.current_frame = frame
+                }
                 _ => return None,
             }
             self.current_frame_offset = 0;
