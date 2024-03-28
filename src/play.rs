@@ -1,6 +1,7 @@
 use std::{thread, time::Duration};
 
 use anyhow::Error;
+use hyper::header::HeaderValue;
 use tunein::TuneInClient;
 
 use crate::{
@@ -88,24 +89,29 @@ pub async fn exec(name_or_id: &str) -> Result<(), Error> {
             .send(State {
                 name: headers
                     .get("icy-name")
-                    .unwrap()
+                    .unwrap_or(&HeaderValue::from_static("Unknown"))
                     .to_str()
                     .unwrap()
                     .to_string(),
                 now_playing,
                 genre: headers
                     .get("icy-genre")
-                    .unwrap()
+                    .unwrap_or(&HeaderValue::from_static("Unknown"))
                     .to_str()
                     .unwrap()
                     .to_string(),
                 description: headers
                     .get("icy-description")
-                    .unwrap()
+                    .unwrap_or(&HeaderValue::from_static("Unknown"))
                     .to_str()
                     .unwrap()
                     .to_string(),
-                br: headers.get("icy-br").unwrap().to_str().unwrap().to_string(),
+                br: headers
+                    .get("icy-br")
+                    .unwrap_or(&HeaderValue::from_static(""))
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
             })
             .unwrap();
         let location = response.headers().get("location");
