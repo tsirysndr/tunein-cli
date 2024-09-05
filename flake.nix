@@ -2,7 +2,7 @@
   description = "TuneIn CLI - Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     crane = {
       url = "github:ipetkov/crane";
@@ -54,7 +54,7 @@
             # Add additional build inputs here
             pkgs.openssl
             pkgs.openssl.dev
-            pkgs.pkgconfig
+            pkgs.pkg-config
             pkgs.gnumake
             pkgs.perl
             pkgs.protobuf

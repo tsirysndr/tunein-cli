@@ -66,6 +66,7 @@ brew install tsirysndr/tap/tunein
 Using [Nix](https://nixos.org/nix/):
 
 ```bash
+cachix use tsirysndr
 nix profile install --experimental-features "nix-command flakes" github:tsirysndr/tunein-cli
 ```
 
