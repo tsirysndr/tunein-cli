@@ -11,9 +11,8 @@ export const exclude = ["target", ".git", ".devbox", ".fluentci"];
 export const test = async (src = ".", options: string[] = []) => {
   const context = await getDirectory(src);
   const ctr = dag
-    .pipeline(Job.test)
     .container()
-    .from("rust:latest")
+    .from("rust:1.84-bullseye")
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withMountedCache("/app/target", dag.cacheVolume("target"))
@@ -27,9 +26,8 @@ export const build = async (src = ".") => {
   const rustflags = buildRustFlags();
   const context = await getDirectory(src);
   const ctr = dag
-    .pipeline(Job.build)
     .container()
-    .from("rust:1.76-bullseye")
+    .from("rust:1.84-bullseye")
     .withExec(["dpkg", "--add-architecture", "armhf"])
     .withExec(["dpkg", "--add-architecture", "arm64"])
     .withExec(["apt-get", "update"])
