@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Setup Fluent CI CLI
-        uses: fluentci-io/setup-fluentci@v4
+        uses: fluentci-io/setup-fluentci@v5
       - name: Installing needed dependencies
         run: brew install protobuf
       - name: Installing Rust toolchain
