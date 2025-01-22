@@ -10,9 +10,11 @@ mod input;
 mod music;
 mod play;
 mod player;
+mod provider;
 mod search;
 mod server;
 mod tui;
+mod types;
 mod visualization;
 
 fn cli() -> Command<'static> {
