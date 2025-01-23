@@ -19,6 +19,9 @@
   <a href="LICENSE" target="./LICENSE">
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
   </a>
+  <a href="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml">
+    <img src="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml/badge.svg"
+  </a>
 </p>
 
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
