@@ -3820,9 +3820,9 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "tunein"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbb48ce12eca4db1649e7d311e782e9b8a341c844cec57b5b8d1e332381e323f"
+checksum = "9d33b9d790869737661ff1f34a95da32a1288373c5b78c66d098cff2df045055"
 dependencies = [
  "anyhow",
  "m3u",

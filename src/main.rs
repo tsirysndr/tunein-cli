@@ -13,6 +13,7 @@ mod player;
 mod provider;
 mod search;
 mod server;
+mod tags;
 mod tui;
 mod types;
 mod visualization;

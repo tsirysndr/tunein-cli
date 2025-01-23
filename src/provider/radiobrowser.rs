@@ -38,8 +38,8 @@ impl Provider for Radiobrowser {
         Ok(stations)
     }
 
-    async fn get_station(&self, name: String) -> Result<(), Error> {
-        let station = self
+    async fn get_station(&self, name: String) -> Result<Option<Station>, Error> {
+        let stations = self
             .client
             .get_stations()
             .name(&name)
@@ -47,8 +47,10 @@ impl Provider for Radiobrowser {
             .send()
             .await
             .map_err(|e| anyhow::anyhow!(format!("{}", e)))?;
-        println!("Station: {:#?}", station);
-        Ok(())
+        match stations.len() {
+            0 => Ok(None),
+            _ => Ok(Some(Station::from(stations[0].clone()))),
+        }
     }
 
     async fn browse(&self, category: String) -> Result<Vec<Station>, Error> {
@@ -56,7 +58,7 @@ impl Provider for Radiobrowser {
             .client
             .get_stations()
             .tag(&category)
-            .limit("20")
+            .limit("100")
             .send()
             .await
             .map_err(|e| anyhow::anyhow!(format!("{}", e)))?;
@@ -80,8 +82,9 @@ mod tests {
     #[tokio::test]
     pub async fn test_get_station() {
         let provider = Radiobrowser::new().await;
-        let name = "alternariveradio.us".to_string();
-        provider.get_station(name).await.unwrap();
+        let name = "AlternativeRadio.us".to_string();
+        let station = provider.get_station(name).await.unwrap();
+        assert!(station.is_some())
     }
 
     #[tokio::test]
@@ -92,6 +95,6 @@ mod tests {
             .into_iter()
             .map(|x| Station::from(x))
             .collect::<Vec<Station>>();
-        assert!(stations.len() == 20)
+        assert!(stations.len() == 100)
     }
 }
