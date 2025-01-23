@@ -42,6 +42,7 @@ impl Provider for Tunein {
     }
 
     async fn browse(&self, category: String) -> Result<Vec<Station>, Error> {
+        let guide_id = category.clone();
         let category = match category.as_str() {
             "by location" => Some(tunein::types::Category::ByLocation),
             "by language" => Some(tunein::types::Category::ByLanguage),
@@ -50,8 +51,27 @@ impl Provider for Tunein {
             "music" => Some(tunein::types::Category::Music),
             "local radio" => Some(tunein::types::Category::LocalRadio),
             "podcasts" => Some(tunein::types::Category::Podcasts),
-            _ => return Err(Error::msg("Invalid category")),
+            _ => None,
         };
+
+        if category.is_none() {
+            let category_stations = self
+                .client
+                .browse_by_id(&guide_id)
+                .await
+                .map_err(|e| Error::msg(e.to_string()))?;
+
+            let mut stations = vec![];
+
+            for st in category_stations {
+                if let Some(children) = st.children {
+                    stations = [stations, children].concat();
+                }
+            }
+
+            let stations = stations.into_iter().map(|x| Station::from(x)).collect();
+            return Ok(stations);
+        }
 
         let stations = self
             .client
@@ -59,7 +79,8 @@ impl Provider for Tunein {
             .await
             .map_err(|e| Error::msg(e.to_string()))?;
 
-        Ok(vec![])
+        let stations = stations.into_iter().map(|x| Station::from(x)).collect();
+        Ok(stations)
     }
 }
 
@@ -89,11 +110,15 @@ mod tests {
     pub async fn test_browse() {
         let provider = Tunein::new();
         let stations = provider.browse("music".to_string()).await.unwrap();
-        let stations = stations
-            .into_iter()
-            .map(|x| Station::from(x))
-            .collect::<Vec<Station>>();
         println!("Browse: {:#?}", stations);
-        assert!(stations.len() == 0)
+        assert!(stations.len() > 0)
+    }
+
+    #[tokio::test]
+    pub async fn test_browse_by_id() {
+        let provider = Tunein::new();
+        let stations = provider.browse("c57942".to_string()).await.unwrap();
+        println!("Browse by category id: {:#?}", stations);
+        assert!(stations.len() > 0)
     }
 }

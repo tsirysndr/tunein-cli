@@ -32,8 +32,8 @@ impl From<SearchResult> for Station {
                 .unwrap_or("0".to_string())
                 .parse()
                 .unwrap_or_default(),
-            codec: "".to_string(),
-            stream_url: "".to_string(),
+            codec: Default::default(),
+            stream_url: Default::default(),
         }
     }
 }
@@ -41,11 +41,55 @@ impl From<SearchResult> for Station {
 impl From<StationLinkDetails> for Station {
     fn from(details: StationLinkDetails) -> Station {
         Station {
-            id: "".to_string(),
-            name: "".to_string(),
+            id: Default::default(),
+            name: Default::default(),
             bitrate: details.bitrate,
             stream_url: details.url,
             codec: details.media_type.to_uppercase(),
+        }
+    }
+}
+
+impl From<tunein::types::Station> for Station {
+    fn from(st: tunein::types::Station) -> Station {
+        Station {
+            id: st.guide_id.unwrap_or_default(),
+            name: st.text,
+            bitrate: st
+                .bitrate
+                .unwrap_or("0".to_string())
+                .parse()
+                .unwrap_or_default(),
+            stream_url: Default::default(),
+            codec: st.formats.unwrap_or_default().to_uppercase(),
+        }
+    }
+}
+
+impl From<Box<tunein::types::Station>> for Station {
+    fn from(st: Box<tunein::types::Station>) -> Station {
+        Station {
+            id: st.guide_id.unwrap_or_default(),
+            name: st.text,
+            bitrate: st
+                .bitrate
+                .unwrap_or("0".to_string())
+                .parse()
+                .unwrap_or_default(),
+            stream_url: Default::default(),
+            codec: st.formats.unwrap_or_default().to_uppercase(),
+        }
+    }
+}
+
+impl From<tunein::types::CategoryDetails> for Station {
+    fn from(ct: tunein::types::CategoryDetails) -> Station {
+        Station {
+            id: ct.guide_id.unwrap_or_default(),
+            name: ct.text,
+            bitrate: 0,
+            stream_url: Default::default(),
+            codec: Default::default(),
         }
     }
 }
