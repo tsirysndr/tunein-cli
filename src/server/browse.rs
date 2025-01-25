@@ -1,6 +1,3 @@
-use std::str::FromStr;
-
-use tunein::{types, TuneInClient};
 use tunein_cli::api::{
     objects::v1alpha1::{Category, StationLinkDetails},
     tunein::v1alpha1::{
@@ -10,17 +7,10 @@ use tunein_cli::api::{
     },
 };
 
-pub struct Browse {
-    client: TuneInClient,
-}
+use tunein_cli::provider::{tunein::Tunein, Provider};
 
-impl Default for Browse {
-    fn default() -> Self {
-        Self {
-            client: TuneInClient::new(),
-        }
-    }
-}
+#[derive(Default)]
+pub struct Browse;
 
 #[tonic::async_trait]
 impl BrowseService for Browse {
@@ -28,9 +18,11 @@ impl BrowseService for Browse {
         &self,
         _request: tonic::Request<GetCategoriesRequest>,
     ) -> Result<tonic::Response<GetCategoriesResponse>, tonic::Status> {
-        let result = self
-            .client
-            .browse(None)
+        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let offset = 0;
+        let limit = 100;
+        let result = client
+            .categories(offset, limit)
             .await
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
@@ -45,24 +37,17 @@ impl BrowseService for Browse {
     ) -> Result<tonic::Response<BrowseCategoryResponse>, tonic::Status> {
         let req = request.into_inner();
         let category_id = req.category_id;
-        let categories: Vec<Category> = match types::Category::from_str(&category_id) {
-            Ok(category) => {
-                let results = self
-                    .client
-                    .browse(Some(category))
-                    .await
-                    .map_err(|e| tonic::Status::internal(e.to_string()))?;
-                results.into_iter().map(Category::from).collect()
-            }
-            Err(_) => {
-                let results = self
-                    .client
-                    .browse_by_id(&category_id)
-                    .await
-                    .map_err(|e| tonic::Status::internal(e.to_string()))?;
-                results.into_iter().map(Category::from).collect()
-            }
-        };
+
+        let offset = 0;
+        let limit = 100;
+
+        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let results = client
+            .browse(category_id, offset, limit)
+            .await
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+
+        let categories = results.into_iter().map(Category::from).collect();
         Ok(tonic::Response::new(BrowseCategoryResponse { categories }))
     }
 
@@ -72,14 +57,18 @@ impl BrowseService for Browse {
     ) -> Result<tonic::Response<GetStationDetailsResponse>, tonic::Status> {
         let req = request.into_inner();
         let station_id = req.id;
-        let station = self
-            .client
-            .get_station(&station_id)
+        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let result = client
+            .get_station(station_id)
             .await
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
+        let station = match result {
+            Some(station) => station,
+            None => return Err(tonic::Status::internal("No station found")),
+        };
         Ok(tonic::Response::new(GetStationDetailsResponse {
-            station_link_details: station.into_iter().map(StationLinkDetails::from).collect(),
+            station_link_details: vec![StationLinkDetails::from(station)],
         }))
     }
 }

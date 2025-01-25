@@ -1,12 +1,39 @@
+pub mod extract;
+pub mod provider;
+pub mod types;
+
 pub mod api {
     #[path = ""]
     pub mod tunein {
+        use super::super::types;
         use tunein::types::CategoryDetails;
 
         use super::objects::v1alpha1::{Category, Station, StationLinkDetails};
 
         #[path = "tunein.v1alpha1.rs"]
         pub mod v1alpha1;
+
+        pub const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("api/descriptor.bin");
+
+        impl From<String> for Category {
+            fn from(name: String) -> Self {
+                Self {
+                    name,
+                    ..Default::default()
+                }
+            }
+        }
+
+        impl From<types::Station> for Category {
+            fn from(st: crate::types::Station) -> Self {
+                Self {
+                    id: st.id,
+                    name: st.name,
+                    ..Default::default()
+                }
+            }
+        }
+
         impl From<CategoryDetails> for Category {
             fn from(category: CategoryDetails) -> Self {
                 Self {
@@ -45,6 +72,17 @@ pub mod api {
                                 .collect()
                         })
                         .unwrap_or(vec![]),
+                }
+            }
+        }
+
+        impl From<types::Station> for StationLinkDetails {
+            fn from(s: types::Station) -> Self {
+                Self {
+                    bitrate: s.bitrate,
+                    url: s.stream_url,
+                    media_type: s.codec,
+                    ..Default::default()
                 }
             }
         }
