@@ -67,11 +67,13 @@ async fn main() -> Result<(), Error> {
     match matches.subcommand() {
         Some(("search", args)) => {
             let query = args.value_of("query").unwrap();
-            search::exec(query).await?;
+            let provider = matches.value_of("provider").unwrap();
+            search::exec(query, provider).await?;
         }
         Some(("play", args)) => {
             let station = args.value_of("station").unwrap();
-            play::exec(station).await?;
+            let provider = matches.value_of("provider").unwrap();
+            play::exec(station, provider).await?;
         }
         Some(("browse", args)) => {
             let category = args.value_of("category");

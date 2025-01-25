@@ -36,7 +36,7 @@ impl From<SearchResult> for Station {
                 .unwrap_or_default(),
             codec: Default::default(),
             stream_url: Default::default(),
-            playing: None,
+            playing: result.subtext,
         }
     }
 }

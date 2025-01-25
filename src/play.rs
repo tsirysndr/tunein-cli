@@ -9,10 +9,22 @@ use crate::{
     cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
     extract::{extract_stream_url, get_currently_playing},
+    provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
 };
 
-pub async fn exec(name_or_id: &str) -> Result<(), Error> {
+pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
+    let provider: Box<dyn Provider> = match provider {
+        "tunein" => Box::new(Tunein::new()),
+        "radiobrowser" => Box::new(Radiobrowser::new().await),
+        _ => {
+            return Err(anyhow::anyhow!(format!(
+                "Unsupported provider '{}'",
+                provider
+            )))
+        }
+    };
+
     let client = TuneInClient::new();
     let results = client
         .get_station(name_or_id)

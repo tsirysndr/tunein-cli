@@ -1,20 +1,22 @@
 use anyhow::Error;
 use owo_colors::OwoColorize;
-use tunein::TuneInClient;
 
-pub async fn exec(query: &str) -> Result<(), Error> {
-    let client = TuneInClient::new();
-    let results = client
-        .search(query)
-        .await
-        .map_err(|e| Error::msg(e.to_string()))?;
+use crate::provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider};
+
+pub async fn exec(query: &str, provider: &str) -> Result<(), Error> {
+    let provider: Box<dyn Provider> = match provider {
+        "tunein" => Box::new(Tunein::new()),
+        "radiobrowser" => Box::new(Radiobrowser::new().await),
+        _ => {
+            return Err(anyhow::anyhow!(format!(
+                "Unsupported provider '{}'",
+                provider
+            )))
+        }
+    };
+    let results = provider.search(query.to_string()).await?;
     let query = format!("\"{}\"", query);
     println!("Results for {}:", query.bright_green());
-
-    let results = results
-        .into_iter()
-        .filter(|r| Some("audio".to_string()) == r.r#type)
-        .collect::<Vec<_>>();
 
     if results.is_empty() {
         println!("No results found");
@@ -22,13 +24,14 @@ pub async fn exec(query: &str) -> Result<(), Error> {
     }
 
     for result in results {
-        if Some("audio".to_string()) == result.r#type {
-            println!(
+        match result.playing {
+            Some(playing) => println!(
                 "{} | {} | id: {}",
-                result.text.magenta(),
-                result.subtext.unwrap_or_default(),
-                result.guide_id.unwrap()
-            );
+                result.name.magenta(),
+                playing,
+                result.id
+            ),
+            None => println!("{} | id: {}", result.name.magenta(), result.id),
         }
     }
     Ok(())
