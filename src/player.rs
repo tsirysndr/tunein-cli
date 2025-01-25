@@ -8,6 +8,7 @@ use std::{
 
 use anyhow::Error;
 use futures_util::Future;
+use reqwest::blocking::Response;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use tokio::sync::mpsc;
 
@@ -33,64 +34,88 @@ pub enum PlayerCommand {
 }
 
 struct PlayerInternal {
-    sink: Sink,
+    sink: Arc<Mutex<Sink>>,
     stream: OutputStream,
     handle: OutputStreamHandle,
     commands: Arc<Mutex<mpsc::UnboundedReceiver<PlayerCommand>>>,
+    decoder: Option<Mp3Decoder<Response>>,
 }
 
 impl PlayerInternal {
     fn new(cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<PlayerCommand>>>) -> Self {
         let (stream, handle) = rodio::OutputStream::try_default().unwrap();
         Self {
-            sink: rodio::Sink::try_new(&handle).unwrap(),
+            sink: Arc::new(Mutex::new(rodio::Sink::try_new(&handle).unwrap())),
             stream,
             handle,
             commands: cmd_rx,
+            decoder: None,
         }
     }
 
     fn handle_play(&mut self, url: String) -> Result<(), Error> {
-        let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
-        let client = reqwest::blocking::Client::new();
-
-        let response = client.get(url).send().unwrap();
-
-        println!("headers: {:#?}", response.headers());
-        let location = response.headers().get("location");
-
-        let response = match location {
-            Some(location) => {
-                let response = client.get(location.to_str().unwrap()).send().unwrap();
-                let location = response.headers().get("location");
-                match location {
-                    Some(location) => client.get(location.to_str().unwrap()).send().unwrap(),
-                    None => response,
-                }
-            }
-            None => response,
-        };
-
         let (stream, handle) = rodio::OutputStream::try_default().unwrap();
         self.stream = stream;
-        self.sink = rodio::Sink::try_new(&handle).unwrap();
+        self.sink = Arc::new(Mutex::new(rodio::Sink::try_new(&handle).unwrap()));
         self.handle = handle;
-        let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
-        self.sink.append(decoder);
-        self.sink.play();
+        let sink = self.sink.clone();
+
+        thread::spawn(move || {
+            let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
+            let client = reqwest::blocking::Client::new();
+
+            let response = client.get(url.clone()).send().unwrap();
+
+            println!("headers: {:#?}", response.headers());
+            let location = response.headers().get("location");
+
+            let response = match location {
+                Some(location) => {
+                    let response = client.get(location.to_str().unwrap()).send().unwrap();
+                    let location = response.headers().get("location");
+                    match location {
+                        Some(location) => client.get(location.to_str().unwrap()).send().unwrap(),
+                        None => response,
+                    }
+                }
+                None => response,
+            };
+            let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
+
+            {
+                let sink = sink.lock().unwrap();
+                sink.append(decoder);
+                sink.play();
+            }
+
+            loop {
+                let sink = sink.lock().unwrap();
+
+                if sink.empty() {
+                    break;
+                }
+
+                drop(sink);
+
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        });
+
         Ok(())
     }
 
     fn handle_play_or_pause(&self) -> Result<(), Error> {
-        match self.sink.is_paused() {
-            true => self.sink.play(),
-            false => self.sink.pause(),
+        let sink = self.sink.lock().unwrap();
+        match sink.is_paused() {
+            true => sink.play(),
+            false => sink.pause(),
         };
         Ok(())
     }
 
     fn handle_stop(&self) -> Result<(), Error> {
-        self.sink.stop();
+        let sink = self.sink.lock().unwrap();
+        sink.stop();
         Ok(())
     }
 
