@@ -1,5 +1,9 @@
+use std::thread;
+
 use radiobrowser::ApiStation;
 use tunein::types::{SearchResult, StationLinkDetails};
+
+use crate::extract::extract_stream_url;
 
 #[derive(Debug, Clone)]
 pub struct Station {
@@ -60,11 +64,16 @@ impl From<Box<SearchResult>> for Station {
 
 impl From<StationLinkDetails> for Station {
     fn from(details: StationLinkDetails) -> Station {
+        let handle = thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(extract_stream_url(&details.url, details.playlist_type))
+        });
+        let stream_url = handle.join().unwrap().unwrap();
         Station {
             id: Default::default(),
             name: Default::default(),
             bitrate: details.bitrate,
-            stream_url: details.url,
+            stream_url,
             codec: details.media_type.to_uppercase(),
             playing: None,
         }

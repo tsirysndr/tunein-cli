@@ -36,7 +36,25 @@ impl Provider for Tunein {
             .await
             .map_err(|e| Error::msg(e.to_string()))?;
         match stations.len() {
-            0 => Ok(None),
+            0 => {
+                let results = self.search(id.clone()).await?;
+                let station = results.first().cloned();
+                match station {
+                    Some(st) => {
+                        let stations = self
+                            .client
+                            .get_station(&st.id)
+                            .await
+                            .map_err(|e| Error::msg(e.to_string()))?;
+                        let mut station = Station::from(stations[0].clone());
+                        station.id = st.id.clone();
+                        station.name = st.name.clone();
+                        station.playing = st.playing.clone();
+                        return Ok(Some(station));
+                    }
+                    None => Ok(None),
+                }
+            }
             _ => Ok(Some(Station::from(stations[0].clone()))),
         }
     }

@@ -2,18 +2,17 @@ use std::{thread, time::Duration};
 
 use anyhow::Error;
 use hyper::header::HeaderValue;
-use tunein::TuneInClient;
 
 use crate::{
     app::{App, State},
     cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
-    extract::{extract_stream_url, get_currently_playing},
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
 };
 
 pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
+    let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
         "tunein" => Box::new(Tunein::new()),
         "radiobrowser" => Box::new(Radiobrowser::new().await),
@@ -24,52 +23,15 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
             )))
         }
     };
+    let station = provider.get_station(name_or_id.to_string()).await?;
+    if station.is_none() {
+        return Err(Error::msg("No station found"));
+    }
 
-    let client = TuneInClient::new();
-    let results = client
-        .get_station(name_or_id)
-        .await
-        .map_err(|e| Error::msg(e.to_string()))?;
-    let (url, playlist_type, _, id) = match results.is_empty() {
-        true => {
-            let results = client
-                .search(name_or_id)
-                .await
-                .map_err(|e| Error::msg(e.to_string()))?;
-            match results.first() {
-                Some(result) => {
-                    if result.r#type != Some("audio".to_string()) {
-                        return Err(Error::msg("No station found"));
-                    }
-                    let id = result.guide_id.as_ref().unwrap();
-                    let station = client
-                        .get_station(id)
-                        .await
-                        .map_err(|e| Error::msg(e.to_string()))?;
-                    let station = station.first().unwrap();
-                    (
-                        station.url.clone(),
-                        station.playlist_type.clone(),
-                        station.media_type.clone(),
-                        id.clone(),
-                    )
-                }
-                None => ("".to_string(), None, "".to_string(), "".to_string()),
-            }
-        }
-        false => {
-            let result = results.first().unwrap();
-            (
-                result.url.clone(),
-                result.playlist_type.clone(),
-                result.media_type.clone(),
-                name_or_id.to_string(),
-            )
-        }
-    };
-    let now_playing = get_currently_playing(&id).await?;
-    let stream_url = extract_stream_url(&url, playlist_type).await?;
-    println!("{}", stream_url);
+    let station = station.unwrap();
+    let stream_url = station.stream_url.clone();
+    let id = station.id.clone();
+    let now_playing = station.playing.clone().unwrap_or_default();
 
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
     let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
