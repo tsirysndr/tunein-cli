@@ -1,10 +1,13 @@
-use tunein_cli::api::{
-    objects::v1alpha1::{Category, Station, StationLinkDetails},
-    tunein::v1alpha1::{
-        browse_service_server::BrowseService, BrowseCategoryRequest, BrowseCategoryResponse,
-        GetCategoriesRequest, GetCategoriesResponse, GetStationDetailsRequest,
-        GetStationDetailsResponse, SearchRequest, SearchResponse,
+use tunein_cli::{
+    api::{
+        objects::v1alpha1::{Category, Station, StationLinkDetails},
+        tunein::v1alpha1::{
+            browse_service_server::BrowseService, BrowseCategoryRequest, BrowseCategoryResponse,
+            GetCategoriesRequest, GetCategoriesResponse, GetStationDetailsRequest,
+            GetStationDetailsResponse, SearchRequest, SearchResponse,
+        },
     },
+    provider::radiobrowser::Radiobrowser,
 };
 
 use tunein_cli::provider::{tunein::Tunein, Provider};
@@ -16,11 +19,22 @@ pub struct Browse;
 impl BrowseService for Browse {
     async fn get_categories(
         &self,
-        _request: tonic::Request<GetCategoriesRequest>,
+        request: tonic::Request<GetCategoriesRequest>,
     ) -> Result<tonic::Response<GetCategoriesResponse>, tonic::Status> {
-        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
-        let offset = 0;
-        let limit = 100;
+        let req = request.into_inner();
+        let provider = req.provider.as_deref();
+
+        let client: Box<dyn Provider + Send + Sync> = match provider {
+            Some("tunein") => Box::new(Tunein::new()),
+            Some("radiobrowser") => Box::new(Radiobrowser::new().await),
+            None => Box::new(Tunein::new()),
+            _ => {
+                return Err(tonic::Status::internal("Unsupported provider"));
+            }
+        };
+
+        let offset = req.offset.unwrap_or(0);
+        let limit = req.limit.unwrap_or(100);
         let result = client
             .categories(offset, limit)
             .await
@@ -38,10 +52,20 @@ impl BrowseService for Browse {
         let req = request.into_inner();
         let category_id = req.category_id;
 
-        let offset = 0;
-        let limit = 100;
+        let offset = req.offset.unwrap_or(0);
+        let limit = req.limit.unwrap_or(100);
 
-        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let provider = req.provider.as_deref();
+
+        let client: Box<dyn Provider + Send + Sync> = match provider {
+            Some("tunein") => Box::new(Tunein::new()),
+            Some("radiobrowser") => Box::new(Radiobrowser::new().await),
+            None => Box::new(Tunein::new()),
+            _ => {
+                return Err(tonic::Status::internal("Unsupported provider"));
+            }
+        };
+
         let results = client
             .browse(category_id, offset, limit)
             .await
@@ -57,7 +81,18 @@ impl BrowseService for Browse {
     ) -> Result<tonic::Response<GetStationDetailsResponse>, tonic::Status> {
         let req = request.into_inner();
         let station_id = req.id;
-        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+
+        let provider = req.provider.as_deref();
+
+        let client: Box<dyn Provider + Send + Sync> = match provider {
+            Some("tunein") => Box::new(Tunein::new()),
+            Some("radiobrowser") => Box::new(Radiobrowser::new().await),
+            None => Box::new(Tunein::new()),
+            _ => {
+                return Err(tonic::Status::internal("Unsupported provider"));
+            }
+        };
+
         let result = client
             .get_station(station_id)
             .await
@@ -77,7 +112,17 @@ impl BrowseService for Browse {
         request: tonic::Request<SearchRequest>,
     ) -> Result<tonic::Response<SearchResponse>, tonic::Status> {
         let req = request.into_inner();
-        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let provider = req.provider.as_deref();
+
+        let client: Box<dyn Provider + Send + Sync> = match provider {
+            Some("tunein") => Box::new(Tunein::new()),
+            Some("radiobrowser") => Box::new(Radiobrowser::new().await),
+            None => Box::new(Tunein::new()),
+            _ => {
+                return Err(tonic::Status::internal("Unsupported provider"));
+            }
+        };
+
         let results = client
             .search(req.query)
             .await

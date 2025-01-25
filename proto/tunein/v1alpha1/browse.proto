@@ -5,7 +5,11 @@ package tunein.v1alpha1;
 import "objects/v1alpha1/category.proto";
 import "objects/v1alpha1/station.proto";
 
-message GetCategoriesRequest {}
+message GetCategoriesRequest {
+  optional string provider = 1;
+  optional uint32 offset = 2;
+  optional uint32 limit = 3;
+}
 
 message GetCategoriesResponse {
   repeated objects.v1alpha1.Category categories = 1;
@@ -13,6 +17,9 @@ message GetCategoriesResponse {
 
 message BrowseCategoryRequest {
   string category_id = 1;
+  optional string provider = 2;
+  optional uint32 offset = 3;
+  optional uint32 limit = 4;
 }
 
 message BrowseCategoryResponse {
@@ -21,6 +28,7 @@ message BrowseCategoryResponse {
 
 message GetStationDetailsRequest {
   string id = 1;
+  optional string provider = 2;
 }
 
 message GetStationDetailsResponse {
@@ -29,6 +37,7 @@ message GetStationDetailsResponse {
 
 message SearchRequest {
   string query = 1;
+  optional string provider = 2;
 }
 
 message SearchResponse {

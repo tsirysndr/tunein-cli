@@ -1,14 +1,14 @@
 use std::sync::{Arc, Mutex};
 
+use crate::player::{Player, PlayerCommand};
 use tokio::sync::mpsc;
-use tunein_cli::api::tunein::v1alpha1::{
-    playback_service_server::PlaybackService, PlayOrPauseRequest, PlayOrPauseResponse, PlayRequest,
-    PlayResponse, StopRequest, StopResponse,
-};
-
-use crate::{
-    player::{Player, PlayerCommand},
-    provider::{tunein::Tunein, Provider},
+use tunein_cli::provider::{tunein::Tunein, Provider};
+use tunein_cli::{
+    api::tunein::v1alpha1::{
+        playback_service_server::PlaybackService, PlayOrPauseRequest, PlayOrPauseResponse,
+        PlayRequest, PlayResponse, StopRequest, StopResponse,
+    },
+    provider::radiobrowser::Radiobrowser,
 };
 
 pub struct Playback {
@@ -33,7 +33,17 @@ impl PlaybackService for Playback {
     ) -> Result<tonic::Response<PlayResponse>, tonic::Status> {
         let req = request.into_inner();
 
-        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let provider = req.provider.as_deref();
+
+        let client: Box<dyn Provider + Send + Sync> = match provider {
+            Some("tunein") => Box::new(Tunein::new()),
+            Some("radiobrowser") => Box::new(Radiobrowser::new().await),
+            None => Box::new(Tunein::new()),
+            _ => {
+                return Err(tonic::Status::internal("Unsupported provider"));
+            }
+        };
+
         let station = client
             .get_station(req.station_name_or_id.clone())
             .await

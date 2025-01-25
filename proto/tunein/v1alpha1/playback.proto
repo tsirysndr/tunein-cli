@@ -12,6 +12,7 @@ message StopResponse {}
 
 message PlayRequest {
   string station_name_or_id = 1;
+  optional string provider = 2;
 }
 
 message PlayResponse {}
