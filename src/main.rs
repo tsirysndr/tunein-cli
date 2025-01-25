@@ -32,6 +32,9 @@ fn cli() -> Command<'static> {
                                                               
 A simple CLI to listen to radio stations"#,
         )
+        .arg(
+            arg!(-p --provider "The radio provider to use, can be 'tunein' or 'radiobrowser'. Default is 'tunein'").default_value("tunein")
+        )
         .subcommand_required(true)
         .subcommand(
             Command::new("search")
@@ -46,7 +49,9 @@ A simple CLI to listen to radio stations"#,
         .subcommand(
             Command::new("browse")
                 .about("Browse radio stations")
-                .arg(arg!([category] "The category (category name or id) to browse")),
+                .arg(arg!([category] "The category (category name or id) to browse"))
+                .arg(arg!(--offset "The offset to start from").default_value("0"))
+                .arg(arg!(--limit "The number of results to show").default_value("100")),
         )
         .subcommand(
             Command::new("server")
@@ -70,7 +75,16 @@ async fn main() -> Result<(), Error> {
         }
         Some(("browse", args)) => {
             let category = args.value_of("category");
-            browse::exec(category).await?;
+            let offset = args.value_of("offset").unwrap();
+            let limit = args.value_of("limit").unwrap();
+            let provider = matches.value_of("provider").unwrap();
+            browse::exec(
+                category,
+                offset.parse::<u32>()?,
+                limit.parse::<u32>()?,
+                provider,
+            )
+            .await?;
         }
         Some(("server", args)) => {
             let port = args.value_of("port").unwrap();

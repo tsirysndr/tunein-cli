@@ -41,9 +41,14 @@ impl Provider for Tunein {
         }
     }
 
-    async fn browse(&self, category: String) -> Result<Vec<Station>, Error> {
+    async fn browse(
+        &self,
+        category: String,
+        _offset: u32,
+        _limit: u32,
+    ) -> Result<Vec<Station>, Error> {
         let guide_id = category.clone();
-        let category = match category.as_str() {
+        let category = match category.to_lowercase().as_str() {
             "by location" => Some(tunein::types::Category::ByLocation),
             "by language" => Some(tunein::types::Category::ByLanguage),
             "sports" => Some(tunein::types::Category::Sports),
@@ -64,8 +69,8 @@ impl Provider for Tunein {
             let mut stations = vec![];
 
             for st in category_stations {
-                if let Some(children) = st.children {
-                    stations = [stations, children].concat();
+                if let Some(children) = st.clone().children {
+                    stations = [stations, vec![Box::new(st.clone())], children].concat();
                 }
             }
 
@@ -73,14 +78,40 @@ impl Provider for Tunein {
             return Ok(stations);
         }
 
-        let stations = self
+        let category_stations = self
             .client
             .browse(category)
             .await
             .map_err(|e| Error::msg(e.to_string()))?;
 
-        let stations = stations.into_iter().map(|x| Station::from(x)).collect();
-        Ok(stations)
+        let stations = category_stations
+            .clone()
+            .into_iter()
+            .map(|x| Station::from(x))
+            .collect::<Vec<Station>>();
+
+        let mut _stations = vec![];
+        for st in category_stations {
+            if let Some(children) = st.children {
+                _stations = [_stations, children].concat();
+            }
+        }
+        let _stations = _stations
+            .into_iter()
+            .map(|x| Station::from(x))
+            .collect::<Vec<Station>>();
+
+        Ok([stations, _stations].concat())
+    }
+
+    async fn categories(&self, _offset: u32, _limit: u32) -> Result<Vec<String>, Error> {
+        let categories = self
+            .client
+            .browse(None)
+            .await
+            .map_err(|e| Error::msg(e.to_string()))?;
+        let categories = categories.into_iter().map(|x| x.text).collect();
+        Ok(categories)
     }
 }
 
@@ -109,7 +140,7 @@ mod tests {
     #[tokio::test]
     pub async fn test_browse() {
         let provider = Tunein::new();
-        let stations = provider.browse("music".to_string()).await.unwrap();
+        let stations = provider.browse("music".to_string(), 0, 100).await.unwrap();
         println!("Browse: {:#?}", stations);
         assert!(stations.len() > 0)
     }
@@ -117,8 +148,16 @@ mod tests {
     #[tokio::test]
     pub async fn test_browse_by_id() {
         let provider = Tunein::new();
-        let stations = provider.browse("c57942".to_string()).await.unwrap();
+        let stations = provider.browse("c57942".to_string(), 0, 100).await.unwrap();
         println!("Browse by category id: {:#?}", stations);
         assert!(stations.len() > 0)
+    }
+
+    #[tokio::test]
+    pub async fn test_categories() {
+        let provider = Tunein::new();
+        let categories = provider.categories(0, 100).await.unwrap();
+        println!("Categories: {:#?}", categories);
+        assert!(categories.len() > 0)
     }
 }

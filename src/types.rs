@@ -8,6 +8,7 @@ pub struct Station {
     pub codec: String,
     pub bitrate: u32,
     pub stream_url: String,
+    pub playing: Option<String>,
 }
 
 impl From<ApiStation> for Station {
@@ -18,6 +19,7 @@ impl From<ApiStation> for Station {
             codec: station.codec,
             bitrate: station.bitrate,
             stream_url: station.url_resolved,
+            playing: None,
         }
     }
 }
@@ -34,6 +36,24 @@ impl From<SearchResult> for Station {
                 .unwrap_or_default(),
             codec: Default::default(),
             stream_url: Default::default(),
+            playing: None,
+        }
+    }
+}
+
+impl From<Box<SearchResult>> for Station {
+    fn from(result: Box<SearchResult>) -> Station {
+        Station {
+            id: result.guide_id.unwrap_or_default(),
+            name: result.text,
+            bitrate: result
+                .bitrate
+                .unwrap_or("0".to_string())
+                .parse()
+                .unwrap_or_default(),
+            codec: Default::default(),
+            stream_url: Default::default(),
+            playing: None,
         }
     }
 }
@@ -46,6 +66,7 @@ impl From<StationLinkDetails> for Station {
             bitrate: details.bitrate,
             stream_url: details.url,
             codec: details.media_type.to_uppercase(),
+            playing: None,
         }
     }
 }
@@ -62,6 +83,7 @@ impl From<tunein::types::Station> for Station {
                 .unwrap_or_default(),
             stream_url: Default::default(),
             codec: st.formats.unwrap_or_default().to_uppercase(),
+            playing: st.playing,
         }
     }
 }
@@ -78,6 +100,7 @@ impl From<Box<tunein::types::Station>> for Station {
                 .unwrap_or_default(),
             stream_url: Default::default(),
             codec: st.formats.unwrap_or_default().to_uppercase(),
+            playing: st.playing,
         }
     }
 }
@@ -90,6 +113,7 @@ impl From<tunein::types::CategoryDetails> for Station {
             bitrate: 0,
             stream_url: Default::default(),
             codec: Default::default(),
+            playing: None,
         }
     }
 }
