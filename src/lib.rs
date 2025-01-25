@@ -87,6 +87,16 @@ pub mod api {
             }
         }
 
+        impl From<types::Station> for Station {
+            fn from(s: types::Station) -> Self {
+                Self {
+                    id: s.id,
+                    name: s.name,
+                    playing: s.playing.unwrap_or_default(),
+                }
+            }
+        }
+
         impl From<tunein::types::StationLinkDetails> for StationLinkDetails {
             fn from(s: tunein::types::StationLinkDetails) -> Self {
                 Self {

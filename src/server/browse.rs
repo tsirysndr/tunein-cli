@@ -1,9 +1,9 @@
 use tunein_cli::api::{
-    objects::v1alpha1::{Category, StationLinkDetails},
+    objects::v1alpha1::{Category, Station, StationLinkDetails},
     tunein::v1alpha1::{
         browse_service_server::BrowseService, BrowseCategoryRequest, BrowseCategoryResponse,
         GetCategoriesRequest, GetCategoriesResponse, GetStationDetailsRequest,
-        GetStationDetailsResponse,
+        GetStationDetailsResponse, SearchRequest, SearchResponse,
     },
 };
 
@@ -68,7 +68,21 @@ impl BrowseService for Browse {
             None => return Err(tonic::Status::internal("No station found")),
         };
         Ok(tonic::Response::new(GetStationDetailsResponse {
-            station_link_details: vec![StationLinkDetails::from(station)],
+            station_link_details: Some(StationLinkDetails::from(station)),
         }))
+    }
+
+    async fn search(
+        &self,
+        request: tonic::Request<SearchRequest>,
+    ) -> Result<tonic::Response<SearchResponse>, tonic::Status> {
+        let req = request.into_inner();
+        let client: Box<dyn Provider + Send + Sync> = Box::new(Tunein::new());
+        let results = client
+            .search(req.query)
+            .await
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let station = results.into_iter().map(Station::from).collect();
+        Ok(tonic::Response::new(SearchResponse { station }))
     }
 }

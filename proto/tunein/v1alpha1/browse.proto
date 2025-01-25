@@ -24,11 +24,20 @@ message GetStationDetailsRequest {
 }
 
 message GetStationDetailsResponse {
-  repeated objects.v1alpha1.StationLinkDetails station_link_details = 1;
+  objects.v1alpha1.StationLinkDetails station_link_details = 1;
+}
+
+message SearchRequest {
+  string query = 1;
+}
+
+message SearchResponse {
+  repeated objects.v1alpha1.Station station = 1;
 }
 
 service BrowseService {
   rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse) {}
   rpc BrowseCategory(BrowseCategoryRequest) returns (BrowseCategoryResponse) {}
   rpc GetStationDetails(GetStationDetailsRequest) returns (GetStationDetailsResponse) {}
+  rpc Search(SearchRequest) returns (SearchResponse) {}
 }
