@@ -24,6 +24,7 @@ pre-build = [
 
 [dependencies]
 anyhow = "1.0.69"
+async-trait = "0.1.85"
 clap = "3.2.20"
 cpal = "0.14.0"
 crossterm = "0.27.0"
@@ -36,7 +37,9 @@ minimp3 = "0.5.1"
 owo-colors = "3.5.0"
 pls = "0.2.2"
 prost = "0.11.8"
+radiobrowser = { version = "0.6.1", features = ["default-rustls"], default-features = false }
 ratatui = "0.26.1"
+regex = "1.11.1"
 reqwest = {version = "0.11.14", features = ["blocking", "rustls-tls"], default-features = false}
 rodio = {version = "0.16"}
 rustfft = "6.2.0"
@@ -48,7 +51,7 @@ thiserror = "1.0.58"
 tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
 tonic = "0.8.3"
 tonic-web = "0.4.0"
-tunein = "0.1.2"
+tunein = "0.1.3"
 url = "2.3.1"
 
 [build-dependencies]

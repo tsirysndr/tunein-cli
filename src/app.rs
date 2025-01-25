@@ -118,23 +118,30 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
         },
         frame,
     );
-    render_line(
-        "Now Playing ",
-        &state.now_playing,
-        Rect {
-            x: size.x,
-            y: size.y + 2,
-            width: size.width,
-            height: 1,
-        },
-        frame,
-    );
+
+    if !state.now_playing.is_empty() {
+        render_line(
+            "Now Playing ",
+            &state.now_playing,
+            Rect {
+                x: size.x,
+                y: size.y + 2,
+                width: size.width,
+                height: 1,
+            },
+            frame,
+        );
+    }
+
     render_line(
         "Genre ",
         &state.genre,
         Rect {
             x: size.x,
-            y: size.y + 3,
+            y: match state.now_playing.is_empty() {
+                true => size.y + 2,
+                false => size.y + 3,
+            },
             width: size.width,
             height: 1,
         },
@@ -145,7 +152,10 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
         &state.description,
         Rect {
             x: size.x,
-            y: size.y + 4,
+            y: match state.now_playing.is_empty() {
+                true => size.y + 3,
+                false => size.y + 4,
+            },
             width: size.width,
             height: 1,
         },
@@ -156,7 +166,10 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
         &format!("{} kbps", &state.br),
         Rect {
             x: size.x,
-            y: size.y + 5,
+            y: match state.now_playing.is_empty() {
+                true => size.y + 4,
+                false => size.y + 5,
+            },
             width: size.width,
             height: 1,
         },

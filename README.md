@@ -19,6 +19,9 @@
   <a href="LICENSE" target="./LICENSE">
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
   </a>
+  <a href="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml">
+    <img src="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml/badge.svg"
+  </a>
 </p>
 
 A command line interface for [TuneIn Radio](https://tunein.com).<br />
@@ -81,8 +84,10 @@ USAGE:
     tunein <SUBCOMMAND>
 
 OPTIONS:
-    -h, --help       Print help information
-    -V, --version    Print version information
+    -h, --help                   Print help information
+    -p, --provider <provider>    The radio provider to use, can be 'tunein' or 'radiobrowser'.
+                                 Default is 'tunein' [default: tunein]
+    -V, --version                Print version information
 
 SUBCOMMANDS:
     browse    Browse radio stations
