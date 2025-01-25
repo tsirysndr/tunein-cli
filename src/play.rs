@@ -52,6 +52,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
     };
 
     let mut app = App::new(&ui, &opts, frame_rx);
+    let station_name = station.name.clone();
 
     thread::spawn(move || {
         let client = reqwest::blocking::Client::new();
@@ -61,12 +62,15 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
         let headers = response.headers();
         cmd_tx
             .send(State {
-                name: headers
+                name: match headers
                     .get("icy-name")
                     .unwrap_or(&HeaderValue::from_static("Unknown"))
                     .to_str()
                     .unwrap()
-                    .to_string(),
+                {
+                    "Unknown" => station_name,
+                    name => name.to_string(),
+                },
                 now_playing,
                 genre: headers
                     .get("icy-genre")

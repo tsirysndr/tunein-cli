@@ -163,7 +163,10 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
     );
     render_line(
         "Bitrate ",
-        &format!("{} kbps", &state.br),
+        &match state.br.is_empty() {
+            true => "Unknown".to_string(),
+            false => format!("{} kbps", &state.br),
+        },
         Rect {
             x: size.x,
             y: match state.now_playing.is_empty() {
