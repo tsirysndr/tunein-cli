@@ -84,8 +84,10 @@ USAGE:
     tunein <SUBCOMMAND>
 
 OPTIONS:
-    -h, --help       Print help information
-    -V, --version    Print version information
+    -h, --help                   Print help information
+    -p, --provider <provider>    The radio provider to use, can be 'tunein' or 'radiobrowser'.
+                                 Default is 'tunein' [default: tunein]
+    -V, --version                Print version information
 
 SUBCOMMANDS:
     browse    Browse radio stations
