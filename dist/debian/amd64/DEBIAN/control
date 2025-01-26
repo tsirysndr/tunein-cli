@@ -1,0 +1,8 @@
+Package: tunein-cli
+Version: 0.3.0
+Section: user/multimedia
+Priority: optional
+Architecture: amd64
+Maintainer: Tsiry Sandratraina <tsiry.sndr@fluentci.io>
+Depends: alsa-utils, libasound2-dev
+Description: Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨
