@@ -73,6 +73,12 @@ cachix use tsirysndr
 nix profile install --experimental-features "nix-command flakes" github:tsirysndr/tunein-cli
 ```
 
+Using [paru](https://github.com/Morganamilo/paru) (Arch Linux):
+
+```bash
+paru -S tunein-cli-bin
+```
+
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
 ## 📦 Downloads
