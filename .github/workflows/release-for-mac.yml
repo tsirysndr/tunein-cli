@@ -17,7 +17,7 @@ jobs:
       - name: Setup Fluent CI CLI
         uses: fluentci-io/setup-fluentci@v5
       - name: Installing needed dependencies
-        run: brew install protobuf
+        run: brew install protobuf llvm@15
       - name: Installing Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
