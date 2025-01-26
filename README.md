@@ -24,7 +24,7 @@
   </a>
 </p>
 
-A command line interface for [TuneIn Radio](https://tunein.com).<br />
+A command line interface for [TuneIn Radio](https://tunein.com) / [Radio Browser](https://www.radio-browser.info/).<br />
 You can search for stations, play them, and see what's currently playing.
 
 ![Made with VHS](https://vhs.charm.sh/vhs-4UhZFFRvVAuaZnapZUlp6R.gif)
