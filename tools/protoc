@@ -1,0 +1,2 @@
+#!/bin/bash
+_protoc --experimental_allow_proto3_optional "$@"

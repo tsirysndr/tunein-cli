@@ -116,6 +116,11 @@ export const build = async (src = ".") => {
       "TARGET",
       Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu",
     )
+    .withExec([
+      "sh",
+      "-c",
+      "mv /usr/bin/protoc /usr/bin/_protoc && cp tools/protoc /usr/bin/protoc && chmod a+x /usr/bin/protoc",
+    ])
     .withExec(["sh", "-c", "rustup target add $TARGET"])
     .withExec(["sh", "-c", "cargo build --release --target $TARGET"])
     .withExec(["sh", "-c", "cp target/${TARGET}/release/tunein ."])
