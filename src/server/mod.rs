@@ -15,6 +15,17 @@ pub mod playback;
 
 pub async fn exec(port: u16) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
+    println!(
+        "{}",
+        r#"
+        ______              ____       _______   ____
+       /_  __/_ _____  ___ /  _/__    / ___/ /  /  _/
+        / / / // / _ \/ -_)/ // _ \  / /__/ /___/ /  
+       /_/  \_,_/_//_/\__/___/_//_/  \___/____/___/  
+                                                              
+    "#
+        .bright_green()
+    );
     println!("Listening on {}", addr.cyan());
     Server::builder()
         .accept_http1(true)
