@@ -73,7 +73,33 @@ cachix use tsirysndr
 nix profile install --experimental-features "nix-command flakes" github:tsirysndr/tunein-cli
 ```
 
-Using [paru](https://github.com/Morganamilo/paru) (Arch Linux):
+### Ubuntu/Debian
+
+```bash
+echo "deb [trusted=yes] https://apt.fury.io/tsiry/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+sudo apt-get update
+sudo apt-get install tunein-cli
+```
+
+### Fedora
+
+Add the following to `/etc/yum.repos.d/fury.repo`:
+
+```
+[fury]
+name=Gemfury Private Repo
+baseurl=https://yum.fury.io/tsiry/
+enabled=1
+gpgcheck=0
+```
+
+Then run:
+```bash
+dnf install tunein-cli
+```
+
+### Arch Linux
+Using [paru](https://github.com/Morganamilo/paru):
 
 ```bash
 paru -S tunein-cli-bin
