@@ -1,0 +1,10 @@
+[Unit]
+Description=TuneIn Server Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/tunein server
+Restart=always
+
+[Install]
+WantedBy=default.target

@@ -13,6 +13,7 @@ mod player;
 mod provider;
 mod search;
 mod server;
+mod service;
 mod tags;
 mod tui;
 mod types;
@@ -58,6 +59,22 @@ A simple CLI to listen to radio stations"#,
                 .about("Start the server")
                 .arg(arg!([port] "The port to listen on").default_value("8090")),
         )
+        .subcommand(
+            Command::new("service")
+            .about("Manage systemd service for tunein-cli server")
+            .subcommand(
+                Command::new("install")
+                        .about("Install systemd service for tunein-cli server")
+            )
+            .subcommand(
+                    Command::new("uninstall")
+                        .about("Uninstall systemd service for tunein-cli server")   
+                )
+            .subcommand(
+                    Command::new("status")
+                    .about("Check status of tunein-cli systemd service")
+                )
+        )
 }
 
 #[tokio::main]
@@ -93,6 +110,15 @@ async fn main() -> Result<(), Error> {
             let port = port.parse::<u16>().unwrap();
             server::exec(port).await?;
         }
+        Some(("service", sub_m)) => match sub_m.subcommand() {
+            Some(("install", _)) => service::install()?,
+            Some(("uninstall", _)) => service::uninstall()?,
+            Some(("status", _)) => service::status()?,
+            _ => {
+                println!("Invalid subcommand. Use `tunein service --help` for more information");
+                std::process::exit(1);
+            }
+        },
         _ => unreachable!(),
     }
 

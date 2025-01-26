@@ -146,6 +146,27 @@ tunein play "alternativeradio.us"
 tunein play s221580
 ```
 
+## 🧙 Systemd Service
+
+Tunein daemon can be started as a systemd service. To enable and start the service, run the following command:
+
+```bash
+tunein service install
+```
+
+To disable and stop the service, run the following command:
+
+```bash
+tunein service uninstall
+```
+
+To check the status of the service, run the following command:
+
+```bash
+tunein service status
+```
+
+
 ## API Documentation
 [https://buf.build/tsiry/tuneinserverapis/docs/main:tunein.v1alpha1](https://buf.build/tsiry/tuneinserverapis/docs/main:tunein.v1alpha1)
 
