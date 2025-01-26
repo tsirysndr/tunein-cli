@@ -100,6 +100,7 @@ SUBCOMMANDS:
     help      Print this message or the help of the given subcommand(s)
     play      Play a radio station
     search    Search for a radio station
+    server    Start the server
 ```
 
 Search for a radio station:
