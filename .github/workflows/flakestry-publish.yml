@@ -21,7 +21,7 @@ jobs:
       - name: Setup Fluent CI
         uses: fluentci-io/setup-fluentci@v5
       - name: Publish flake
-        run: fluentci run flakestry_pipeline publish
+        run: fluentci run --wasm flakestry publish
         env:
           VERSION: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
