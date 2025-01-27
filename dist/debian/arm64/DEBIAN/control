@@ -1,5 +1,5 @@
 Package: tunein-cli
-Version: 0.3.0
+Version: 0.3.1
 Section: user/multimedia
 Priority: optional
 Architecture: arm64

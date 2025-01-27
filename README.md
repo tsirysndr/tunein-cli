@@ -108,8 +108,9 @@ paru -S tunein-cli-bin
 Or download the latest release for your platform [here](https://github.com/tsirysndr/tunein-cli/releases).
 
 ## 📦 Downloads
-- `Mac`: arm64: [tunein_v0.3.0_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.0/tunein_v0.3.0_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.3.0_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.0/tunein_v0.3.0_x86_64-apple-darwin.tar.gz)
-- `Linux`: [tunein_v0.3.0_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.0/tunein_v0.3.0_x86_64-unknown-linux-gnu.tar.gz)
+- `Mac`: arm64: [tunein_v0.3.1_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.1/tunein_v0.3.1_aarch64-apple-darwin.tar.gz) intel: [tunein_v0.3.1_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.1/tunein_v0.3.1_x86_64-apple-darwin.tar.gz)
+- `Linux`: [tunein_v0.3.1_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/tunein-cli/releases/download/v0.3.1/tunein_v0.3.1_x86_64-unknown-linux-gnu.tar.gz)
+
 ## 🚀 Usage
 ```
 USAGE:
@@ -127,6 +128,7 @@ SUBCOMMANDS:
     play      Play a radio station
     search    Search for a radio station
     server    Start the server
+    service   Manage systemd service for tunein-cli server
 ```
 
 Search for a radio station:
