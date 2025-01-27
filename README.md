@@ -16,7 +16,7 @@
   <a href="https://crates.io/crates/tunein-cli" target="_blank">
     <img src="https://img.shields.io/crates/dr/tunein-cli" />
   </a>
-  <a href="#"
+  <a href="#">
     <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/tsirysndr/tunein-cli/total">
   </a>
   <a href="LICENSE" target="./LICENSE">
