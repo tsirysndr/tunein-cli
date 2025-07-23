@@ -55,7 +55,10 @@ pub async fn extract_stream_url(url: &str, playlist_type: Option<String>) -> Res
 
 pub async fn get_currently_playing(station: &str) -> Result<String, Error> {
     let client = Client::new();
-    let url = format!("https://feed.tunein.com/profiles/{}/nowPlaying?partnerId=RadioTime", station);
+    let url = format!(
+        "https://feed.tunein.com/profiles/{}/nowPlaying?partnerId=RadioTime",
+        station
+    );
     let response: NowPlaying = client
         .get(Url::parse(&url)?)
         .recv_json()
