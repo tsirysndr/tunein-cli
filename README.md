@@ -23,7 +23,7 @@
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
   </a>
   <a href="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml">
-    <img src="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml/badge.svg"
+    <img src="https://github.com/tsirysndr/tunein-cli/actions/workflows/ci.yml/badge.svg" />
   </a>
 </p>
 
