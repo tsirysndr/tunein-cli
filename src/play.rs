@@ -11,7 +11,7 @@ use crate::{
     tui,
 };
 
-pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
+pub async fn exec(name_or_id: &str, provider: &str, default_volume: f32) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
         "tunein" => Box::new(Tunein::new()),
@@ -61,6 +61,8 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
         let response = client.get(stream_url).send().unwrap();
 
         let headers = response.headers();
+        let volume = Volume::new(default_volume, false);
+
         cmd_tx
             .send(State {
                 name: match headers
@@ -91,7 +93,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
                     .to_str()
                     .unwrap()
                     .to_string(),
-                volume: Volume::default(),
+                volume: volume.clone(),
             })
             .unwrap();
         let location = response.headers().get("location");
@@ -110,6 +112,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
 
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
+        sink.set_volume(volume.volume_ratio());
         let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
         sink.append(decoder);
 

@@ -45,7 +45,8 @@ A simple CLI to listen to radio stations"#,
         .subcommand(
             Command::new("play")
                 .about("Play a radio station")
-                .arg(arg!(<station> "The station to play")),
+                .arg(arg!(<station> "The station to play"))
+                .arg(arg!(--volume "Set the initial volume (as a percent)").default_value("100")),
         )
         .subcommand(
             Command::new("browse")
@@ -90,7 +91,8 @@ async fn main() -> Result<(), Error> {
         Some(("play", args)) => {
             let station = args.value_of("station").unwrap();
             let provider = matches.value_of("provider").unwrap();
-            play::exec(station, provider).await?;
+            let volume = args.value_of("volume").unwrap().parse::<f32>().unwrap();
+            play::exec(station, provider, volume).await?;
         }
         Some(("browse", args)) => {
             let category = args.value_of("category");
