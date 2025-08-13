@@ -341,8 +341,7 @@ impl App {
                     self.graph.scale = 1.;
                 }
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let _ = tui::restore();
-                    process::exit(0);
+                    quit = true;
                 }
                 KeyCode::Tab => {
                     // switch modes
