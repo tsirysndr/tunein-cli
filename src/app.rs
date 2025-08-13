@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers, MediaKeyCode};
 use ratatui::{
     prelude::*,
     widgets::{block::*, *},
@@ -6,16 +6,16 @@ use ratatui::{
 use std::{
     io,
     ops::Range,
-    process,
     sync::{mpsc::Receiver, Arc, Mutex},
     thread,
     time::{Duration, Instant},
 };
-use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use crate::{
     extract::get_currently_playing,
     input::stream_to_matrix,
+    play::SinkCommand,
     tui,
     visualization::{
         oscilloscope::Oscilloscope, spectroscope::Spectroscope, vectorscope::Vectorscope,
@@ -30,13 +30,101 @@ pub struct State {
     pub genre: String,
     pub description: String,
     pub br: String,
+    /// [`Volume`].
+    pub volume: Volume,
+}
+
+/// Volume of the player.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Volume {
+    /// Raw volume stored as percentage.
+    raw_volume_percent: f32,
+    /// Is muted?
+    is_muted: bool,
+}
+
+impl Volume {
+    /// Create a new [`Volume`].
+    pub const fn new(raw_volume_percent: f32, is_muted: bool) -> Self {
+        Self {
+            raw_volume_percent,
+            is_muted,
+        }
+    }
+
+    /// Get the current volume ratio. Returns `0.0` if muted.
+    pub const fn volume_ratio(&self) -> f32 {
+        if self.is_muted {
+            0.0
+        } else {
+            self.raw_volume_percent / 100.0
+        }
+    }
+
+    /// Get the raw volume percent.
+    pub const fn raw_volume_percent(&self) -> f32 {
+        self.raw_volume_percent
+    }
+
+    /// Is volume muted?
+    pub const fn is_muted(&self) -> bool {
+        self.is_muted
+    }
+
+    /// Toggle mute.
+    pub const fn toggle_mute(&mut self) {
+        self.is_muted = !self.is_muted;
+    }
+
+    /// Change the volume by the given step percent.
+    ///
+    /// To increase the volume, use a positive step. To decrease the
+    /// volume, use a negative step.
+    pub const fn change_volume(&mut self, step_percent: f32) {
+        self.raw_volume_percent += step_percent;
+        // limit to 0 volume, no upper bound
+        self.raw_volume_percent = self.raw_volume_percent.max(0.0);
+    }
+}
+
+impl Default for Volume {
+    fn default() -> Self {
+        Self::new(100.0, false)
+    }
 }
 
 pub enum CurrentDisplayMode {
     Oscilloscope,
     Vectorscope,
     Spectroscope,
+    None,
 }
+
+impl std::str::FromStr for CurrentDisplayMode {
+    type Err = InvalidDisplayModeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Oscilloscope" => Ok(Self::Oscilloscope),
+            "Vectorscope" => Ok(Self::Vectorscope),
+            "Spectroscope" => Ok(Self::Spectroscope),
+            "None" => Ok(Self::None),
+            _ => Err(InvalidDisplayModeError),
+        }
+    }
+}
+
+/// Invalid display mode error.
+#[derive(Debug)]
+pub struct InvalidDisplayModeError;
+
+impl std::fmt::Display for InvalidDisplayModeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid display mode")
+    }
+}
+
+impl std::error::Error for InvalidDisplayModeError {}
 
 pub struct App {
     #[allow(unused)]
@@ -54,6 +142,7 @@ impl App {
         ui: &crate::cfg::UiOptions,
         source: &crate::cfg::SourceOptions,
         frame_rx: Receiver<minimp3::Frame>,
+        mode: CurrentDisplayMode,
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
@@ -83,7 +172,7 @@ impl App {
             oscilloscope,
             vectorscope,
             spectroscope,
-            mode: CurrentDisplayMode::Spectroscope,
+            mode,
             channels: source.channels as u8,
             frame_rx,
         }
@@ -178,6 +267,24 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
         },
         frame,
     );
+    render_line(
+        "Volume ",
+        &if state.volume.is_muted() {
+            format!("{}% muted", state.volume.raw_volume_percent())
+        } else {
+            format!("{}%", state.volume.raw_volume_percent())
+        },
+        Rect {
+            x: size.x,
+            y: match state.now_playing.is_empty() {
+                true => size.y + 5,
+                false => size.y + 6,
+            },
+            width: size.width,
+            height: 1,
+        },
+        frame,
+    )
 }
 
 fn render_line(label: &str, value: &str, area: Rect, frame: &mut Frame) {
@@ -196,6 +303,7 @@ impl App {
         &mut self,
         terminal: &mut tui::Tui,
         mut cmd_rx: UnboundedReceiver<State>,
+        mut sink_cmd_tx: UnboundedSender<SinkCommand>,
         id: &str,
     ) {
         let new_state = cmd_rx.recv().await.unwrap();
@@ -220,9 +328,11 @@ impl App {
         let mut last_poll = Instant::now();
 
         loop {
-            let audio_frame = self.frame_rx.recv().unwrap();
-            let channels =
-                stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.);
+            let channels = (!self.graph.pause)
+                .then(|| self.frame_rx.recv().unwrap())
+                .map(|audio_frame| {
+                    stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.)
+                });
 
             fps += 1;
 
@@ -236,36 +346,43 @@ impl App {
                 let mut datasets = Vec::new();
                 let graph = self.graph.clone(); // TODO cheap fix...
                 if self.graph.references {
-                    datasets.append(&mut self.current_display_mut().references(&graph));
+                    if let Some(current_display) = self.current_display() {
+                        datasets.append(&mut current_display.references(&graph));
+                    }
                 }
-                datasets.append(&mut self.current_display_mut().process(&graph, &channels));
+                if let Some((current_display, channels)) = self.current_display_mut().zip(channels)
+                {
+                    datasets.append(&mut current_display.process(&graph, &channels));
+                }
                 terminal
                     .draw(|f| {
                         let mut size = f.size();
                         render_frame(new_state.clone(), f);
-                        if self.graph.show_ui {
-                            f.render_widget(
-                                make_header(
-                                    &self.graph,
-                                    &self.current_display().header(&self.graph),
-                                    self.current_display().mode_str(),
-                                    framerate,
-                                    self.graph.pause,
-                                ),
-                                Rect {
-                                    x: size.x,
-                                    y: size.y + 6,
-                                    width: size.width,
-                                    height: 1,
-                                },
-                            );
-                            size.height -= 7;
-                            size.y += 7;
+                        if let Some(current_display) = self.current_display() {
+                            if self.graph.show_ui {
+                                f.render_widget(
+                                    make_header(
+                                        &self.graph,
+                                        &current_display.header(&self.graph),
+                                        current_display.mode_str(),
+                                        framerate,
+                                        self.graph.pause,
+                                    ),
+                                    Rect {
+                                        x: size.x,
+                                        y: size.y + 7,
+                                        width: size.width,
+                                        height: 1,
+                                    },
+                                );
+                                size.height -= 8;
+                                size.y += 8;
+                            }
+                            let chart = Chart::new(datasets.iter().map(|x| x.into()).collect())
+                                .x_axis(current_display.axis(&self.graph, Dimension::X)) // TODO allow to have axis sometimes?
+                                .y_axis(current_display.axis(&self.graph, Dimension::Y));
+                            f.render_widget(chart, size)
                         }
-                        let chart = Chart::new(datasets.iter().map(|x| x.into()).collect())
-                            .x_axis(self.current_display().axis(&self.graph, Dimension::X)) // TODO allow to have axis sometimes?
-                            .y_axis(self.current_display().axis(&self.graph, Dimension::Y));
-                        f.render_widget(chart, size)
                     })
                     .unwrap();
             }
@@ -274,32 +391,97 @@ impl App {
                 // process all enqueued events
                 let event = event::read().unwrap();
 
-                if self.process_events(event.clone()).unwrap() {
+                if self
+                    .process_events(event.clone(), new_state.clone(), &mut sink_cmd_tx)
+                    .unwrap()
+                {
                     return;
                 }
-                self.current_display_mut().handle(event);
+                if let Some(current_display) = self.current_display_mut() {
+                    current_display.handle(event);
+                }
             }
         }
     }
 
-    fn current_display_mut(&mut self) -> &mut dyn DisplayMode {
+    fn current_display_mut(&mut self) -> Option<&mut dyn DisplayMode> {
         match self.mode {
-            CurrentDisplayMode::Oscilloscope => &mut self.oscilloscope as &mut dyn DisplayMode,
-            CurrentDisplayMode::Vectorscope => &mut self.vectorscope as &mut dyn DisplayMode,
-            CurrentDisplayMode::Spectroscope => &mut self.spectroscope as &mut dyn DisplayMode,
+            CurrentDisplayMode::Oscilloscope => {
+                Some(&mut self.oscilloscope as &mut dyn DisplayMode)
+            }
+            CurrentDisplayMode::Vectorscope => Some(&mut self.vectorscope as &mut dyn DisplayMode),
+            CurrentDisplayMode::Spectroscope => {
+                Some(&mut self.spectroscope as &mut dyn DisplayMode)
+            }
+            CurrentDisplayMode::None => None,
         }
     }
 
-    fn current_display(&self) -> &dyn DisplayMode {
+    fn current_display(&self) -> Option<&dyn DisplayMode> {
         match self.mode {
-            CurrentDisplayMode::Oscilloscope => &self.oscilloscope as &dyn DisplayMode,
-            CurrentDisplayMode::Vectorscope => &self.vectorscope as &dyn DisplayMode,
-            CurrentDisplayMode::Spectroscope => &self.spectroscope as &dyn DisplayMode,
+            CurrentDisplayMode::Oscilloscope => Some(&self.oscilloscope as &dyn DisplayMode),
+            CurrentDisplayMode::Vectorscope => Some(&self.vectorscope as &dyn DisplayMode),
+            CurrentDisplayMode::Spectroscope => Some(&self.spectroscope as &dyn DisplayMode),
+            CurrentDisplayMode::None => None,
         }
     }
 
-    fn process_events(&mut self, event: Event) -> Result<bool, io::Error> {
+    fn process_events(
+        &mut self,
+        event: Event,
+        state: Arc<Mutex<State>>,
+        sink_cmd_tx: &mut UnboundedSender<SinkCommand>,
+    ) -> Result<bool, io::Error> {
         let mut quit = false;
+
+        let play = |graph: &mut GraphConfig| {
+            graph.pause = false;
+            sink_cmd_tx
+                .send(SinkCommand::Play)
+                .expect("receiver never dropped");
+        };
+
+        let pause = |graph: &mut GraphConfig| {
+            graph.pause = true;
+            sink_cmd_tx
+                .send(SinkCommand::Pause)
+                .expect("receiver never dropped");
+        };
+
+        let toggle_play_pause = |graph: &mut GraphConfig| {
+            graph.pause = !graph.pause;
+            let sink_cmd = if graph.pause {
+                SinkCommand::Pause
+            } else {
+                SinkCommand::Play
+            };
+            sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
+        };
+
+        let lower_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.change_volume(-1.0);
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+                .expect("receiver never dropped");
+        };
+
+        let raise_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.change_volume(1.0);
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+                .expect("receiver never dropped");
+        };
+
+        let mute_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.toggle_mute();
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+                .expect("receiver never dropped");
+        };
+
         if let Event::Key(key) = event {
             if let KeyModifiers::CONTROL = key.modifiers {
                 match key.code {
@@ -315,8 +497,16 @@ impl App {
                 _ => 1.0,
             };
             match key.code {
-                KeyCode::Up => update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0), // inverted to act as zoom
-                KeyCode::Down => update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0), // inverted to act as zoom
+                KeyCode::Up => {
+                    // inverted to act as zoom
+                    update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
+                    raise_volume();
+                }
+                KeyCode::Down => {
+                    // inverted to act as zoom
+                    update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
+                    lower_volume();
+                }
                 KeyCode::Right => update_value_i(
                     &mut self.graph.samples,
                     true,
@@ -332,32 +522,52 @@ impl App {
                     0..self.graph.width * 2,
                 ),
                 KeyCode::Char('q') => quit = true,
-                KeyCode::Char(' ') => self.graph.pause = !self.graph.pause,
+                KeyCode::Char(' ') => toggle_play_pause(&mut self.graph),
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
+                KeyCode::Char('m') => mute_volume(),
                 KeyCode::Esc => {
                     self.graph.samples = self.graph.width;
                     self.graph.scale = 1.;
                 }
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let _ = tui::restore();
-                    process::exit(0);
+                    quit = true;
                 }
                 KeyCode::Tab => {
                     // switch modes
                     match self.mode {
                         CurrentDisplayMode::Oscilloscope => {
-                            self.mode = CurrentDisplayMode::Vectorscope
+                            self.mode = CurrentDisplayMode::Vectorscope;
                         }
                         CurrentDisplayMode::Vectorscope => {
-                            self.mode = CurrentDisplayMode::Spectroscope
+                            self.mode = CurrentDisplayMode::Spectroscope;
                         }
                         CurrentDisplayMode::Spectroscope => {
-                            self.mode = CurrentDisplayMode::Oscilloscope
+                            self.mode = CurrentDisplayMode::None;
+                        }
+                        CurrentDisplayMode::None => {
+                            self.mode = CurrentDisplayMode::Oscilloscope;
                         }
                     }
                 }
+                KeyCode::Media(media_key_code) => match media_key_code {
+                    MediaKeyCode::Play => play(&mut self.graph),
+                    MediaKeyCode::Pause => pause(&mut self.graph),
+                    MediaKeyCode::PlayPause => toggle_play_pause(&mut self.graph),
+                    MediaKeyCode::Stop => {
+                        quit = true;
+                    }
+                    MediaKeyCode::LowerVolume => lower_volume(),
+                    MediaKeyCode::RaiseVolume => raise_volume(),
+                    MediaKeyCode::MuteVolume => mute_volume(),
+                    MediaKeyCode::TrackNext
+                    | MediaKeyCode::TrackPrevious
+                    | MediaKeyCode::Reverse
+                    | MediaKeyCode::FastForward
+                    | MediaKeyCode::Rewind
+                    | MediaKeyCode::Record => {}
+                },
                 _ => {}
             }
         };

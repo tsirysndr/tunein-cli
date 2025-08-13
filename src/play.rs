@@ -4,14 +4,19 @@ use anyhow::Error;
 use hyper::header::HeaderValue;
 
 use crate::{
-    app::{App, State},
+    app::{App, CurrentDisplayMode, State, Volume},
     cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
 };
 
-pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
+pub async fn exec(
+    name_or_id: &str,
+    provider: &str,
+    volume: f32,
+    display_mode: CurrentDisplayMode,
+) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
         "tunein" => Box::new(Tunein::new()),
@@ -34,6 +39,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
     let now_playing = station.playing.clone().unwrap_or_default();
 
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
+    let (sink_cmd_tx, mut sink_cmd_rx) = tokio::sync::mpsc::unbounded_channel::<SinkCommand>();
     let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
 
     let ui = UiOptions {
@@ -51,7 +57,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
         tune: None,
     };
 
-    let mut app = App::new(&ui, &opts, frame_rx);
+    let mut app = App::new(&ui, &opts, frame_rx, display_mode);
     let station_name = station.name.clone();
 
     thread::spawn(move || {
@@ -60,6 +66,8 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
         let response = client.get(stream_url).send().unwrap();
 
         let headers = response.headers();
+        let volume = Volume::new(volume, false);
+
         cmd_tx
             .send(State {
                 name: match headers
@@ -90,6 +98,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                volume: volume.clone(),
             })
             .unwrap();
         let location = response.headers().get("location");
@@ -108,16 +117,41 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
 
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
+        sink.set_volume(volume.volume_ratio());
         let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
         sink.append(decoder);
 
         loop {
+            while let Ok(sink_cmd) = sink_cmd_rx.try_recv() {
+                match sink_cmd {
+                    SinkCommand::Play => {
+                        sink.play();
+                    }
+                    SinkCommand::Pause => {
+                        sink.pause();
+                    }
+                    SinkCommand::SetVolume(volume) => {
+                        sink.set_volume(volume);
+                    }
+                }
+            }
             std::thread::sleep(Duration::from_millis(10));
         }
     });
 
     let mut terminal = tui::init()?;
-    app.run(&mut terminal, cmd_rx, &id).await;
+    app.run(&mut terminal, cmd_rx, sink_cmd_tx, &id).await;
     tui::restore()?;
     Ok(())
+}
+
+/// Command for a sink.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SinkCommand {
+    /// Play.
+    Play,
+    /// Pause.
+    Pause,
+    /// Set the volume.
+    SetVolume(f32),
 }
