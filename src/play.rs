@@ -4,7 +4,7 @@ use anyhow::Error;
 use hyper::header::HeaderValue;
 
 use crate::{
-    app::{App, State},
+    app::{App, State, Volume},
     cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
@@ -91,6 +91,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                volume: Volume::default(),
             })
             .unwrap();
         let location = response.headers().get("location");
@@ -121,6 +122,9 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
                     SinkCommand::Pause => {
                         sink.pause();
                     }
+                    SinkCommand::SetVolume(volume) => {
+                        sink.set_volume(volume);
+                    }
                 }
             }
             std::thread::sleep(Duration::from_millis(10));
@@ -140,4 +144,6 @@ pub enum SinkCommand {
     Play,
     /// Pause.
     Pause,
+    /// Set the volume.
+    SetVolume(f32),
 }

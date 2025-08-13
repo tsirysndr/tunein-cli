@@ -30,6 +30,8 @@ pub struct State {
     pub genre: String,
     pub description: String,
     pub br: String,
+    /// [`Volume`].
+    pub volume: Volume,
 }
 
 /// Volume of the player.
@@ -52,7 +54,7 @@ impl Volume {
         if self.is_muted {
             0.0
         } else {
-            1.0
+            self.volume
         }
     }
 
@@ -229,6 +231,24 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
         },
         frame,
     );
+    render_line(
+        "Volume ",
+        &if state.volume.is_muted() {
+            format!("{} muted", state.volume.volume())
+        } else {
+            format!("{}", state.volume.volume())
+        },
+        Rect {
+            x: size.x,
+            y: match state.now_playing.is_empty() {
+                true => size.y + 5,
+                false => size.y + 6,
+            },
+            width: size.width,
+            height: 1,
+        },
+        frame,
+    )
 }
 
 fn render_line(label: &str, value: &str, area: Rect, frame: &mut Frame) {
@@ -327,7 +347,7 @@ impl App {
                 let event = event::read().unwrap();
 
                 if self
-                    .process_events(event.clone(), &mut sink_cmd_tx)
+                    .process_events(event.clone(), new_state.clone(), &mut sink_cmd_tx)
                     .unwrap()
                 {
                     return;
@@ -356,9 +376,35 @@ impl App {
     fn process_events(
         &mut self,
         event: Event,
+        state: Arc<Mutex<State>>,
         sink_cmd_tx: &mut UnboundedSender<SinkCommand>,
     ) -> Result<bool, io::Error> {
         let mut quit = false;
+
+        let lower_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.change_volume(-0.01);
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .expect("receiver never dropped");
+        };
+
+        let raise_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.change_volume(0.01);
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .expect("receiver never dropped");
+        };
+
+        let mute_volume = || {
+            let mut state = state.lock().unwrap();
+            state.volume.toggle_mute();
+            sink_cmd_tx
+                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .expect("receiver never dropped");
+        };
+
         if let Event::Key(key) = event {
             if let KeyModifiers::CONTROL = key.modifiers {
                 match key.code {
@@ -374,8 +420,16 @@ impl App {
                 _ => 1.0,
             };
             match key.code {
-                KeyCode::Up => update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0), // inverted to act as zoom
-                KeyCode::Down => update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0), // inverted to act as zoom
+                KeyCode::Up => {
+                    // inverted to act as zoom
+                    update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
+                    raise_volume();
+                }
+                KeyCode::Down => {
+                    // inverted to act as zoom
+                    update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
+                    lower_volume();
+                }
                 KeyCode::Right => update_value_i(
                     &mut self.graph.samples,
                     true,
@@ -403,6 +457,7 @@ impl App {
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
+                KeyCode::Char('m') => mute_volume(),
                 KeyCode::Esc => {
                     self.graph.samples = self.graph.width;
                     self.graph.scale = 1.;
@@ -449,10 +504,10 @@ impl App {
                     MediaKeyCode::Stop => {
                         quit = true;
                     }
-                    MediaKeyCode::LowerVolume
-                    | MediaKeyCode::RaiseVolume
-                    | MediaKeyCode::MuteVolume
-                    | MediaKeyCode::TrackNext
+                    MediaKeyCode::LowerVolume => lower_volume(),
+                    MediaKeyCode::RaiseVolume => raise_volume(),
+                    MediaKeyCode::MuteVolume => mute_volume(),
+                    MediaKeyCode::TrackNext
                     | MediaKeyCode::TrackPrevious
                     | MediaKeyCode::Reverse
                     | MediaKeyCode::FastForward
