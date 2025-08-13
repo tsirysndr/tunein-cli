@@ -404,6 +404,30 @@ impl App {
     ) -> Result<bool, io::Error> {
         let mut quit = false;
 
+        let play = |graph: &mut GraphConfig| {
+            graph.pause = false;
+            sink_cmd_tx
+                .send(SinkCommand::Play)
+                .expect("receiver never dropped");
+        };
+
+        let pause = |graph: &mut GraphConfig| {
+            graph.pause = true;
+            sink_cmd_tx
+                .send(SinkCommand::Pause)
+                .expect("receiver never dropped");
+        };
+
+        let toggle_play_pause = |graph: &mut GraphConfig| {
+            graph.pause = !graph.pause;
+            let sink_cmd = if graph.pause {
+                SinkCommand::Pause
+            } else {
+                SinkCommand::Play
+            };
+            sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
+        };
+
         let lower_volume = || {
             let mut state = state.lock().unwrap();
             state.volume.change_volume(-1.0);
@@ -468,15 +492,7 @@ impl App {
                     0..self.graph.width * 2,
                 ),
                 KeyCode::Char('q') => quit = true,
-                KeyCode::Char(' ') => {
-                    self.graph.pause = !self.graph.pause;
-                    let sink_cmd = if self.graph.pause {
-                        SinkCommand::Pause
-                    } else {
-                        SinkCommand::Play
-                    };
-                    sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
-                }
+                KeyCode::Char(' ') => toggle_play_pause(&mut self.graph),
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
@@ -506,27 +522,9 @@ impl App {
                     }
                 }
                 KeyCode::Media(media_key_code) => match media_key_code {
-                    MediaKeyCode::Play => {
-                        self.graph.pause = false;
-                        sink_cmd_tx
-                            .send(SinkCommand::Play)
-                            .expect("receiver never dropped");
-                    }
-                    MediaKeyCode::Pause => {
-                        self.graph.pause = true;
-                        sink_cmd_tx
-                            .send(SinkCommand::Pause)
-                            .expect("receiver never dropped");
-                    }
-                    MediaKeyCode::PlayPause => {
-                        self.graph.pause = !self.graph.pause;
-                        let sink_cmd = if self.graph.pause {
-                            SinkCommand::Pause
-                        } else {
-                            SinkCommand::Play
-                        };
-                        sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
-                    }
+                    MediaKeyCode::Play => play(&mut self.graph),
+                    MediaKeyCode::Pause => pause(&mut self.graph),
+                    MediaKeyCode::PlayPause => toggle_play_pause(&mut self.graph),
                     MediaKeyCode::Stop => {
                         quit = true;
                     }
