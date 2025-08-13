@@ -566,7 +566,7 @@ impl App {
                     | MediaKeyCode::Reverse
                     | MediaKeyCode::FastForward
                     | MediaKeyCode::Rewind
-                    | MediaKeyCode::Record => todo!(),
+                    | MediaKeyCode::Record => {}
                 },
                 _ => {}
             }
