@@ -6,7 +6,6 @@ use ratatui::{
 use std::{
     io,
     ops::Range,
-    process,
     sync::{mpsc::Receiver, Arc, Mutex},
     thread,
     time::{Duration, Instant},
@@ -31,6 +30,57 @@ pub struct State {
     pub genre: String,
     pub description: String,
     pub br: String,
+}
+
+/// Volume of the player.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Volume {
+    /// Raw volume.
+    volume: f32,
+    /// Is muted?
+    is_muted: bool,
+}
+
+impl Volume {
+    /// Create a new [`Volume`].
+    pub const fn new(volume: f32, is_muted: bool) -> Self {
+        Self { volume, is_muted }
+    }
+
+    /// Get the current volume. Returns `0.0` if muted.
+    pub const fn volume(&self) -> f32 {
+        if self.is_muted {
+            0.0
+        } else {
+            1.0
+        }
+    }
+
+    /// Is volume muted?
+    pub const fn is_muted(&self) -> bool {
+        self.is_muted
+    }
+
+    /// Toggle mute.
+    pub const fn toggle_mute(&mut self) {
+        self.is_muted = !self.is_muted;
+    }
+
+    /// Change the volume by the given step.
+    ///
+    /// To increase the volume, use a positive step. To decrease the
+    /// volume, use a negative step.
+    pub const fn change_volume(&mut self, step: f32) {
+        self.volume += step;
+        // limit to 0 volume, no upper bound
+        self.volume = self.volume.max(0.0);
+    }
+}
+
+impl Default for Volume {
+    fn default() -> Self {
+        Self::new(1.0, false)
+    }
 }
 
 pub enum CurrentDisplayMode {
