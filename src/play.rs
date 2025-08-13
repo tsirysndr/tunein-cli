@@ -121,13 +121,6 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
                     SinkCommand::Pause => {
                         sink.pause();
                     }
-                    SinkCommand::PlayPause => {
-                        if sink.is_paused() {
-                            sink.play();
-                        } else {
-                            sink.pause();
-                        }
-                    }
                 }
             }
             std::thread::sleep(Duration::from_millis(10));
@@ -147,6 +140,4 @@ pub enum SinkCommand {
     Play,
     /// Pause.
     Pause,
-    /// Toggle between play and pause.
-    PlayPause,
 }

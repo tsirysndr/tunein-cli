@@ -341,7 +341,15 @@ impl App {
                     0..self.graph.width * 2,
                 ),
                 KeyCode::Char('q') => quit = true,
-                KeyCode::Char(' ') => self.graph.pause = !self.graph.pause,
+                KeyCode::Char(' ') => {
+                    self.graph.pause = !self.graph.pause;
+                    let sink_cmd = if self.graph.pause {
+                        SinkCommand::Pause
+                    } else {
+                        SinkCommand::Play
+                    };
+                    sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
+                }
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
@@ -368,19 +376,25 @@ impl App {
                 }
                 KeyCode::Media(media_key_code) => match media_key_code {
                     MediaKeyCode::Play => {
+                        self.graph.pause = false;
                         sink_cmd_tx
                             .send(SinkCommand::Play)
                             .expect("receiver never dropped");
                     }
                     MediaKeyCode::Pause => {
+                        self.graph.pause = true;
                         sink_cmd_tx
                             .send(SinkCommand::Pause)
                             .expect("receiver never dropped");
                     }
                     MediaKeyCode::PlayPause => {
-                        sink_cmd_tx
-                            .send(SinkCommand::PlayPause)
-                            .expect("receiver never dropped");
+                        self.graph.pause = !self.graph.pause;
+                        let sink_cmd = if self.graph.pause {
+                            SinkCommand::Pause
+                        } else {
+                            SinkCommand::Play
+                        };
+                        sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
                     }
                     MediaKeyCode::Stop => {
                         quit = true;
