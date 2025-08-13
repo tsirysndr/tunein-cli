@@ -34,6 +34,7 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
     let now_playing = station.playing.clone().unwrap_or_default();
 
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
+    let (sink_cmd_tx, mut sink_cmd_rx) = tokio::sync::mpsc::unbounded_channel::<SinkCommand>();
     let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
 
     let ui = UiOptions {
@@ -112,12 +113,40 @@ pub async fn exec(name_or_id: &str, provider: &str) -> Result<(), Error> {
         sink.append(decoder);
 
         loop {
+            while let Ok(sink_cmd) = sink_cmd_rx.try_recv() {
+                match sink_cmd {
+                    SinkCommand::Play => {
+                        sink.play();
+                    }
+                    SinkCommand::Pause => {
+                        sink.pause();
+                    }
+                    SinkCommand::PlayPause => {
+                        if sink.is_paused() {
+                            sink.play();
+                        } else {
+                            sink.pause();
+                        }
+                    }
+                }
+            }
             std::thread::sleep(Duration::from_millis(10));
         }
     });
 
     let mut terminal = tui::init()?;
-    app.run(&mut terminal, cmd_rx, &id).await;
+    app.run(&mut terminal, cmd_rx, sink_cmd_tx, &id).await;
     tui::restore()?;
     Ok(())
+}
+
+/// Command for a sink.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SinkCommand {
+    /// Play.
+    Play,
+    /// Pause.
+    Pause,
+    /// Toggle between play and pause.
+    PlayPause,
 }

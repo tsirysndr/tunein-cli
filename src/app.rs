@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers, MediaKeyCode};
 use ratatui::{
     prelude::*,
     widgets::{block::*, *},
@@ -11,11 +11,12 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use crate::{
     extract::get_currently_playing,
     input::stream_to_matrix,
+    play::SinkCommand,
     tui,
     visualization::{
         oscilloscope::Oscilloscope, spectroscope::Spectroscope, vectorscope::Vectorscope,
@@ -196,6 +197,7 @@ impl App {
         &mut self,
         terminal: &mut tui::Tui,
         mut cmd_rx: UnboundedReceiver<State>,
+        mut sink_cmd_tx: UnboundedSender<SinkCommand>,
         id: &str,
     ) {
         let new_state = cmd_rx.recv().await.unwrap();
@@ -274,7 +276,10 @@ impl App {
                 // process all enqueued events
                 let event = event::read().unwrap();
 
-                if self.process_events(event.clone()).unwrap() {
+                if self
+                    .process_events(event.clone(), &mut sink_cmd_tx)
+                    .unwrap()
+                {
                     return;
                 }
                 self.current_display_mut().handle(event);
@@ -298,7 +303,11 @@ impl App {
         }
     }
 
-    fn process_events(&mut self, event: Event) -> Result<bool, io::Error> {
+    fn process_events(
+        &mut self,
+        event: Event,
+        sink_cmd_tx: &mut UnboundedSender<SinkCommand>,
+    ) -> Result<bool, io::Error> {
         let mut quit = false;
         if let Event::Key(key) = event {
             if let KeyModifiers::CONTROL = key.modifiers {
@@ -357,6 +366,35 @@ impl App {
                         }
                     }
                 }
+                KeyCode::Media(media_key_code) => match media_key_code {
+                    MediaKeyCode::Play => {
+                        sink_cmd_tx
+                            .send(SinkCommand::Play)
+                            .expect("receiver never dropped");
+                    }
+                    MediaKeyCode::Pause => {
+                        sink_cmd_tx
+                            .send(SinkCommand::Pause)
+                            .expect("receiver never dropped");
+                    }
+                    MediaKeyCode::PlayPause => {
+                        sink_cmd_tx
+                            .send(SinkCommand::PlayPause)
+                            .expect("receiver never dropped");
+                    }
+                    MediaKeyCode::Stop => {
+                        quit = true;
+                    }
+                    MediaKeyCode::LowerVolume
+                    | MediaKeyCode::RaiseVolume
+                    | MediaKeyCode::MuteVolume
+                    | MediaKeyCode::TrackNext
+                    | MediaKeyCode::TrackPrevious
+                    | MediaKeyCode::Reverse
+                    | MediaKeyCode::FastForward
+                    | MediaKeyCode::Rewind
+                    | MediaKeyCode::Record => todo!(),
+                },
                 _ => {}
             }
         };
