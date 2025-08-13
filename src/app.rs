@@ -97,6 +97,7 @@ pub enum CurrentDisplayMode {
     Oscilloscope,
     Vectorscope,
     Spectroscope,
+    None,
 }
 
 pub struct App {
@@ -316,36 +317,42 @@ impl App {
                 let mut datasets = Vec::new();
                 let graph = self.graph.clone(); // TODO cheap fix...
                 if self.graph.references {
-                    datasets.append(&mut self.current_display_mut().references(&graph));
+                    if let Some(current_display) = self.current_display() {
+                        datasets.append(&mut current_display.references(&graph));
+                    }
                 }
-                datasets.append(&mut self.current_display_mut().process(&graph, &channels));
+                if let Some(current_display) = self.current_display_mut() {
+                    datasets.append(&mut current_display.process(&graph, &channels));
+                }
                 terminal
                     .draw(|f| {
                         let mut size = f.size();
                         render_frame(new_state.clone(), f);
-                        if self.graph.show_ui {
-                            f.render_widget(
-                                make_header(
-                                    &self.graph,
-                                    &self.current_display().header(&self.graph),
-                                    self.current_display().mode_str(),
-                                    framerate,
-                                    self.graph.pause,
-                                ),
-                                Rect {
-                                    x: size.x,
-                                    y: size.y + 6,
-                                    width: size.width,
-                                    height: 1,
-                                },
-                            );
-                            size.height -= 7;
-                            size.y += 7;
+                        if let Some(current_display) = self.current_display() {
+                            if self.graph.show_ui {
+                                f.render_widget(
+                                    make_header(
+                                        &self.graph,
+                                        &current_display.header(&self.graph),
+                                        current_display.mode_str(),
+                                        framerate,
+                                        self.graph.pause,
+                                    ),
+                                    Rect {
+                                        x: size.x,
+                                        y: size.y + 7,
+                                        width: size.width,
+                                        height: 1,
+                                    },
+                                );
+                                size.height -= 8;
+                                size.y += 8;
+                            }
+                            let chart = Chart::new(datasets.iter().map(|x| x.into()).collect())
+                                .x_axis(current_display.axis(&self.graph, Dimension::X)) // TODO allow to have axis sometimes?
+                                .y_axis(current_display.axis(&self.graph, Dimension::Y));
+                            f.render_widget(chart, size)
                         }
-                        let chart = Chart::new(datasets.iter().map(|x| x.into()).collect())
-                            .x_axis(self.current_display().axis(&self.graph, Dimension::X)) // TODO allow to have axis sometimes?
-                            .y_axis(self.current_display().axis(&self.graph, Dimension::Y));
-                        f.render_widget(chart, size)
                     })
                     .unwrap();
             }
@@ -360,24 +367,32 @@ impl App {
                 {
                     return;
                 }
-                self.current_display_mut().handle(event);
+                if let Some(current_display) = self.current_display_mut() {
+                    current_display.handle(event);
+                }
             }
         }
     }
 
-    fn current_display_mut(&mut self) -> &mut dyn DisplayMode {
+    fn current_display_mut(&mut self) -> Option<&mut dyn DisplayMode> {
         match self.mode {
-            CurrentDisplayMode::Oscilloscope => &mut self.oscilloscope as &mut dyn DisplayMode,
-            CurrentDisplayMode::Vectorscope => &mut self.vectorscope as &mut dyn DisplayMode,
-            CurrentDisplayMode::Spectroscope => &mut self.spectroscope as &mut dyn DisplayMode,
+            CurrentDisplayMode::Oscilloscope => {
+                Some(&mut self.oscilloscope as &mut dyn DisplayMode)
+            }
+            CurrentDisplayMode::Vectorscope => Some(&mut self.vectorscope as &mut dyn DisplayMode),
+            CurrentDisplayMode::Spectroscope => {
+                Some(&mut self.spectroscope as &mut dyn DisplayMode)
+            }
+            CurrentDisplayMode::None => None,
         }
     }
 
-    fn current_display(&self) -> &dyn DisplayMode {
+    fn current_display(&self) -> Option<&dyn DisplayMode> {
         match self.mode {
-            CurrentDisplayMode::Oscilloscope => &self.oscilloscope as &dyn DisplayMode,
-            CurrentDisplayMode::Vectorscope => &self.vectorscope as &dyn DisplayMode,
-            CurrentDisplayMode::Spectroscope => &self.spectroscope as &dyn DisplayMode,
+            CurrentDisplayMode::Oscilloscope => Some(&self.oscilloscope as &dyn DisplayMode),
+            CurrentDisplayMode::Vectorscope => Some(&self.vectorscope as &dyn DisplayMode),
+            CurrentDisplayMode::Spectroscope => Some(&self.spectroscope as &dyn DisplayMode),
+            CurrentDisplayMode::None => None,
         }
     }
 
@@ -477,13 +492,16 @@ impl App {
                     // switch modes
                     match self.mode {
                         CurrentDisplayMode::Oscilloscope => {
-                            self.mode = CurrentDisplayMode::Vectorscope
+                            self.mode = CurrentDisplayMode::Vectorscope;
                         }
                         CurrentDisplayMode::Vectorscope => {
-                            self.mode = CurrentDisplayMode::Spectroscope
+                            self.mode = CurrentDisplayMode::Spectroscope;
                         }
                         CurrentDisplayMode::Spectroscope => {
-                            self.mode = CurrentDisplayMode::Oscilloscope
+                            self.mode = CurrentDisplayMode::None;
+                        }
+                        CurrentDisplayMode::None => {
+                            self.mode = CurrentDisplayMode::Oscilloscope;
                         }
                     }
                 }
