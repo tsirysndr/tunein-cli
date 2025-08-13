@@ -58,6 +58,11 @@ impl Volume {
         }
     }
 
+    /// Get the raw volume.
+    pub const fn raw_volume(&self) -> f32 {
+        self.volume
+    }
+
     /// Is volume muted?
     pub const fn is_muted(&self) -> bool {
         self.is_muted
@@ -234,9 +239,9 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
     render_line(
         "Volume ",
         &if state.volume.is_muted() {
-            format!("{} muted", state.volume.volume())
+            format!("{} muted", state.volume.raw_volume())
         } else {
-            format!("{}", state.volume.volume())
+            format!("{}", state.volume.raw_volume())
         },
         Rect {
             x: size.x,
