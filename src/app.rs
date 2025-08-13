@@ -301,9 +301,11 @@ impl App {
         let mut last_poll = Instant::now();
 
         loop {
-            let audio_frame = self.frame_rx.recv().unwrap();
-            let channels =
-                stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.);
+            let channels = (!self.graph.pause)
+                .then(|| self.frame_rx.recv().unwrap())
+                .map(|audio_frame| {
+                    stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.)
+                });
 
             fps += 1;
 
@@ -321,7 +323,8 @@ impl App {
                         datasets.append(&mut current_display.references(&graph));
                     }
                 }
-                if let Some(current_display) = self.current_display_mut() {
+                if let Some((current_display, channels)) = self.current_display_mut().zip(channels)
+                {
                     datasets.append(&mut current_display.process(&graph, &channels));
                 }
                 terminal
