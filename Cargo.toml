@@ -33,7 +33,7 @@ futures = "0.3.26"
 futures-util = "0.3.26"
 hyper = {version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"]}
 m3u = "1.0.0"
-minimp3 = "0.5.1"
+minimp3 = "0.6"
 owo-colors = "3.5.0"
 pls = "0.2.2"
 prost = "0.13.2"
