@@ -100,6 +100,32 @@ pub enum CurrentDisplayMode {
     None,
 }
 
+impl std::str::FromStr for CurrentDisplayMode {
+    type Err = InvalidDisplayModeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Oscilloscope" => Ok(Self::Oscilloscope),
+            "Vectorscope" => Ok(Self::Vectorscope),
+            "Spectroscope" => Ok(Self::Spectroscope),
+            "None" => Ok(Self::None),
+            _ => Err(InvalidDisplayModeError),
+        }
+    }
+}
+
+/// Invalid display mode error.
+#[derive(Debug)]
+pub struct InvalidDisplayModeError;
+
+impl std::fmt::Display for InvalidDisplayModeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid display mode")
+    }
+}
+
+impl std::error::Error for InvalidDisplayModeError {}
+
 pub struct App {
     #[allow(unused)]
     channels: u8,
@@ -116,6 +142,7 @@ impl App {
         ui: &crate::cfg::UiOptions,
         source: &crate::cfg::SourceOptions,
         frame_rx: Receiver<minimp3::Frame>,
+        mode: CurrentDisplayMode,
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
@@ -145,7 +172,7 @@ impl App {
             oscilloscope,
             vectorscope,
             spectroscope,
-            mode: CurrentDisplayMode::Spectroscope,
+            mode,
             channels: source.channels as u8,
             frame_rx,
         }
