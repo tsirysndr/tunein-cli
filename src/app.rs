@@ -37,30 +37,33 @@ pub struct State {
 /// Volume of the player.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Volume {
-    /// Raw volume.
-    volume: f32,
+    /// Raw volume stored as percentage.
+    raw_volume_percent: f32,
     /// Is muted?
     is_muted: bool,
 }
 
 impl Volume {
     /// Create a new [`Volume`].
-    pub const fn new(volume: f32, is_muted: bool) -> Self {
-        Self { volume, is_muted }
-    }
-
-    /// Get the current volume. Returns `0.0` if muted.
-    pub const fn volume(&self) -> f32 {
-        if self.is_muted {
-            0.0
-        } else {
-            self.volume
+    pub const fn new(raw_volume_percent: f32, is_muted: bool) -> Self {
+        Self {
+            raw_volume_percent,
+            is_muted,
         }
     }
 
-    /// Get the raw volume.
-    pub const fn raw_volume(&self) -> f32 {
-        self.volume
+    /// Get the current volume ratio. Returns `0.0` if muted.
+    pub const fn volume_ratio(&self) -> f32 {
+        if self.is_muted {
+            0.0
+        } else {
+            self.raw_volume_percent / 100.0
+        }
+    }
+
+    /// Get the raw volume percent.
+    pub const fn raw_volume_percent(&self) -> f32 {
+        self.raw_volume_percent
     }
 
     /// Is volume muted?
@@ -73,20 +76,20 @@ impl Volume {
         self.is_muted = !self.is_muted;
     }
 
-    /// Change the volume by the given step.
+    /// Change the volume by the given step percent.
     ///
     /// To increase the volume, use a positive step. To decrease the
     /// volume, use a negative step.
-    pub const fn change_volume(&mut self, step: f32) {
-        self.volume += step;
+    pub const fn change_volume(&mut self, step_percent: f32) {
+        self.raw_volume_percent += step_percent;
         // limit to 0 volume, no upper bound
-        self.volume = self.volume.max(0.0);
+        self.raw_volume_percent = self.raw_volume_percent.max(0.0);
     }
 }
 
 impl Default for Volume {
     fn default() -> Self {
-        Self::new(1.0, false)
+        Self::new(100.0, false)
     }
 }
 
@@ -239,9 +242,9 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
     render_line(
         "Volume ",
         &if state.volume.is_muted() {
-            format!("{} muted", state.volume.raw_volume())
+            format!("{}% muted", state.volume.raw_volume_percent())
         } else {
-            format!("{}", state.volume.raw_volume())
+            format!("{}%", state.volume.raw_volume_percent())
         },
         Rect {
             x: size.x,
@@ -388,17 +391,17 @@ impl App {
 
         let lower_volume = || {
             let mut state = state.lock().unwrap();
-            state.volume.change_volume(-0.01);
+            state.volume.change_volume(-1.0);
             sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
                 .expect("receiver never dropped");
         };
 
         let raise_volume = || {
             let mut state = state.lock().unwrap();
-            state.volume.change_volume(0.01);
+            state.volume.change_volume(1.0);
             sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
                 .expect("receiver never dropped");
         };
 
@@ -406,7 +409,7 @@ impl App {
             let mut state = state.lock().unwrap();
             state.volume.toggle_mute();
             sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume()))
+                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
                 .expect("receiver never dropped");
         };
 
