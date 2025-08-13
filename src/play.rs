@@ -4,14 +4,19 @@ use anyhow::Error;
 use hyper::header::HeaderValue;
 
 use crate::{
-    app::{App, State, Volume},
+    app::{App, CurrentDisplayMode, State, Volume},
     cfg::{SourceOptions, UiOptions},
     decoder::Mp3Decoder,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
 };
 
-pub async fn exec(name_or_id: &str, provider: &str, default_volume: f32) -> Result<(), Error> {
+pub async fn exec(
+    name_or_id: &str,
+    provider: &str,
+    volume: f32,
+    display_mode: CurrentDisplayMode,
+) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
         "tunein" => Box::new(Tunein::new()),
@@ -52,7 +57,7 @@ pub async fn exec(name_or_id: &str, provider: &str, default_volume: f32) -> Resu
         tune: None,
     };
 
-    let mut app = App::new(&ui, &opts, frame_rx);
+    let mut app = App::new(&ui, &opts, frame_rx, display_mode);
     let station_name = station.name.clone();
 
     thread::spawn(move || {
@@ -61,7 +66,7 @@ pub async fn exec(name_or_id: &str, provider: &str, default_volume: f32) -> Resu
         let response = client.get(stream_url).send().unwrap();
 
         let headers = response.headers();
-        let volume = Volume::new(default_volume, false);
+        let volume = Volume::new(volume, false);
 
         cmd_tx
             .send(State {
