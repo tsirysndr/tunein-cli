@@ -3,6 +3,7 @@ use ratatui::{
     prelude::*,
     widgets::{block::*, *},
 };
+use souvlaki::MediaControlEvent;
 use std::{
     io,
     ops::Range,
@@ -11,6 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tunein_cli::os_media_controls::{self, OsMediaControls};
 
 use crate::{
     extract::get_currently_playing,
@@ -76,6 +78,14 @@ impl Volume {
         self.is_muted = !self.is_muted;
     }
 
+    /// Set the volume to the given volume ratio.
+    ///
+    /// `1.0` is 100% volume.
+    pub const fn set_volume_ratio(&mut self, volume: f32) {
+        self.raw_volume_percent = volume * 100.0;
+        self.raw_volume_percent = self.raw_volume_percent.max(0.0);
+    }
+
     /// Change the volume by the given step percent.
     ///
     /// To increase the volume, use a positive step. To decrease the
@@ -135,6 +145,8 @@ pub struct App {
     spectroscope: Spectroscope,
     mode: CurrentDisplayMode,
     frame_rx: Receiver<minimp3::Frame>,
+    /// [`OsMediaControls`].
+    os_media_controls: Option<OsMediaControls>,
 }
 
 impl App {
@@ -143,6 +155,7 @@ impl App {
         source: &crate::cfg::SourceOptions,
         frame_rx: Receiver<minimp3::Frame>,
         mode: CurrentDisplayMode,
+        os_media_controls: Option<OsMediaControls>,
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
@@ -175,6 +188,7 @@ impl App {
             mode,
             channels: source.channels as u8,
             frame_rx,
+            os_media_controls,
         }
     }
 }
@@ -387,6 +401,16 @@ impl App {
                     .unwrap();
             }
 
+            while let Some(event) = self
+                .os_media_controls
+                .as_mut()
+                .and_then(|os_media_controls| os_media_controls.try_recv_os_event())
+            {
+                if self.process_os_media_control_event(event, &new_state, &mut sink_cmd_tx) {
+                    return;
+                }
+            }
+
             while event::poll(Duration::from_millis(0)).unwrap() {
                 // process all enqueued events
                 let event = event::read().unwrap();
@@ -526,6 +550,45 @@ impl App {
 
         Ok(quit)
     }
+
+    /// Process OS media control event.
+    ///
+    /// Returns [`true`] if application should quit.
+    fn process_os_media_control_event(
+        &mut self,
+        event: MediaControlEvent,
+        state: &Mutex<State>,
+        sink_cmd_tx: &mut UnboundedSender<SinkCommand>,
+    ) -> bool {
+        let mut quit = false;
+
+        match event {
+            MediaControlEvent::Play => {
+                play(&mut self.graph, sink_cmd_tx);
+            }
+            MediaControlEvent::Pause => {
+                pause(&mut self.graph, sink_cmd_tx);
+            }
+            MediaControlEvent::Toggle => {
+                toggle_play_pause(&mut self.graph, sink_cmd_tx);
+            }
+            MediaControlEvent::Stop | MediaControlEvent::Quit => {
+                quit = true;
+            }
+            MediaControlEvent::SetVolume(volume) => {
+                set_volume_ratio(volume as f32, state, sink_cmd_tx);
+            }
+            MediaControlEvent::Next
+            | MediaControlEvent::Previous
+            | MediaControlEvent::Seek(_)
+            | MediaControlEvent::SeekBy(_, _)
+            | MediaControlEvent::SetPosition(_)
+            | MediaControlEvent::OpenUri(_)
+            | MediaControlEvent::Raise => {}
+        }
+
+        quit
+    }
 }
 
 pub fn update_value_f(val: &mut f64, base: f64, magnitude: f64, range: Range<f64>) {
@@ -637,6 +700,19 @@ fn raise_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkCom
 fn mute_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
     let mut state = state.lock().unwrap();
     state.volume.toggle_mute();
+    sink_cmd_tx
+        .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+        .expect("receiver never dropped");
+}
+
+/// Set the volume to the given volume ratio.
+fn set_volume_ratio(
+    volume_ratio: f32,
+    state: &Mutex<State>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    let mut state = state.lock().unwrap();
+    state.volume.set_volume_ratio(volume_ratio);
     sink_cmd_tx
         .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
         .expect("receiver never dropped");

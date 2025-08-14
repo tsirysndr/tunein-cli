@@ -2,6 +2,7 @@ use std::{thread, time::Duration};
 
 use anyhow::Error;
 use hyper::header::HeaderValue;
+use tunein_cli::os_media_controls::OsMediaControls;
 
 use crate::{
     app::{App, CurrentDisplayMode, State, Volume},
@@ -57,7 +58,16 @@ pub async fn exec(
         tune: None,
     };
 
-    let mut app = App::new(&ui, &opts, frame_rx, display_mode);
+    let os_media_controls = OsMediaControls::new()
+        .inspect_err(|err| {
+            eprintln!(
+                "error: failed to initialize os media controls due to `{}`",
+                err
+            );
+        })
+        .ok();
+
+    let mut app = App::new(&ui, &opts, frame_rx, display_mode, os_media_controls);
     let station_name = station.name.clone();
 
     thread::spawn(move || {
