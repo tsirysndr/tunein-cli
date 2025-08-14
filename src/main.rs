@@ -1,6 +1,6 @@
 use anyhow::Error;
 use app::CurrentDisplayMode;
-use clap::{arg, Command};
+use clap::{arg, builder::ValueParser, Command};
 
 mod app;
 mod browse;
@@ -48,7 +48,8 @@ A simple CLI to listen to radio stations"#,
                 .about("Play a radio station")
                 .arg(arg!(<station> "The station to play"))
                 .arg(arg!(--volume "Set the initial volume (as a percent)").default_value("100"))
-                .arg(clap::Arg::new("display-mode").long("display-mode").help("Set the display mode to start with").default_value("Spectroscope")),
+                .arg(clap::Arg::new("display-mode").long("display-mode").help("Set the display mode to start with").default_value("Spectroscope"))
+                .arg(clap::Arg::new("enable-os-media-controls").long("enable-os-media-controls").help("Should enable OS media controls?").default_value("true").value_parser(ValueParser::bool())),
         )
         .subcommand(
             Command::new("browse")
@@ -99,7 +100,15 @@ async fn main() -> Result<(), Error> {
                 .unwrap()
                 .parse::<CurrentDisplayMode>()
                 .unwrap();
-            play::exec(station, provider, volume, display_mode).await?;
+            let enable_os_media_controls = args.get_one("enable-os-media-controls").unwrap();
+            play::exec(
+                station,
+                provider,
+                volume,
+                display_mode,
+                *enable_os_media_controls,
+            )
+            .await?;
         }
         Some(("browse", args)) => {
             let category = args.value_of("category");

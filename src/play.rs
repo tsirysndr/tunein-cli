@@ -17,6 +17,7 @@ pub async fn exec(
     provider: &str,
     volume: f32,
     display_mode: CurrentDisplayMode,
+    enable_os_media_controls: bool,
 ) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
@@ -58,14 +59,18 @@ pub async fn exec(
         tune: None,
     };
 
-    let os_media_controls = OsMediaControls::new()
-        .inspect_err(|err| {
-            eprintln!(
-                "error: failed to initialize os media controls due to `{}`",
-                err
-            );
-        })
-        .ok();
+    let os_media_controls = if enable_os_media_controls {
+        OsMediaControls::new()
+            .inspect_err(|err| {
+                eprintln!(
+                    "error: failed to initialize os media controls due to `{}`",
+                    err
+                );
+            })
+            .ok()
+    } else {
+        None
+    };
 
     let mut app = App::new(&ui, &opts, frame_rx, display_mode, os_media_controls);
     let station_name = station.name.clone();
