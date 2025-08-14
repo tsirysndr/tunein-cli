@@ -321,6 +321,24 @@ impl App {
         id: &str,
     ) {
         let new_state = cmd_rx.recv().await.unwrap();
+
+        // report metadata to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::SetMetadata(souvlaki::MediaMetadata {
+                title: (!new_state.now_playing.is_empty()).then_some(&new_state.now_playing),
+                album: (!new_state.name.is_empty()).then_some(&new_state.name),
+                artist: None,
+                cover_url: None,
+                duration: None,
+            }),
+        );
+        // report started playing to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::Play,
+        );
+
         let new_state = Arc::new(Mutex::new(new_state));
 
         let id = id.to_string();
