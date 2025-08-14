@@ -33,4 +33,36 @@ impl OsMediaControls {
             event_receiver,
         })
     }
+
+    /// Try to receive event produced by the operating system.
+    ///
+    /// Is [`None`] if no event is produced.
+    pub fn try_recv_os_event(&mut self) -> Option<souvlaki::MediaControlEvent> {
+        self.event_receiver.try_recv().ok()
+    }
+
+    /// Send the given [`Command`] to the operating system.
+    pub fn send_to_os(&mut self, command: Command) -> Result<(), souvlaki::Error> {
+        match command {
+            Command::Play => self
+                .controls
+                .set_playback(souvlaki::MediaPlayback::Playing { progress: None }),
+            Command::Pause => self
+                .controls
+                .set_playback(souvlaki::MediaPlayback::Paused { progress: None }),
+            Command::SetVolume(volume) => self.controls.set_volume(volume),
+            Command::SetMetadata(metadata) => self.controls.set_metadata(metadata),
+        }
+    }
+}
+
+/// Commands understood by OS media controls.
+#[derive(Debug, Clone)]
+pub enum Command<'a> {
+    Play,
+    Pause,
+    /// Volume must be between `0.0..=1.0`.
+    SetVolume(f64),
+    /// Set the [`souvlaki::MediaMetadata`].
+    SetMetadata(souvlaki::MediaMetadata<'a>),
 }
