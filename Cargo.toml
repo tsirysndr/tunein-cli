@@ -8,7 +8,7 @@ license = "MIT"
 name = "tunein-cli"
 readme = "README.md"
 repository = "https://github.com/tsirysndr/tunein-cli"
-version = "0.3.1"
+version = "0.3.2"
 
 [[bin]]
 name = "tunein"
@@ -31,24 +31,48 @@ crossterm = "0.27.0"
 derive_more = "0.99.17"
 futures = "0.3.26"
 futures-util = "0.3.26"
-hyper = {version = "0.14.23", features = ["client", "stream", "tcp", "http1", "http2"]}
+hyper = { version = "0.14.23", features = [
+  "client",
+  "stream",
+  "tcp",
+  "http1",
+  "http2",
+] }
 m3u = "1.0.0"
 minimp3 = "0.6"
 owo-colors = "3.5.0"
 pls = "0.2.2"
 prost = "0.13.2"
-radiobrowser = { version = "0.6.1", features = ["default-rustls"], default-features = false }
+radiobrowser = { version = "0.6.1", features = [
+  "default-rustls",
+], default-features = false }
 ratatui = "0.26.1"
 regex = "1.11.1"
-reqwest = {version = "0.11.14", features = ["blocking", "rustls-tls"], default-features = false}
-rodio = {version = "0.16"}
+reqwest = { version = "0.11.14", features = [
+  "blocking",
+  "rustls-tls",
+], default-features = false }
+rodio = { version = "0.16" }
 rustfft = "6.2.0"
 serde = "1.0.197"
-surf = {version = "2.3.2", features = ["h1-client-rustls"], default-features = false}
-symphonia = {version = "0.5.1", features = ["aac", "alac", "mp3", "isomp4", "flac"]}
+surf = { version = "2.3.2", features = [
+  "h1-client-rustls",
+], default-features = false }
+symphonia = { version = "0.5.1", features = [
+  "aac",
+  "alac",
+  "mp3",
+  "isomp4",
+  "flac",
+] }
 termion = "2.0.1"
 thiserror = "1.0.58"
-tokio = {version = "1.36.0", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
+tokio = { version = "1.36.0", features = [
+  "tokio-macros",
+  "macros",
+  "rt",
+  "rt-multi-thread",
+] }
 tonic = "0.12.3"
 tonic-reflection = "0.12.3"
 tonic-web = "0.12.3"
