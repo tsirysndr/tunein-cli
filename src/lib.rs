@@ -1,4 +1,5 @@
 pub mod extract;
+pub mod os_media_controls;
 pub mod provider;
 pub mod types;
 
