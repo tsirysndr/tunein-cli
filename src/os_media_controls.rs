@@ -50,7 +50,26 @@ impl OsMediaControls {
             Command::Pause => self
                 .controls
                 .set_playback(souvlaki::MediaPlayback::Paused { progress: None }),
-            Command::SetVolume(volume) => self.controls.set_volume(volume),
+            Command::SetVolume(volume) => {
+                // NOTE: is supported only for MPRIS backend,
+                // `souvlaki` doesn't provide a way to know this, so
+                // need to use `cfg` attribute like the way it exposes
+                // the platform
+                #[cfg(all(
+                    unix,
+                    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+                ))]
+                {
+                    self.controls.set_volume(volume)
+                }
+                #[cfg(not(all(
+                    unix,
+                    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+                )))]
+                {
+                    Ok(())
+                }
+            }
             Command::SetMetadata(metadata) => self.controls.set_metadata(metadata),
         }
     }
