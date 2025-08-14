@@ -476,12 +476,12 @@ impl App {
                 KeyCode::Up => {
                     // inverted to act as zoom
                     update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
-                    raise_volume(&state, sink_cmd_tx);
+                    raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Down => {
                     // inverted to act as zoom
                     update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
-                    lower_volume(&state, sink_cmd_tx);
+                    lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Right => update_value_i(
                     &mut self.graph.samples,
@@ -498,11 +498,17 @@ impl App {
                     0..self.graph.width * 2,
                 ),
                 KeyCode::Char('q') => quit = true,
-                KeyCode::Char(' ') => toggle_play_pause(&mut self.graph, sink_cmd_tx),
+                KeyCode::Char(' ') => toggle_play_pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                ),
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
-                KeyCode::Char('m') => mute_volume(&state, sink_cmd_tx),
+                KeyCode::Char('m') => {
+                    mute_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                }
                 KeyCode::Esc => {
                     self.graph.samples = self.graph.width;
                     self.graph.scale = 1.;
@@ -528,15 +534,33 @@ impl App {
                     }
                 }
                 KeyCode::Media(media_key_code) => match media_key_code {
-                    MediaKeyCode::Play => play(&mut self.graph, sink_cmd_tx),
-                    MediaKeyCode::Pause => pause(&mut self.graph, sink_cmd_tx),
-                    MediaKeyCode::PlayPause => toggle_play_pause(&mut self.graph, sink_cmd_tx),
+                    MediaKeyCode::Play => play(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
+                    MediaKeyCode::Pause => pause(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
+                    MediaKeyCode::PlayPause => toggle_play_pause(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
                     MediaKeyCode::Stop => {
                         quit = true;
                     }
-                    MediaKeyCode::LowerVolume => lower_volume(&state, sink_cmd_tx),
-                    MediaKeyCode::RaiseVolume => raise_volume(&state, sink_cmd_tx),
-                    MediaKeyCode::MuteVolume => mute_volume(&state, sink_cmd_tx),
+                    MediaKeyCode::LowerVolume => {
+                        lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
+                    MediaKeyCode::RaiseVolume => {
+                        raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
+                    MediaKeyCode::MuteVolume => {
+                        mute_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
                     MediaKeyCode::TrackNext
                     | MediaKeyCode::TrackPrevious
                     | MediaKeyCode::Reverse
@@ -564,19 +588,36 @@ impl App {
 
         match event {
             MediaControlEvent::Play => {
-                play(&mut self.graph, sink_cmd_tx);
+                play(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
             }
             MediaControlEvent::Pause => {
-                pause(&mut self.graph, sink_cmd_tx);
+                pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
             }
             MediaControlEvent::Toggle => {
-                toggle_play_pause(&mut self.graph, sink_cmd_tx);
+                toggle_play_pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
             }
             MediaControlEvent::Stop | MediaControlEvent::Quit => {
                 quit = true;
             }
             MediaControlEvent::SetVolume(volume) => {
-                set_volume_ratio(volume as f32, state, sink_cmd_tx);
+                set_volume_ratio(
+                    volume as f32,
+                    state,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
             }
             MediaControlEvent::Next
             | MediaControlEvent::Previous
@@ -652,54 +693,93 @@ fn make_header<'a>(
 }
 
 /// Play music.
-fn play(graph: &mut GraphConfig, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn play(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     graph.pause = false;
+    send_os_media_controls_command(os_media_controls, os_media_controls::Command::Play);
     sink_cmd_tx
         .send(SinkCommand::Play)
         .expect("receiver never dropped");
 }
 
 /// Pause music.
-fn pause(graph: &mut GraphConfig, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn pause(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     graph.pause = true;
+    send_os_media_controls_command(os_media_controls, os_media_controls::Command::Pause);
     sink_cmd_tx
         .send(SinkCommand::Pause)
         .expect("receiver never dropped");
 }
 
 /// Toggle between play and pause.
-fn toggle_play_pause(graph: &mut GraphConfig, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn toggle_play_pause(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     graph.pause = !graph.pause;
-    let sink_cmd = if graph.pause {
-        SinkCommand::Pause
+    let (sink_cmd, os_media_controls_command) = if graph.pause {
+        (SinkCommand::Pause, os_media_controls::Command::Pause)
     } else {
-        SinkCommand::Play
+        (SinkCommand::Play, os_media_controls::Command::Play)
     };
+    send_os_media_controls_command(os_media_controls, os_media_controls_command);
     sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
 }
 
 /// Lower the volume.
-fn lower_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn lower_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     let mut state = state.lock().unwrap();
     state.volume.change_volume(-1.0);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
     sink_cmd_tx
         .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
         .expect("receiver never dropped");
 }
 
 /// Raise the volume.
-fn raise_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn raise_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     let mut state = state.lock().unwrap();
     state.volume.change_volume(1.0);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
     sink_cmd_tx
         .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
         .expect("receiver never dropped");
 }
 
 /// Mute the volume.
-fn mute_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkCommand>) {
+fn mute_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
     let mut state = state.lock().unwrap();
     state.volume.toggle_mute();
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
     sink_cmd_tx
         .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
         .expect("receiver never dropped");
@@ -709,11 +789,31 @@ fn mute_volume(state: &Arc<Mutex<State>>, sink_cmd_tx: &UnboundedSender<SinkComm
 fn set_volume_ratio(
     volume_ratio: f32,
     state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
     sink_cmd_tx: &UnboundedSender<SinkCommand>,
 ) {
     let mut state = state.lock().unwrap();
     state.volume.set_volume_ratio(volume_ratio);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
     sink_cmd_tx
         .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
         .expect("receiver never dropped");
+}
+
+/// Send [`os_media_controls::Command`].
+fn send_os_media_controls_command(
+    os_media_controls: Option<&mut OsMediaControls>,
+    command: os_media_controls::Command<'_>,
+) {
+    if let Some(os_media_controls) = os_media_controls {
+        let _ = os_media_controls.send_to_os(command).inspect_err(|err| {
+            eprintln!(
+                "error: failed to send command to OS media controls due to `{}`",
+                err
+            );
+        });
+    }
 }
