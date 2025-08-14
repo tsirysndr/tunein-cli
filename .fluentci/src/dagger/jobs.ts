@@ -12,7 +12,7 @@ export const test = async (src = ".", options: string[] = []) => {
   const context = await getDirectory(src);
   const ctr = dag
     .container()
-    .from("rust:1.84-bullseye")
+    .from("rust:1.89-bullseye")
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withMountedCache("/app/target", dag.cacheVolume("target"))
@@ -27,7 +27,7 @@ export const build = async (src = ".") => {
   const context = await getDirectory(src);
   const ctr = dag
     .container()
-    .from("rust:1.84-bullseye")
+    .from("rust:1.89-bullseye")
     .withExec(["dpkg", "--add-architecture", "armhf"])
     .withExec(["dpkg", "--add-architecture", "arm64"])
     .withExec(["apt-get", "update"])
@@ -103,18 +103,18 @@ export const build = async (src = ".") => {
     .withEnvVariable("RUSTFLAGS", rustflags)
     .withEnvVariable(
       "PKG_CONFIG_ALLOW_CROSS",
-      Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu" ? "1" : "0",
+      Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu" ? "1" : "0"
     )
     .withEnvVariable(
       "C_INCLUDE_PATH",
       Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu"
         ? "/build/sysroot/usr/include"
-        : "/usr/include",
+        : "/usr/include"
     )
     .withEnvVariable("TAG", Deno.env.get("TAG") || "latest")
     .withEnvVariable(
       "TARGET",
-      Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu",
+      Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu"
     )
     .withExec([
       "sh",
@@ -142,19 +142,17 @@ export const build = async (src = ".") => {
     ]);
 
   const exe = await ctr.file(
-    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`,
+    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
   );
   await exe.export(
-    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`,
+    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
   );
 
   const sha = await ctr.file(
-    `/app/tunein_${Deno.env.get("TAG")}_${
-      Deno.env.get("TARGET")
-    }.tar.gz.sha256`,
+    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`
   );
   await sha.export(
-    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`,
+    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`
   );
   return ctr.stdout();
 };
@@ -162,11 +160,11 @@ export const build = async (src = ".") => {
 export type JobExec = (src?: string) =>
   | Promise<string>
   | ((
-    src?: string,
-    options?: {
-      ignore: string[];
-    },
-  ) => Promise<string>);
+      src?: string,
+      options?: {
+        ignore: string[];
+      }
+    ) => Promise<string>);
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.test]: test,
