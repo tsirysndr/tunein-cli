@@ -3,6 +3,7 @@ use ratatui::{
     prelude::*,
     widgets::{block::*, *},
 };
+use souvlaki::MediaControlEvent;
 use std::{
     io,
     ops::Range,
@@ -11,6 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tunein_cli::os_media_controls::{self, OsMediaControls};
 
 use crate::{
     extract::get_currently_playing,
@@ -76,6 +78,14 @@ impl Volume {
         self.is_muted = !self.is_muted;
     }
 
+    /// Set the volume to the given volume ratio.
+    ///
+    /// `1.0` is 100% volume.
+    pub const fn set_volume_ratio(&mut self, volume: f32) {
+        self.raw_volume_percent = volume * 100.0;
+        self.raw_volume_percent = self.raw_volume_percent.max(0.0);
+    }
+
     /// Change the volume by the given step percent.
     ///
     /// To increase the volume, use a positive step. To decrease the
@@ -135,6 +145,20 @@ pub struct App {
     spectroscope: Spectroscope,
     mode: CurrentDisplayMode,
     frame_rx: Receiver<minimp3::Frame>,
+    /// [`OsMediaControls`].
+    os_media_controls: Option<OsMediaControls>,
+    /// Poll for events every specified [`Duration`].
+    ///
+    /// Allows user to decide the trade off between computational
+    /// resource comsumption, animation smoothness and how responsive
+    /// the application. Smaller durations lead to more resource
+    /// consumption but smoother animations and better responsiveness.
+    poll_events_every: Duration,
+    /// [`Self::poll_events_every`] but when player is paused.
+    ///
+    /// This should generally be larger than
+    /// [`Self::poll_events_every`].
+    poll_events_every_while_paused: Duration,
 }
 
 impl App {
@@ -143,6 +167,9 @@ impl App {
         source: &crate::cfg::SourceOptions,
         frame_rx: Receiver<minimp3::Frame>,
         mode: CurrentDisplayMode,
+        os_media_controls: Option<OsMediaControls>,
+        poll_events_every: Duration,
+        poll_events_every_while_paused: Duration,
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
@@ -175,6 +202,9 @@ impl App {
             mode,
             channels: source.channels as u8,
             frame_rx,
+            os_media_controls,
+            poll_events_every,
+            poll_events_every_while_paused,
         }
     }
 }
@@ -307,6 +337,29 @@ impl App {
         id: &str,
     ) {
         let new_state = cmd_rx.recv().await.unwrap();
+
+        // report metadata to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::SetMetadata(souvlaki::MediaMetadata {
+                title: (!new_state.now_playing.is_empty()).then_some(&new_state.now_playing),
+                album: (!new_state.name.is_empty()).then_some(&new_state.name),
+                artist: None,
+                cover_url: None,
+                duration: None,
+            }),
+        );
+        // report started playing to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::Play,
+        );
+        // report volume to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::SetVolume(new_state.volume.volume_ratio() as f64),
+        );
+
         let new_state = Arc::new(Mutex::new(new_state));
 
         let id = id.to_string();
@@ -328,11 +381,20 @@ impl App {
         let mut last_poll = Instant::now();
 
         loop {
-            let channels = (!self.graph.pause)
-                .then(|| self.frame_rx.recv().unwrap())
-                .map(|audio_frame| {
-                    stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.)
-                });
+            let channels = if self.graph.pause {
+                None
+            } else {
+                let Ok(audio_frame) = self.frame_rx.recv() else {
+                    // other thread has closed so application has
+                    // closed
+                    return;
+                };
+                Some(stream_to_matrix(
+                    audio_frame.data.iter().cloned(),
+                    audio_frame.channels,
+                    1.,
+                ))
+            };
 
             fps += 1;
 
@@ -387,7 +449,23 @@ impl App {
                     .unwrap();
             }
 
-            while event::poll(Duration::from_millis(0)).unwrap() {
+            while let Some(event) = self
+                .os_media_controls
+                .as_mut()
+                .and_then(|os_media_controls| os_media_controls.try_recv_os_event())
+            {
+                if self.process_os_media_control_event(event, &new_state, &mut sink_cmd_tx) {
+                    return;
+                }
+            }
+
+            let timeout_duration = if self.graph.pause {
+                self.poll_events_every_while_paused
+            } else {
+                self.poll_events_every
+            };
+
+            while event::poll(timeout_duration).unwrap() {
                 // process all enqueued events
                 let event = event::read().unwrap();
 
@@ -434,54 +512,6 @@ impl App {
     ) -> Result<bool, io::Error> {
         let mut quit = false;
 
-        let play = |graph: &mut GraphConfig| {
-            graph.pause = false;
-            sink_cmd_tx
-                .send(SinkCommand::Play)
-                .expect("receiver never dropped");
-        };
-
-        let pause = |graph: &mut GraphConfig| {
-            graph.pause = true;
-            sink_cmd_tx
-                .send(SinkCommand::Pause)
-                .expect("receiver never dropped");
-        };
-
-        let toggle_play_pause = |graph: &mut GraphConfig| {
-            graph.pause = !graph.pause;
-            let sink_cmd = if graph.pause {
-                SinkCommand::Pause
-            } else {
-                SinkCommand::Play
-            };
-            sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
-        };
-
-        let lower_volume = || {
-            let mut state = state.lock().unwrap();
-            state.volume.change_volume(-1.0);
-            sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
-                .expect("receiver never dropped");
-        };
-
-        let raise_volume = || {
-            let mut state = state.lock().unwrap();
-            state.volume.change_volume(1.0);
-            sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
-                .expect("receiver never dropped");
-        };
-
-        let mute_volume = || {
-            let mut state = state.lock().unwrap();
-            state.volume.toggle_mute();
-            sink_cmd_tx
-                .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
-                .expect("receiver never dropped");
-        };
-
         if let Event::Key(key) = event {
             if let KeyModifiers::CONTROL = key.modifiers {
                 match key.code {
@@ -500,12 +530,12 @@ impl App {
                 KeyCode::Up => {
                     // inverted to act as zoom
                     update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
-                    raise_volume();
+                    raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Down => {
                     // inverted to act as zoom
                     update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
-                    lower_volume();
+                    lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Right => update_value_i(
                     &mut self.graph.samples,
@@ -522,11 +552,17 @@ impl App {
                     0..self.graph.width * 2,
                 ),
                 KeyCode::Char('q') => quit = true,
-                KeyCode::Char(' ') => toggle_play_pause(&mut self.graph),
+                KeyCode::Char(' ') => toggle_play_pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                ),
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
-                KeyCode::Char('m') => mute_volume(),
+                KeyCode::Char('m') => {
+                    mute_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                }
                 KeyCode::Esc => {
                     self.graph.samples = self.graph.width;
                     self.graph.scale = 1.;
@@ -552,15 +588,33 @@ impl App {
                     }
                 }
                 KeyCode::Media(media_key_code) => match media_key_code {
-                    MediaKeyCode::Play => play(&mut self.graph),
-                    MediaKeyCode::Pause => pause(&mut self.graph),
-                    MediaKeyCode::PlayPause => toggle_play_pause(&mut self.graph),
+                    MediaKeyCode::Play => play(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
+                    MediaKeyCode::Pause => pause(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
+                    MediaKeyCode::PlayPause => toggle_play_pause(
+                        &mut self.graph,
+                        self.os_media_controls.as_mut(),
+                        sink_cmd_tx,
+                    ),
                     MediaKeyCode::Stop => {
                         quit = true;
                     }
-                    MediaKeyCode::LowerVolume => lower_volume(),
-                    MediaKeyCode::RaiseVolume => raise_volume(),
-                    MediaKeyCode::MuteVolume => mute_volume(),
+                    MediaKeyCode::LowerVolume => {
+                        lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
+                    MediaKeyCode::RaiseVolume => {
+                        raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
+                    MediaKeyCode::MuteVolume => {
+                        mute_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx)
+                    }
                     MediaKeyCode::TrackNext
                     | MediaKeyCode::TrackPrevious
                     | MediaKeyCode::Reverse
@@ -573,6 +627,62 @@ impl App {
         };
 
         Ok(quit)
+    }
+
+    /// Process OS media control event.
+    ///
+    /// Returns [`true`] if application should quit.
+    fn process_os_media_control_event(
+        &mut self,
+        event: MediaControlEvent,
+        state: &Mutex<State>,
+        sink_cmd_tx: &mut UnboundedSender<SinkCommand>,
+    ) -> bool {
+        let mut quit = false;
+
+        match event {
+            MediaControlEvent::Play => {
+                play(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
+            }
+            MediaControlEvent::Pause => {
+                pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
+            }
+            MediaControlEvent::Toggle => {
+                toggle_play_pause(
+                    &mut self.graph,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
+            }
+            MediaControlEvent::Stop | MediaControlEvent::Quit => {
+                quit = true;
+            }
+            MediaControlEvent::SetVolume(volume) => {
+                set_volume_ratio(
+                    volume as f32,
+                    state,
+                    self.os_media_controls.as_mut(),
+                    sink_cmd_tx,
+                );
+            }
+            MediaControlEvent::Next
+            | MediaControlEvent::Previous
+            | MediaControlEvent::Seek(_)
+            | MediaControlEvent::SeekBy(_, _)
+            | MediaControlEvent::SetPosition(_)
+            | MediaControlEvent::OpenUri(_)
+            | MediaControlEvent::Raise => {}
+        }
+
+        quit
     }
 }
 
@@ -634,4 +744,130 @@ fn make_header<'a>(
         ],
     )
     .style(Style::default().fg(cfg.labels_color))
+}
+
+/// Play music.
+fn play(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    graph.pause = false;
+    send_os_media_controls_command(os_media_controls, os_media_controls::Command::Play);
+    sink_cmd_tx
+        .send(SinkCommand::Play)
+        .expect("receiver never dropped");
+}
+
+/// Pause music.
+fn pause(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    graph.pause = true;
+    send_os_media_controls_command(os_media_controls, os_media_controls::Command::Pause);
+    sink_cmd_tx
+        .send(SinkCommand::Pause)
+        .expect("receiver never dropped");
+}
+
+/// Toggle between play and pause.
+fn toggle_play_pause(
+    graph: &mut GraphConfig,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    graph.pause = !graph.pause;
+    let (sink_cmd, os_media_controls_command) = if graph.pause {
+        (SinkCommand::Pause, os_media_controls::Command::Pause)
+    } else {
+        (SinkCommand::Play, os_media_controls::Command::Play)
+    };
+    send_os_media_controls_command(os_media_controls, os_media_controls_command);
+    sink_cmd_tx.send(sink_cmd).expect("receiver never dropped");
+}
+
+/// Lower the volume.
+fn lower_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    let mut state = state.lock().unwrap();
+    state.volume.change_volume(-1.0);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
+    sink_cmd_tx
+        .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+        .expect("receiver never dropped");
+}
+
+/// Raise the volume.
+fn raise_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    let mut state = state.lock().unwrap();
+    state.volume.change_volume(1.0);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
+    sink_cmd_tx
+        .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+        .expect("receiver never dropped");
+}
+
+/// Mute the volume.
+fn mute_volume(
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    let mut state = state.lock().unwrap();
+    state.volume.toggle_mute();
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
+    sink_cmd_tx
+        .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+        .expect("receiver never dropped");
+}
+
+/// Set the volume to the given volume ratio.
+fn set_volume_ratio(
+    volume_ratio: f32,
+    state: &Mutex<State>,
+    os_media_controls: Option<&mut OsMediaControls>,
+    sink_cmd_tx: &UnboundedSender<SinkCommand>,
+) {
+    let mut state = state.lock().unwrap();
+    state.volume.set_volume_ratio(volume_ratio);
+    send_os_media_controls_command(
+        os_media_controls,
+        os_media_controls::Command::SetVolume(state.volume.volume_ratio() as f64),
+    );
+    sink_cmd_tx
+        .send(SinkCommand::SetVolume(state.volume.volume_ratio()))
+        .expect("receiver never dropped");
+}
+
+/// Send [`os_media_controls::Command`].
+fn send_os_media_controls_command(
+    os_media_controls: Option<&mut OsMediaControls>,
+    command: os_media_controls::Command<'_>,
+) {
+    if let Some(os_media_controls) = os_media_controls {
+        let _ = os_media_controls.send_to_os(command).inspect_err(|err| {
+            eprintln!(
+                "error: failed to send command to OS media controls due to `{}`",
+                err
+            );
+        });
+    }
 }

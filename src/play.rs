@@ -2,6 +2,7 @@ use std::{thread, time::Duration};
 
 use anyhow::Error;
 use hyper::header::HeaderValue;
+use tunein_cli::os_media_controls::OsMediaControls;
 
 use crate::{
     app::{App, CurrentDisplayMode, State, Volume},
@@ -16,6 +17,9 @@ pub async fn exec(
     provider: &str,
     volume: f32,
     display_mode: CurrentDisplayMode,
+    enable_os_media_controls: bool,
+    poll_events_every: Duration,
+    poll_events_every_while_paused: Duration,
 ) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
@@ -57,7 +61,28 @@ pub async fn exec(
         tune: None,
     };
 
-    let mut app = App::new(&ui, &opts, frame_rx, display_mode);
+    let os_media_controls = if enable_os_media_controls {
+        OsMediaControls::new()
+            .inspect_err(|err| {
+                eprintln!(
+                    "error: failed to initialize os media controls due to `{}`",
+                    err
+                );
+            })
+            .ok()
+    } else {
+        None
+    };
+
+    let mut app = App::new(
+        &ui,
+        &opts,
+        frame_rx,
+        display_mode,
+        os_media_controls,
+        poll_events_every,
+        poll_events_every_while_paused,
+    );
     let station_name = station.name.clone();
 
     thread::spawn(move || {
