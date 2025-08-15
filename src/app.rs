@@ -360,11 +360,20 @@ impl App {
         let mut last_poll = Instant::now();
 
         loop {
-            let channels = (!self.graph.pause)
-                .then(|| self.frame_rx.recv().unwrap())
-                .map(|audio_frame| {
-                    stream_to_matrix(audio_frame.data.iter().cloned(), audio_frame.channels, 1.)
-                });
+            let channels = if self.graph.pause {
+                None
+            } else {
+                let Ok(audio_frame) = self.frame_rx.recv() else {
+                    // other thread has closed so application has
+                    // closed
+                    return;
+                };
+                Some(stream_to_matrix(
+                    audio_frame.data.iter().cloned(),
+                    audio_frame.channels,
+                    1.,
+                ))
+            };
 
             fps += 1;
 
