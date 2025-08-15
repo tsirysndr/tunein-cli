@@ -147,6 +147,18 @@ pub struct App {
     frame_rx: Receiver<minimp3::Frame>,
     /// [`OsMediaControls`].
     os_media_controls: Option<OsMediaControls>,
+    /// Poll for events every specified [`Duration`].
+    ///
+    /// Allows user to decide the trade off between computational
+    /// resource comsumption, animation smoothness and how responsive
+    /// the application. Smaller durations lead to more resource
+    /// consumption but smoother animations and better responsiveness.
+    poll_events_every: Duration,
+    /// [`Self::poll_events_every`] but when player is paused.
+    ///
+    /// This should generally be larger than
+    /// [`Self::poll_events_every`].
+    poll_events_every_while_paused: Duration,
 }
 
 impl App {
@@ -156,6 +168,8 @@ impl App {
         frame_rx: Receiver<minimp3::Frame>,
         mode: CurrentDisplayMode,
         os_media_controls: Option<OsMediaControls>,
+        poll_events_every: Duration,
+        poll_events_every_while_paused: Duration,
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
@@ -189,6 +203,8 @@ impl App {
             channels: source.channels as u8,
             frame_rx,
             os_media_controls,
+            poll_events_every,
+            poll_events_every_while_paused,
         }
     }
 }
@@ -439,13 +455,9 @@ impl App {
             }
 
             let timeout_duration = if self.graph.pause {
-                // reduce checks to only every 100 milliseconds (~10
-                // times a second). This helps reduce spinning of the
-                // thread and thus consuming a lot of resources while
-                // allowing for event handling at a decent rate.
-                Duration::from_millis(100)
+                self.poll_events_every_while_paused
             } else {
-                Duration::from_millis(0)
+                self.poll_events_every
             };
 
             while event::poll(timeout_duration).unwrap() {

@@ -18,6 +18,8 @@ pub async fn exec(
     volume: f32,
     display_mode: CurrentDisplayMode,
     enable_os_media_controls: bool,
+    poll_events_every: Duration,
+    poll_events_every_while_paused: Duration,
 ) -> Result<(), Error> {
     let _provider = provider;
     let provider: Box<dyn Provider> = match provider {
@@ -72,7 +74,15 @@ pub async fn exec(
         None
     };
 
-    let mut app = App::new(&ui, &opts, frame_rx, display_mode, os_media_controls);
+    let mut app = App::new(
+        &ui,
+        &opts,
+        frame_rx,
+        display_mode,
+        os_media_controls,
+        poll_events_every,
+        poll_events_every_while_paused,
+    );
     let station_name = station.name.clone();
 
     thread::spawn(move || {
