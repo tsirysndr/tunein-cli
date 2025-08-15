@@ -354,6 +354,11 @@ impl App {
             self.os_media_controls.as_mut(),
             os_media_controls::Command::Play,
         );
+        // report volume to OS
+        send_os_media_controls_command(
+            self.os_media_controls.as_mut(),
+            os_media_controls::Command::SetVolume(new_state.volume.volume_ratio() as f64),
+        );
 
         let new_state = Arc::new(Mutex::new(new_state));
 
