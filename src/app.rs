@@ -429,7 +429,17 @@ impl App {
                 }
             }
 
-            while event::poll(Duration::from_millis(0)).unwrap() {
+            let timeout_duration = if self.graph.pause {
+                // reduce checks to only every 100 milliseconds (~10
+                // times a second). This helps reduce spinning of the
+                // thread and thus consuming a lot of resources while
+                // allowing for event handling at a decent rate.
+                Duration::from_millis(100)
+            } else {
+                Duration::from_millis(0)
+            };
+
+            while event::poll(timeout_duration).unwrap() {
                 // process all enqueued events
                 let event = event::read().unwrap();
 
