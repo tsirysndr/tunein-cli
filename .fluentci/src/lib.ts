@@ -31,8 +31,8 @@ export function buildRustFlags(): string {
         -Clink-arg=-lcap \
         -Clink-arg=-lgcrypt \
         -Clink-arg=-lgpg-error \
-        -Clink-arg=-lz4 \
-        -Clink-arg=-lzma \
+        -Clink-arg=-llz4 \
+        -Clink-arg=-llzma \
         -Clink-arg=-lpsx \
         -Clink-arg=-lxxhash \
         -Clink-arg=-lzstd \
@@ -46,8 +46,8 @@ export function buildRustFlags(): string {
         -Clink-arg=-lcap \
         -Clink-arg=-lgcrypt \
         -Clink-arg=-lgpg-error \
-        -Clink-arg=-lz4 \
-        -Clink-arg=-lzma \
+        -Clink-arg=-llz4 \
+        -Clink-arg=-llzma \
         -Clink-arg=-lpsx \
         -Clink-arg=-lxxhash \
         -Clink-arg=-lzstd \
