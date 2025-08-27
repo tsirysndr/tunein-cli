@@ -184,7 +184,7 @@ export const build = async (src = ".") => {
     .withExec([
       "dpkg",
       "-x",
-      "libgpg-error-dev_1.38-2_armhf.debeb",
+      "libgpg-error-dev_1.38-2_armhf.deb",
       "/build/sysroot/",
     ])
     .withExec([
