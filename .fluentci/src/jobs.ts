@@ -349,6 +349,26 @@ export const build = async (src = ".") => {
       "libzstd-dev_1.4.8+dfsg-2.1_arm64.deb",
       "/build/sysroot/",
     ])
+    .withExec([
+      "cp",
+      "/build/sysroot/usr/lib/aarch64-linux-gnu/liblzma.so",
+      "/build/sysroot/usr/lib/aarch64-linux-gnu/liblzma.so.5",
+    ])
+    .withExec([
+      "cp",
+      "/build/sysroot/usr/lib/arm-linux-gnueabihf/liblzma.so",
+      "/build/sysroot/usr/lib/arm-linux-gnueabihf/liblzma.so.5",
+    ])
+    .withExec([
+      "cp",
+      "/build/sysroot/usr/lib/aarch64-linux-gnu/libgpg-error.so",
+      "/build/sysroot/usr/lib/aarch64-linux-gnu/libgpg-error.so.0",
+    ])
+    .withExec([
+      "cp",
+      "/build/sysroot/usr/lib/arm-linux-gnueabihf/libgpg-error.so",
+      "/build/sysroot/usr/lib/arm-linux-gnueabihf/libgpg-error.so.0",
+    ])
     .withDirectory("/app", context, { exclude })
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
