@@ -1,5 +1,5 @@
-import { brightGreen, stringifyTree } from "../../deps.ts";
-import { runnableJobs, jobDescriptions, Job } from "./jobs.ts";
+import { brightGreen, stringifyTree } from "../deps.ts";
+import { Job, jobDescriptions, runnableJobs } from "./jobs.ts";
 
 const tree = {
   name: brightGreen("rust_pipeline"),
@@ -15,6 +15,6 @@ console.log(
   stringifyTree(
     tree,
     (t) => t.name,
-    (t) => t.children
-  )
+    (t) => t.children,
+  ),
 );

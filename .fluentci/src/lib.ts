@@ -1,5 +1,5 @@
-import { dag } from "../../sdk/client.gen.ts";
-import { Directory, DirectoryID } from "../../deps.ts";
+import { dag } from "../sdk/client.gen.ts";
+import { Directory, DirectoryID } from "../deps.ts";
 
 export const getDirectory = async (
   src: string | Directory | undefined = ".",
@@ -27,13 +27,31 @@ export function buildRustFlags(): string {
   let rustflags = "";
   switch (Deno.env.get("TARGET")) {
     case "aarch64-unknown-linux-gnu":
-      rustflags = `-Clink-arg=-lsystemd -C linker=aarch64-linux-gnu-gcc \
+      rustflags = `-Clink-arg=-lsystemd \
+        -Clink-arg=-lcap \
+        -Clink-arg=-lgcrypt \
+        -Clink-arg=-lgpg-error \
+        -Clink-arg=-lz4 \
+        -Clink-arg=-lzma \
+        -Clink-arg=-lpsx \
+        -Clink-arg=-lxxhash \
+        -Clink-arg=-lzstd \
+        -C linker=aarch64-linux-gnu-gcc \
         -L/usr/aarch64-linux-gnu/lib \
         -L/build/sysroot/usr/lib/aarch64-linux-gnu \
         -L/build/sysroot/lib/aarch64-linux-gnu`;
       break;
     case "armv7-unknown-linux-gnueabihf":
-      rustflags = `-Clink-arg=-lsystemd -C linker=arm-linux-gnueabihf-gcc \
+      rustflags = `-Clink-arg=-lsystemd \
+        -Clink-arg=-lcap \
+        -Clink-arg=-lgcrypt \
+        -Clink-arg=-lgpg-error \
+        -Clink-arg=-lz4 \
+        -Clink-arg=-lzma \
+        -Clink-arg=-lpsx \
+        -Clink-arg=-lxxhash \
+        -Clink-arg=-lzstd \
+        -C linker=arm-linux-gnueabihf-gcc \
         -L/usr/arm-linux-gnueabihf/lib \
         -L/build/sysroot/usr/lib/arm-linux-gnueabihf \
         -L/build/sysroot/lib/arm-linux-gnueabihf`;

@@ -1,4 +1,4 @@
-import { dag } from "../../sdk/client.gen.ts";
+import { dag } from "../sdk/client.gen.ts";
 import { buildRustFlags, getDirectory } from "./lib.ts";
 
 export enum Job {
@@ -73,12 +73,41 @@ export const build = async (src = ".") => {
       "libdbus-1-3:armhf",
       "libsystemd-dev:armhf",
       "libsystemd0:armhf",
+      "libcap2:armhf",
+      "libcap-dev:armhf",
+      "libgcrypt20:armhf",
+      "libgcrypt20-dev:armhf",
+      "libgpg-error0:armhf",
+      "libgpg-error-dev:armhf",
+      "liblz4-1:armhf",
+      "liblz4-dev:armhf",
+      "libxxhash0:armhf",
+      "libxxhash-dev:armhf",
+      "liblzma5:armhf",
+      "liblzma-dev:armhf",
+      "libzstd1:armhf",
+      "libzstd-dev:armhf",
+
       "libasound2:arm64",
       "libasound2-dev:arm64",
       "libdbus-1-dev:arm64",
       "libdbus-1-3:arm64",
       "libsystemd-dev:arm64",
       "libsystemd0:arm64",
+      "libcap2:arm64",
+      "libcap-dev:arm64",
+      "libgcrypt20:arm64",
+      "libgcrypt20-dev:arm64",
+      "libgpg-error0:arm64",
+      "libgpg-error-dev:arm64",
+      "liblz4-1:arm64",
+      "liblz4-dev:arm64",
+      "libxxhash0:arm64",
+      "libxxhash-dev:arm64",
+      "liblzma5:arm64",
+      "liblzma-dev:arm64",
+      "libzstd1:arm64",
+      "libzstd-dev:arm64",
     ])
     .withExec([
       "dpkg",
@@ -131,6 +160,90 @@ export const build = async (src = ".") => {
     .withExec([
       "dpkg",
       "-x",
+      "libcap-dev_1%3a2.44-1+deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libcap2_1%3a2.44-1+deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgcrypt20-dev_1.8.7-6_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgcrypt20_1.8.7-6_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgpg-error-dev_1.38-2_armhf.debeb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgpg-error0_1.38-2_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblz4-1_1.9.3-2_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblz4-dev_1.9.3-2_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblzma-dev_5.2.5-2.1~deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblzma5_5.2.5-2.1~deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libxxhash-dev_0.8.0-2_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libxxhash0_0.8.0-2_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libzstd1_1.4.8+dfsg-2.1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libzstd-dev_1.4.8+dfsg-2.1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
       "libdbus-1-dev_1.12.28-0+deb11u1_arm64.deb",
       "/build/sysroot/",
     ])
@@ -152,6 +265,91 @@ export const build = async (src = ".") => {
       "libsystemd0_247.3-7+deb11u7_arm64.deb",
       "/build/sysroot/",
     ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libcap-dev_1%3a2.44-1+deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libcap2_1%3a2.44-1+deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgcrypt20-dev_1.8.7-6_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgcrypt20_1.8.7-6_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgpg-error-dev_1.38-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libgpg-error0_1.38-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblz4-1_1.9.3-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblz4-dev_1.9.3-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblzma-dev_5.2.5-2.1~deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "liblzma5_5.2.5-2.1~deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libxxhash-dev_0.8.0-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libxxhash0_0.8.0-2_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libzstd1_1.4.8+dfsg-2.1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libzstd-dev_1.4.8+dfsg-2.1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withDirectory("/app", context, { exclude })
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withMountedCache("/app/target", dag.cacheVolume("target"))

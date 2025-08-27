@@ -1,1 +1,1 @@
-export * from "./src/dagger/index.ts";
+export * from "./src/mod.ts";
