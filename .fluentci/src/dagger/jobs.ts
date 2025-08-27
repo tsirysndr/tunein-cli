@@ -61,6 +61,7 @@ export const build = async (src = ".") => {
       "bc",
       "pkg-config",
       "libudev-dev",
+      "libdbus-1-dev",
     ])
     .withExec(["mkdir", "-p", "/build/sysroot"])
     .withExec([
@@ -68,8 +69,10 @@ export const build = async (src = ".") => {
       "download",
       "libasound2:armhf",
       "libasound2-dev:armhf",
+      "libdbus-1-dev:armhf",
       "libasound2:arm64",
       "libasound2-dev:arm64",
+      "libdbus-1-dev:arm64",
     ])
     .withExec([
       "dpkg",
@@ -95,6 +98,18 @@ export const build = async (src = ".") => {
       "libasound2_1.2.4-1.1_armhf.deb",
       "/build/sysroot/",
     ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libdbus-1-dev_1.12.28-0+deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libdbus-1-dev_1.12.28-0+deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withMountedCache("/app/target", dag.cacheVolume("target"))
@@ -103,18 +118,18 @@ export const build = async (src = ".") => {
     .withEnvVariable("RUSTFLAGS", rustflags)
     .withEnvVariable(
       "PKG_CONFIG_ALLOW_CROSS",
-      Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu" ? "1" : "0"
+      Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu" ? "1" : "0",
     )
     .withEnvVariable(
       "C_INCLUDE_PATH",
       Deno.env.get("TARGET") !== "x86_64-unknown-linux-gnu"
         ? "/build/sysroot/usr/include"
-        : "/usr/include"
+        : "/usr/include",
     )
     .withEnvVariable("TAG", Deno.env.get("TAG") || "latest")
     .withEnvVariable(
       "TARGET",
-      Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu"
+      Deno.env.get("TARGET") || "x86_64-unknown-linux-gnu",
     )
     .withExec([
       "sh",
@@ -142,17 +157,19 @@ export const build = async (src = ".") => {
     ]);
 
   const exe = await ctr.file(
-    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
+    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`,
   );
   await exe.export(
-    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`
+    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz`,
   );
 
   const sha = await ctr.file(
-    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`
+    `/app/tunein_${Deno.env.get("TAG")}_${
+      Deno.env.get("TARGET")
+    }.tar.gz.sha256`,
   );
   await sha.export(
-    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`
+    `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`,
   );
   return ctr.stdout();
 };
@@ -160,11 +177,11 @@ export const build = async (src = ".") => {
 export type JobExec = (src?: string) =>
   | Promise<string>
   | ((
-      src?: string,
-      options?: {
-        ignore: string[];
-      }
-    ) => Promise<string>);
+    src?: string,
+    options?: {
+      ignore: string[];
+    },
+  ) => Promise<string>);
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.test]: test,
