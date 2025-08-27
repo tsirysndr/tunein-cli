@@ -1,6 +1,6 @@
 
 Name:           tunein-cli
-Version:        0.3.2
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        CLI for listening to internet radio stations
 
@@ -8,7 +8,7 @@ License:        MIT
 
 BuildArch:      aarch64
 
-Requires: alsa-utils, alsa-lib-devel
+Requires: alsa-utils, alsa-lib-devel, dbus-libs
 
 %description
 Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨
