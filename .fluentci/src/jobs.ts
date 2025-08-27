@@ -167,7 +167,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "libcap2_1%3a2.44-1+deb11u1_armhf.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -191,7 +191,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "libgpg-error0_1.38-2_armhf.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -215,7 +215,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "liblzma5_5.2.5-2.1~deb11u1_armhf.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -275,7 +275,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "libcap2_1%3a2.44-1+deb11u1_arm64.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -299,7 +299,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "libgpg-error0_1.38-2_arm64.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -323,7 +323,7 @@ export const build = async (src = ".") => {
       "dpkg",
       "-x",
       "liblzma5_5.2.5-2.1~deb11u1_arm64.deb",
-      "/build/sysroot/",
+      "/",
     ])
     .withExec([
       "dpkg",
@@ -348,26 +348,6 @@ export const build = async (src = ".") => {
       "-x",
       "libzstd-dev_1.4.8+dfsg-2.1_arm64.deb",
       "/build/sysroot/",
-    ])
-    .withExec([
-      "cp",
-      "/build/sysroot/usr/lib/aarch64-linux-gnu/liblzma.so",
-      "/build/sysroot/usr/lib/aarch64-linux-gnu/liblzma.so.5",
-    ])
-    .withExec([
-      "cp",
-      "/build/sysroot/usr/lib/arm-linux-gnueabihf/liblzma.so",
-      "/build/sysroot/usr/lib/arm-linux-gnueabihf/liblzma.so.5",
-    ])
-    .withExec([
-      "cp",
-      "/build/sysroot/usr/lib/aarch64-linux-gnu/libgpg-error.so",
-      "/build/sysroot/usr/lib/aarch64-linux-gnu/libgpg-error.so.0",
-    ])
-    .withExec([
-      "cp",
-      "/build/sysroot/usr/lib/arm-linux-gnueabihf/libgpg-error.so",
-      "/build/sysroot/usr/lib/arm-linux-gnueabihf/libgpg-error.so.0",
     ])
     .withDirectory("/app", context, { exclude })
     .withDirectory("/app", context, { exclude })
