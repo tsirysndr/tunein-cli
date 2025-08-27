@@ -20,6 +20,10 @@ pre-build = [
   "apt-get update && apt-get --assume-yes install libasound2-dev libasound2-dev:$CROSS_DEB_ARCH protobuf-compiler",
 ]
 
+[profile.release]
+codegen-units = 1
+lto = true
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
