@@ -70,9 +70,11 @@ export const build = async (src = ".") => {
       "libasound2:armhf",
       "libasound2-dev:armhf",
       "libdbus-1-dev:armhf",
+      "libdbus-1:armhf",
       "libasound2:arm64",
       "libasound2-dev:arm64",
       "libdbus-1-dev:arm64",
+      "libdbus-1:arm64",
     ])
     .withExec([
       "dpkg",
@@ -107,7 +109,19 @@ export const build = async (src = ".") => {
     .withExec([
       "dpkg",
       "-x",
+      "libdbus-1_1.12.28-0+deb11u1_armhf.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
       "libdbus-1-dev_1.12.28-0+deb11u1_arm64.deb",
+      "/build/sysroot/",
+    ])
+    .withExec([
+      "dpkg",
+      "-x",
+      "libdbus-1_1.12.28-0+deb11u1_arm64.deb",
       "/build/sysroot/",
     ])
     .withDirectory("/app", context, { exclude })
