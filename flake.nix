@@ -32,7 +32,7 @@
 
         inherit (pkgs) lib;
 
-        craneLib = crane.lib.${system};
+        craneLib = crane.mkLib pkgs;
 
         protoFilter = path: _type: builtins.match ".*proto$" path != null;
         protoOrCargo = path: type:
@@ -59,6 +59,7 @@
             pkgs.perl
             pkgs.protobuf
             pkgs.alsa-lib.dev
+            pkgs.dbus
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
