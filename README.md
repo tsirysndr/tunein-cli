@@ -36,7 +36,7 @@ Compile from source, without Nix:
 ```bash
 # Install dependencies
 brew install protobuf # macOS
-sudo apt-get install -y libasound2-dev protobuf-compiler # Ubuntu/Debian
+sudo apt-get install -y libasound2-dev protobuf-compiler libdbus-1-dev # Ubuntu/Debian
 # Compile and install
 git clone https://github.com/tsirysndr/tunein-cli
 cd tunein-cli
