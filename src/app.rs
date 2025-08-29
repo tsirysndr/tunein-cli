@@ -338,55 +338,64 @@ impl App {
     ) {
         let new_state = cmd_rx.recv().await.unwrap();
 
-        // report metadata to OS
+        let now_playing = new_state.now_playing.clone();
+        let name = new_state.name.clone();
+        // Report initial metadata to OS
         send_os_media_controls_command(
             self.os_media_controls.as_mut(),
             os_media_controls::Command::SetMetadata(souvlaki::MediaMetadata {
-                title: (!new_state.now_playing.is_empty()).then_some(&new_state.now_playing),
-                album: (!new_state.name.is_empty()).then_some(&new_state.name),
+                title: (!now_playing.is_empty()).then(|| now_playing.as_str()),
+                album: (!name.is_empty()).then(|| name.as_str()),
                 artist: None,
                 cover_url: None,
                 duration: None,
             }),
         );
-        // report started playing to OS
+        // Report started playing to OS
         send_os_media_controls_command(
             self.os_media_controls.as_mut(),
             os_media_controls::Command::Play,
         );
-        // report volume to OS
+        // Report volume to OS
         send_os_media_controls_command(
             self.os_media_controls.as_mut(),
             os_media_controls::Command::SetVolume(new_state.volume.volume_ratio() as f64),
         );
 
         let new_state = Arc::new(Mutex::new(new_state));
-
         let id = id.to_string();
         let new_state_clone = new_state.clone();
 
-        thread::spawn(move || loop {
+        // Background thread to update now_playing
+        thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                let mut new_state = new_state_clone.lock().unwrap();
-                // Get current playing if available, otherwise use state's value
-                new_state.now_playing = get_currently_playing(&id).await.unwrap_or_default();
-                drop(new_state);
-                std::thread::sleep(Duration::from_millis(10000));
+                loop {
+                    let mut new_state = new_state_clone.lock().unwrap();
+                    // Get current playing if available, otherwise use default
+                    let now_playing = get_currently_playing(&id).await.unwrap_or_default();
+                    if new_state.now_playing != now_playing {
+                        new_state.now_playing = now_playing;
+                    }
+                    drop(new_state);
+                    std::thread::sleep(Duration::from_millis(10000));
+                }
             });
         });
 
         let mut fps = 0;
         let mut framerate = 0;
         let mut last_poll = Instant::now();
+        let mut last_metadata_update = Instant::now();
+        let mut last_now_playing = String::new();
+        const METADATA_UPDATE_INTERVAL: Duration = Duration::from_secs(1); // Check every second
 
         loop {
             let channels = if self.graph.pause {
                 None
             } else {
                 let Ok(audio_frame) = self.frame_rx.recv() else {
-                    // other thread has closed so application has
-                    // closed
+                    // other thread has closed so application has closed
                     return;
                 };
                 Some(stream_to_matrix(
@@ -441,12 +450,33 @@ impl App {
                                 size.y += 8;
                             }
                             let chart = Chart::new(datasets.iter().map(|x| x.into()).collect())
-                                .x_axis(current_display.axis(&self.graph, Dimension::X)) // TODO allow to have axis sometimes?
+                                .x_axis(current_display.axis(&self.graph, Dimension::X))
                                 .y_axis(current_display.axis(&self.graph, Dimension::Y));
                             f.render_widget(chart, size)
                         }
                     })
                     .unwrap();
+
+                // Update metadata only if needed and at a controlled interval
+                if last_metadata_update.elapsed() >= METADATA_UPDATE_INTERVAL {
+                    let state = new_state.lock().unwrap();
+                    if state.now_playing != last_now_playing {
+                        let now_playing = state.now_playing.clone();
+                        let name = state.name.clone();
+                        send_os_media_controls_command(
+                            self.os_media_controls.as_mut(),
+                            os_media_controls::Command::SetMetadata(souvlaki::MediaMetadata {
+                                title: (!now_playing.is_empty()).then_some(now_playing.as_str()),
+                                album: (!name.is_empty()).then_some(name.as_str()),
+                                artist: None,
+                                cover_url: None,
+                                duration: None,
+                            }),
+                        );
+                        last_now_playing = state.now_playing.clone();
+                    }
+                    last_metadata_update = Instant::now();
+                }
             }
 
             while let Some(event) = self
@@ -481,7 +511,6 @@ impl App {
             }
         }
     }
-
     fn current_display_mut(&mut self) -> Option<&mut dyn DisplayMode> {
         match self.mode {
             CurrentDisplayMode::Oscilloscope => {
