@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{process, thread, time::Duration};
 
 use anyhow::Error;
 use hyper::header::HeaderValue;
@@ -167,7 +167,8 @@ pub async fn exec(
     let mut terminal = tui::init()?;
     app.run(&mut terminal, cmd_rx, sink_cmd_tx, &id).await;
     tui::restore()?;
-    Ok(())
+
+    process::exit(0);
 }
 
 /// Command for a sink.
