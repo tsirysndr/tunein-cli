@@ -20,6 +20,7 @@ pub enum Dimension {
 pub struct GraphConfig {
     pub pause: bool,
     pub samples: u32,
+    #[allow(dead_code)]
     pub sampling_rate: u32,
     pub scale: f64,
     pub width: u32,
@@ -47,7 +48,7 @@ pub trait DisplayMode {
     fn from_args(args: &crate::cfg::SourceOptions) -> Self
     where
         Self: Sized;
-    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis; // TODO simplify this
+    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis<'_>; // TODO simplify this
     fn process(&mut self, cfg: &GraphConfig, data: &Matrix<f64>) -> Vec<DataSet>;
     fn mode_str(&self) -> &'static str;
 

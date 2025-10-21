@@ -65,5 +65,10 @@ pub async fn get_currently_playing(station: &str) -> Result<String, Error> {
         .await
         .map_err(|e| Error::msg(e.to_string()))?;
 
-    Ok(response.header.subtitle)
+    let subtitle = response.header.subtitle.trim();
+    if subtitle.is_empty() {
+        Ok(response.header.title.trim().to_string())
+    } else {
+        Ok(subtitle.to_string())
+    }
 }
