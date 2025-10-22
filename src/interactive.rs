@@ -7,7 +7,9 @@ use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 use tokio::sync::mpsc;
+use tunein_cli::os_media_controls::{self, OsMediaControls};
 
+use crate::app::send_os_media_controls_command;
 use crate::audio::{AudioController, PlaybackEvent, PlaybackState};
 use crate::extract::get_currently_playing;
 use crate::favorites::{FavoriteStation, FavoritesStore};
@@ -42,12 +44,22 @@ pub async fn run(provider_name: &str) -> Result<(), Error> {
     let (input_tx, mut input_rx) = mpsc::unbounded_channel();
     spawn_input_thread(input_tx.clone());
 
+    let os_media_controls = OsMediaControls::new()
+        .inspect_err(|err| {
+            eprintln!(
+                "error: failed to initialize os media controls due to `{}`",
+                err
+            );
+        })
+        .ok();
+
     let mut app = HubApp::new(
         provider_name.to_string(),
         provider,
         audio,
         favorites,
         metadata_tx,
+        os_media_controls,
     );
 
     let result = loop {
@@ -103,6 +115,7 @@ struct HubApp {
     metadata_tx: mpsc::UnboundedSender<HubMessage>,
     now_playing_station_id: Option<String>,
     next_now_playing_poll: Instant,
+    os_media_controls: Option<OsMediaControls>,
 }
 
 impl HubApp {
@@ -112,6 +125,7 @@ impl HubApp {
         audio: AudioController,
         favorites: FavoritesStore,
         metadata_tx: mpsc::UnboundedSender<HubMessage>,
+        os_media_controls: Option<OsMediaControls>,
     ) -> Self {
         let mut ui = UiState::default();
         ui.menu_state.select(Some(0));
@@ -129,6 +143,7 @@ impl HubApp {
             metadata_tx,
             now_playing_station_id: None,
             next_now_playing_poll: Instant::now(),
+            os_media_controls,
         }
     }
 
@@ -202,7 +217,20 @@ impl HubApp {
                 })
             })
             .unwrap_or_else(|| "Unknown".to_string());
-        self.render_labeled_line(frame, area, row, "Station ", &station_name);
+        let station_id = self
+            .current_playback
+            .as_ref()
+            .map(|p| p.station.id.as_str())
+            .or_else(|| self.current_station.as_ref().map(|s| s.station.id.as_str()))
+            .unwrap_or("N/A");
+
+        self.render_labeled_line(
+            frame,
+            area,
+            row,
+            "Station ",
+            &format!("{} - {}", station_name, station_id),
+        );
         row += 1;
 
         let now_playing = self
@@ -969,6 +997,7 @@ impl HubApp {
                 self.current_playback = Some(state.clone());
                 if let Some(station) = self.current_station.as_mut() {
                     station.station.playing = Some(state.now_playing.clone());
+                    station.station.id = state.station.id.clone();
                 }
                 self.set_status(&format!("Now playing {}", state.stream_name));
                 self.prepare_now_playing_poll();
@@ -996,6 +1025,23 @@ impl HubApp {
                     station.station.playing = Some(now_playing.clone());
                 }
                 self.set_status(&format!("Now Playing {}", now_playing));
+
+                let name = self
+                    .current_station
+                    .as_ref()
+                    .map(|s| s.station.name.clone())
+                    .unwrap_or_default();
+
+                send_os_media_controls_command(
+                    self.os_media_controls.as_mut(),
+                    os_media_controls::Command::SetMetadata(souvlaki::MediaMetadata {
+                        title: (!now_playing.is_empty()).then_some(now_playing.as_str()),
+                        album: (!name.is_empty()).then_some(name.as_str()),
+                        artist: None,
+                        cover_url: None,
+                        duration: None,
+                    }),
+                );
             }
         }
     }

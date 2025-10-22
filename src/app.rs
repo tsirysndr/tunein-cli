@@ -887,7 +887,7 @@ fn set_volume_ratio(
 }
 
 /// Send [`os_media_controls::Command`].
-fn send_os_media_controls_command(
+pub fn send_os_media_controls_command(
     os_media_controls: Option<&mut OsMediaControls>,
     command: os_media_controls::Command<'_>,
 ) {
