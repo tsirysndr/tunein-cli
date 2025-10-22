@@ -5,11 +5,14 @@ use app::CurrentDisplayMode;
 use clap::{arg, builder::ValueParser, Command};
 
 mod app;
+mod audio;
 mod browse;
 mod cfg;
 mod decoder;
 mod extract;
+mod favorites;
 mod input;
+mod interactive;
 mod music;
 mod play;
 mod player;
@@ -39,7 +42,6 @@ A simple CLI to listen to radio stations"#,
         .arg(
             arg!(-p --provider "The radio provider to use, can be 'tunein' or 'radiobrowser'. Default is 'tunein'").default_value("tunein")
         )
-        .subcommand_required(true)
         .subcommand(
             Command::new("search")
                 .about("Search for a radio station")
@@ -88,16 +90,15 @@ A simple CLI to listen to radio stations"#,
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let matches = cli().get_matches();
+    let provider = matches.value_of("provider").unwrap().to_string();
 
     match matches.subcommand() {
         Some(("search", args)) => {
             let query = args.value_of("query").unwrap();
-            let provider = matches.value_of("provider").unwrap();
-            search::exec(query, provider).await?;
+            search::exec(query, provider.as_str()).await?;
         }
         Some(("play", args)) => {
             let station = args.value_of("station").unwrap();
-            let provider = matches.value_of("provider").unwrap();
             let volume = args.value_of("volume").unwrap().parse::<f32>().unwrap();
             let display_mode = args
                 .value_of("display-mode")
@@ -115,7 +116,7 @@ async fn main() -> Result<(), Error> {
             );
             play::exec(
                 station,
-                provider,
+                provider.as_str(),
                 volume,
                 display_mode,
                 *enable_os_media_controls,
@@ -128,12 +129,11 @@ async fn main() -> Result<(), Error> {
             let category = args.value_of("category");
             let offset = args.value_of("offset").unwrap();
             let limit = args.value_of("limit").unwrap();
-            let provider = matches.value_of("provider").unwrap();
             browse::exec(
                 category,
                 offset.parse::<u32>()?,
                 limit.parse::<u32>()?,
-                provider,
+                provider.as_str(),
             )
             .await?;
         }
@@ -151,7 +151,16 @@ async fn main() -> Result<(), Error> {
                 std::process::exit(1);
             }
         },
-        _ => unreachable!(),
+        None => {
+            interactive::run(provider.as_str()).await?;
+        }
+        Some((other, _)) => {
+            eprintln!(
+                "Unknown subcommand '{}'. Use `tunein --help` for available commands.",
+                other
+            );
+            std::process::exit(1);
+        }
     }
 
     Ok(())

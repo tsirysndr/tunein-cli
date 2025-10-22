@@ -55,7 +55,7 @@ impl DisplayMode for Oscilloscope {
         }
     }
 
-    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis {
+    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis<'_> {
         let (name, bounds) = match dimension {
             Dimension::X => ("time -", [0.0, cfg.samples as f64]),
             Dimension::Y => ("| amplitude", [-cfg.scale, cfg.scale]),

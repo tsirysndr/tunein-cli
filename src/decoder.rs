@@ -11,14 +11,14 @@ where
     decoder: Decoder<R>,
     current_frame: Frame,
     current_frame_offset: usize,
-    tx: Sender<Frame>,
+    tx: Option<Sender<Frame>>,
 }
 
 impl<R> Mp3Decoder<R>
 where
     R: Read,
 {
-    pub fn new(mut data: R, tx: Sender<Frame>) -> Result<Self, R> {
+    pub fn new(mut data: R, tx: Option<Sender<Frame>>) -> Result<Self, R> {
         if !is_mp3(data.by_ref()) {
             return Err(data);
         }
@@ -70,9 +70,10 @@ where
         if self.current_frame_offset == self.current_frame.data.len() {
             match self.decoder.next_frame() {
                 Ok(frame) => {
-                    match self.tx.send(frame.clone()) {
-                        Ok(_) => {}
-                        Err(_) => return None,
+                    if let Some(tx) = &self.tx {
+                        if tx.send(frame.clone()).is_err() {
+                            return None;
+                        }
                     }
                     self.current_frame = frame
                 }

@@ -84,7 +84,7 @@ impl DisplayMode for Spectroscope {
         }
     }
 
-    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis {
+    fn axis(&self, cfg: &GraphConfig, dimension: Dimension) -> Axis<'_> {
         let (name, bounds) = match dimension {
             Dimension::X => (
                 "frequency -",

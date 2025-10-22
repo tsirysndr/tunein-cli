@@ -61,7 +61,7 @@ impl PlayerInternal {
         let sink = self.sink.clone();
 
         thread::spawn(move || {
-            let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
+            let (frame_tx, _frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
             let client = reqwest::blocking::Client::new();
 
             let response = client.get(url.clone()).send().unwrap();
@@ -80,7 +80,7 @@ impl PlayerInternal {
                 }
                 None => response,
             };
-            let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
+            let decoder = Mp3Decoder::new(response, Some(frame_tx)).unwrap();
 
             {
                 let sink = sink.lock().unwrap();

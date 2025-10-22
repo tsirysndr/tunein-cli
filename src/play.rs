@@ -143,7 +143,7 @@ pub async fn exec(
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
         sink.set_volume(volume.volume_ratio());
-        let decoder = Mp3Decoder::new(response, frame_tx).unwrap();
+        let decoder = Mp3Decoder::new(response, Some(frame_tx)).unwrap();
         sink.append(decoder);
 
         loop {
