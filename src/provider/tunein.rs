@@ -55,7 +55,12 @@ impl Provider for Tunein {
                     None => Ok(None),
                 }
             }
-            _ => Ok(Some(Station::from(stations[0].clone()))),
+            _ => {
+                let mut station = Station::from(stations[0].clone());
+                // Preserve the original station ID since StationLinkDetails doesn't contain it
+                station.id = id;
+                Ok(Some(station))
+            }
         }
     }
 
