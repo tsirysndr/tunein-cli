@@ -27,6 +27,8 @@
 A command line interface for [TuneIn Radio](https://tunein.com) / [Radio Browser](https://www.radio-browser.info/).<br />
 You can search for stations, play them, and see what's currently playing.
 
+<a href="https://pocketenv.io/new?repo=tangled:tsiry-sandratraina.com/tunein-cli" target="_blank"><img src="https://pocketenv.io/open-in-pocketenv.svg" alt="Open in Pocketenv" /></a>
+
 ![Made with VHS](https://vhs.charm.sh/vhs-4UhZFFRvVAuaZnapZUlp6R.gif)
 
 ## 🚚 Installation
