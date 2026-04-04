@@ -39,7 +39,10 @@ export function buildRustFlags(): string {
         -C linker=aarch64-linux-gnu-gcc \
         -L/usr/aarch64-linux-gnu/lib \
         -L/build/sysroot/usr/lib/aarch64-linux-gnu \
-        -L/build/sysroot/lib/aarch64-linux-gnu`;
+        -L/build/sysroot/lib/aarch64-linux-gnu \
+        -Clink-arg=-Wl,-rpath-link,/build/sysroot/usr/lib/aarch64-linux-gnu \
+        -Clink-arg=-Wl,-rpath-link,/build/sysroot/lib/aarch64-linux-gnu \
+        -Clink-arg=-Wl,-rpath-link,/usr/aarch64-linux-gnu/lib`;
       break;
     case "armv7-unknown-linux-gnueabihf":
       rustflags = `-Clink-arg=-lsystemd \
@@ -54,7 +57,10 @@ export function buildRustFlags(): string {
         -C linker=arm-linux-gnueabihf-gcc \
         -L/usr/arm-linux-gnueabihf/lib \
         -L/build/sysroot/usr/lib/arm-linux-gnueabihf \
-        -L/build/sysroot/lib/arm-linux-gnueabihf`;
+        -L/build/sysroot/lib/arm-linux-gnueabihf \
+        -Clink-arg=-Wl,-rpath-link,/build/sysroot/usr/lib/arm-linux-gnueabihf \
+        -Clink-arg=-Wl,-rpath-link,/build/sysroot/lib/arm-linux-gnueabihf \
+        -Clink-arg=-Wl,-rpath-link,/usr/arm-linux-gnueabihf/lib`;
       break;
     default:
       break;

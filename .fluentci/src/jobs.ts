@@ -73,6 +73,7 @@ export const build = async (src = ".") => {
       "libudev-dev",
       "libdbus-1-dev",
     ])
+    .withExec(["apt-get", "install", "-y", "-qq", "symlinks"])
     .withExec(["mkdir", "-p", "/build/sysroot", "/tmp/debs"])
     // Download all cross-arch .deb files into /tmp/debs to avoid the
     // "_apt permission denied" error that occurs when downloading into /.
@@ -167,6 +168,11 @@ export const build = async (src = ".") => {
     .withExec(dpkgExtract("libxxhash-dev", "arm64", "/build/sysroot/"))
     .withExec(dpkgExtract("libzstd1", "arm64", "/build/sysroot/"))
     .withExec(dpkgExtract("libzstd-dev", "arm64", "/build/sysroot/"))
+    // ── Fix broken relative symlinks in the sysroot ────────────────────────
+    // .deb packages use relative symlinks (e.g. ../../lib/arm-linux-gnueabihf/liblzma.so.5)
+    // which the cross-linker resolves from the host root (/), not from inside the
+    // sysroot, causing "not found" errors. `symlinks -cr` rewrites them to absolute paths.
+    .withExec(["symlinks", "-cr", "/build/sysroot"])
     // ── app sources & build ────────────────────────────────────────────────
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
