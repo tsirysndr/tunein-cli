@@ -103,7 +103,9 @@ pub mod api {
                 Self {
                     bitrate: s.bitrate,
                     element: s.element,
-                    is_ad_clipped_content_enabled: s.is_ad_clipped_content_enabled,
+                    is_ad_clipped_content_enabled: s
+                        .is_ad_clipped_content_enabled
+                        .unwrap_or_else(|| "0".to_string()),
                     is_direct: s.is_direct,
                     is_hls_advanced: s.is_hls_advanced,
                     live_seek_stream: s.live_seek_stream,
