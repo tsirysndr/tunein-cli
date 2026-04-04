@@ -22,6 +22,16 @@ export const test = async (src = ".", options: string[] = []) => {
   return ctr.stdout();
 };
 
+// Helper: extract a downloaded .deb by package base-name and arch into a sysroot.
+// Uses `find` so the exact version/epoch in the filename doesn't matter.
+function dpkgExtract(pkg: string, arch: string, dest: string): string[] {
+  return [
+    "sh",
+    "-c",
+    `deb=$(find /tmp/debs -maxdepth 1 -name '${pkg}_*_${arch}.deb' | head -1) && [ -n "$deb" ] && dpkg -x "$deb" ${dest} || (echo "ERROR: could not find ${pkg}_*_${arch}.deb" && exit 1)`,
+  ];
+}
+
 export const build = async (src = ".") => {
   const rustflags = buildRustFlags();
   const context = await getDirectory(src);
@@ -63,293 +73,101 @@ export const build = async (src = ".") => {
       "libudev-dev",
       "libdbus-1-dev",
     ])
-    .withExec(["mkdir", "-p", "/build/sysroot"])
+    .withExec(["mkdir", "-p", "/build/sysroot", "/tmp/debs"])
+    // Download all cross-arch .deb files into /tmp/debs to avoid the
+    // "_apt permission denied" error that occurs when downloading into /.
     .withExec([
-      "apt-get",
-      "download",
-      "libasound2:armhf",
-      "libasound2-dev:armhf",
-      "libdbus-1-dev:armhf",
-      "libdbus-1-3:armhf",
-      "libsystemd-dev:armhf",
-      "libsystemd0:armhf",
-      "libcap2:armhf",
-      "libcap-dev:armhf",
-      "libgcrypt20:armhf",
-      "libgcrypt20-dev:armhf",
-      "libgpg-error0:armhf",
-      "libgpg-error-dev:armhf",
-      "liblz4-1:armhf",
-      "liblz4-dev:armhf",
-      "libxxhash0:armhf",
-      "libxxhash-dev:armhf",
-      "liblzma5:armhf",
-      "liblzma-dev:armhf",
-      "libzstd1:armhf",
-      "libzstd-dev:armhf",
-
-      "libasound2:arm64",
-      "libasound2-dev:arm64",
-      "libdbus-1-dev:arm64",
-      "libdbus-1-3:arm64",
-      "libsystemd-dev:arm64",
-      "libsystemd0:arm64",
-      "libcap2:arm64",
-      "libcap-dev:arm64",
-      "libgcrypt20:arm64",
-      "libgcrypt20-dev:arm64",
-      "libgpg-error0:arm64",
-      "libgpg-error-dev:arm64",
-      "liblz4-1:arm64",
-      "liblz4-dev:arm64",
-      "libxxhash0:arm64",
-      "libxxhash-dev:arm64",
-      "liblzma5:arm64",
-      "liblzma-dev:arm64",
-      "libzstd1:arm64",
-      "libzstd-dev:arm64",
+      "sh",
+      "-c",
+      [
+        "cd /tmp/debs && apt-get download",
+        // armhf packages
+        "libasound2:armhf",
+        "libasound2-dev:armhf",
+        "libdbus-1-dev:armhf",
+        "libdbus-1-3:armhf",
+        "libsystemd-dev:armhf",
+        "libsystemd0:armhf",
+        "libcap2:armhf",
+        "libcap-dev:armhf",
+        "libgcrypt20:armhf",
+        "libgcrypt20-dev:armhf",
+        "libgpg-error0:armhf",
+        "libgpg-error-dev:armhf",
+        "liblz4-1:armhf",
+        "liblz4-dev:armhf",
+        "libxxhash0:armhf",
+        "libxxhash-dev:armhf",
+        "liblzma5:armhf",
+        "liblzma-dev:armhf",
+        "libzstd1:armhf",
+        "libzstd-dev:armhf",
+        // arm64 packages
+        "libasound2:arm64",
+        "libasound2-dev:arm64",
+        "libdbus-1-dev:arm64",
+        "libdbus-1-3:arm64",
+        "libsystemd-dev:arm64",
+        "libsystemd0:arm64",
+        "libcap2:arm64",
+        "libcap-dev:arm64",
+        "libgcrypt20:arm64",
+        "libgcrypt20-dev:arm64",
+        "libgpg-error0:arm64",
+        "libgpg-error-dev:arm64",
+        "liblz4-1:arm64",
+        "liblz4-dev:arm64",
+        "libxxhash0:arm64",
+        "libxxhash-dev:arm64",
+        "liblzma5:arm64",
+        "liblzma-dev:arm64",
+        "libzstd1:arm64",
+        "libzstd-dev:arm64",
+      ].join(" "),
     ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libasound2-dev_1.2.4-1.1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libasound2_1.2.4-1.1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libasound2-dev_1.2.4-1.1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libasound2_1.2.4-1.1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libdbus-1-dev_1.12.28-0+deb11u1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libdbus-1-3_1.12.28-0+deb11u1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libsystemd-dev_247.3-7+deb11u7_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libsystemd0_247.3-7+deb11u7_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libcap-dev_1%3a2.44-1+deb11u1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libcap2_1%3a2.44-1+deb11u1_armhf.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgcrypt20-dev_1.8.7-6_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgcrypt20_1.8.7-6_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgpg-error-dev_1.38-2_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgpg-error0_1.38-2_armhf.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblz4-1_1.9.3-2_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblz4-dev_1.9.3-2_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblzma-dev_5.2.5-2.1~deb11u1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblzma5_5.2.5-2.1~deb11u1_armhf.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libxxhash-dev_0.8.0-2_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libxxhash0_0.8.0-2_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libzstd1_1.4.8+dfsg-2.1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libzstd-dev_1.4.8+dfsg-2.1_armhf.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libdbus-1-dev_1.12.28-0+deb11u1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libdbus-1-3_1.12.28-0+deb11u1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libsystemd-dev_247.3-7+deb11u7_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libsystemd0_247.3-7+deb11u7_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libcap-dev_1%3a2.44-1+deb11u1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libcap2_1%3a2.44-1+deb11u1_arm64.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgcrypt20-dev_1.8.7-6_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgcrypt20_1.8.7-6_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgpg-error-dev_1.38-2_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libgpg-error0_1.38-2_arm64.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblz4-1_1.9.3-2_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblz4-dev_1.9.3-2_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblzma-dev_5.2.5-2.1~deb11u1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "liblzma5_5.2.5-2.1~deb11u1_arm64.deb",
-      "/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libxxhash-dev_0.8.0-2_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libxxhash0_0.8.0-2_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libzstd1_1.4.8+dfsg-2.1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withExec([
-      "dpkg",
-      "-x",
-      "libzstd-dev_1.4.8+dfsg-2.1_arm64.deb",
-      "/build/sysroot/",
-    ])
-    .withDirectory("/app", context, { exclude })
+    // ── armhf sysroot extractions ──────────────────────────────────────────
+    .withExec(dpkgExtract("libasound2-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libasound2", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libdbus-1-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libdbus-1-3", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libsystemd-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libsystemd0", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libcap-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libcap2", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgcrypt20-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgcrypt20", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgpg-error-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgpg-error0", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblz4-1", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblz4-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblzma5", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblzma-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libxxhash0", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libxxhash-dev", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libzstd1", "armhf", "/build/sysroot/"))
+    .withExec(dpkgExtract("libzstd-dev", "armhf", "/build/sysroot/"))
+    // ── arm64 sysroot extractions ──────────────────────────────────────────
+    .withExec(dpkgExtract("libasound2-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libasound2", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libdbus-1-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libdbus-1-3", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libsystemd-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libsystemd0", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libcap-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libcap2", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgcrypt20-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgcrypt20", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgpg-error-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libgpg-error0", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblz4-1", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblz4-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblzma5", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("liblzma-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libxxhash0", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libxxhash-dev", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libzstd1", "arm64", "/build/sysroot/"))
+    .withExec(dpkgExtract("libzstd-dev", "arm64", "/build/sysroot/"))
+    // ── app sources & build ────────────────────────────────────────────────
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withMountedCache("/app/target", dag.cacheVolume("target"))
@@ -404,9 +222,9 @@ export const build = async (src = ".") => {
   );
 
   const sha = await ctr.file(
-    `/app/tunein_${Deno.env.get("TAG")}_${
-      Deno.env.get("TARGET")
-    }.tar.gz.sha256`,
+    `/app/tunein_${Deno.env.get("TAG")}_${Deno.env.get(
+      "TARGET",
+    )}.tar.gz.sha256`,
   );
   await sha.export(
     `./tunein_${Deno.env.get("TAG")}_${Deno.env.get("TARGET")}.tar.gz.sha256`,
@@ -417,11 +235,11 @@ export const build = async (src = ".") => {
 export type JobExec = (src?: string) =>
   | Promise<string>
   | ((
-    src?: string,
-    options?: {
-      ignore: string[];
-    },
-  ) => Promise<string>);
+      src?: string,
+      options?: {
+        ignore: string[];
+      },
+    ) => Promise<string>);
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.test]: test,
