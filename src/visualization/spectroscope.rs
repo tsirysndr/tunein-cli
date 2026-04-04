@@ -131,6 +131,15 @@ impl DisplayMode for Spectroscope {
 
         for (n, chan_queue) in self.buf.iter().enumerate().rev() {
             let mut chunk = chan_queue.iter().flatten().copied().collect::<Vec<f64>>();
+            // sometimes we'll be handed a buffer smaller than the spectroscope's size
+            // this happens if (for example) we've been handed a static mp3, not a livestream
+            // a good repro is getting a station that returns either of these error mp3s:
+            //  - https://cdn-cms.tunein.com/service/Audio/georestricted.enUS.mp3
+            //  - https://cdn-cms.tunein.com/service/Audio/notcompatible.enUS.mp3
+            // (darkwave radomir [s340893] does this in the UK if you connect via VPN with tunein/pull/1 applied)
+            if chunk.len() < sample_len as usize {
+                chunk.resize(sample_len as usize, 0.0);
+            }
             if self.window {
                 chunk = hann_window(chunk.as_slice());
             }
