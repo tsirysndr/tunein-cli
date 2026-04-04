@@ -27,11 +27,10 @@ jobs:
           TAG: ${{ env.RELEASE_VERSION }}
           TARGET: ${{ matrix.target }}
       - name: Upload release assets
-        run: |
-          for ext in tar.gz tar.gz.sha256; do
-            export FILE=/assets/tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.$ext
-            fluentci run github_pipeline release_upload
-          done
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz
+            tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
         env:
-          TAG: ${{ env.RELEASE_VERSION }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
