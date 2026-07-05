@@ -15,6 +15,7 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tunein_cli::os_media_controls::{self, OsMediaControls};
 
 use crate::{
+    decoder::Frame as AudioFrame,
     extract::get_currently_playing,
     input::stream_to_matrix,
     play::SinkCommand,
@@ -144,7 +145,7 @@ pub struct App {
     vectorscope: Vectorscope,
     spectroscope: Spectroscope,
     mode: CurrentDisplayMode,
-    frame_rx: Receiver<minimp3::Frame>,
+    frame_rx: Receiver<AudioFrame>,
     /// [`OsMediaControls`].
     os_media_controls: Option<OsMediaControls>,
     /// Poll for events every specified [`Duration`].
@@ -165,7 +166,7 @@ impl App {
     pub fn new(
         ui: &crate::cfg::UiOptions,
         source: &crate::cfg::SourceOptions,
-        frame_rx: Receiver<minimp3::Frame>,
+        frame_rx: Receiver<AudioFrame>,
         mode: CurrentDisplayMode,
         os_media_controls: Option<OsMediaControls>,
         poll_events_every: Duration,

@@ -7,7 +7,7 @@ use tunein_cli::os_media_controls::OsMediaControls;
 use crate::{
     app::{App, CurrentDisplayMode, State, Volume},
     cfg::{SourceOptions, UiOptions},
-    decoder::Mp3Decoder,
+    decoder::StreamDecoder,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
 };
@@ -44,7 +44,7 @@ pub async fn exec(
 
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel::<State>();
     let (sink_cmd_tx, mut sink_cmd_rx) = tokio::sync::mpsc::unbounded_channel::<SinkCommand>();
-    let (frame_tx, frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
+    let (frame_tx, frame_rx) = std::sync::mpsc::channel::<crate::decoder::Frame>();
 
     let ui = UiOptions {
         scale: 1.0,
@@ -140,10 +140,17 @@ pub async fn exec(
             None => response,
         };
 
+        let content_type = response
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
         sink.set_volume(volume.volume_ratio());
-        let decoder = Mp3Decoder::new(response, Some(frame_tx)).unwrap();
+        let decoder = StreamDecoder::new(response, content_type.as_deref(), Some(frame_tx))
+            .expect("failed to decode audio stream");
         sink.append(decoder);
 
         loop {
