@@ -7,7 +7,7 @@ use hyper::header::HeaderValue;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use tokio::sync::mpsc;
 
-use crate::decoder::Mp3Decoder;
+use crate::decoder::StreamDecoder;
 use crate::types::Station;
 
 /// Commands sent to the audio worker thread.
@@ -170,13 +170,13 @@ impl AudioWorker {
         let bitrate = header_to_string(headers.get("icy-br")).unwrap_or_default();
 
         let response = follow_redirects(client, response)?;
+        let content_type = header_to_string(response.headers().get("content-type"));
 
         let sink = Arc::new(Sink::try_new(&self.handle)?);
         sink.set_volume(volume_percent.max(0.0) / 100.0);
 
-        let decoder = Mp3Decoder::new(response, None).map_err(|_| {
-            Error::msg("stream is not in MP3 format or failed to initialize decoder")
-        })?;
+        let decoder = StreamDecoder::new(response, content_type.as_deref(), None)
+            .with_context(|| format!("failed to decode stream {}", stream_url))?;
         sink.append(decoder);
         sink.play();
 

@@ -8,11 +8,10 @@ use std::{
 
 use anyhow::Error;
 use futures_util::Future;
-use reqwest::blocking::Response;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use tokio::sync::mpsc;
 
-use crate::decoder::Mp3Decoder;
+use crate::decoder::StreamDecoder;
 
 pub struct Player;
 
@@ -38,7 +37,6 @@ struct PlayerInternal {
     stream: OutputStream,
     handle: OutputStreamHandle,
     commands: Arc<Mutex<mpsc::UnboundedReceiver<PlayerCommand>>>,
-    decoder: Option<Mp3Decoder<Response>>,
 }
 
 impl PlayerInternal {
@@ -49,7 +47,6 @@ impl PlayerInternal {
             stream,
             handle,
             commands: cmd_rx,
-            decoder: None,
         }
     }
 
@@ -61,7 +58,6 @@ impl PlayerInternal {
         let sink = self.sink.clone();
 
         thread::spawn(move || {
-            let (frame_tx, _frame_rx) = std::sync::mpsc::channel::<minimp3::Frame>();
             let client = reqwest::blocking::Client::new();
 
             let response = client.get(url.clone()).send().unwrap();
@@ -80,7 +76,12 @@ impl PlayerInternal {
                 }
                 None => response,
             };
-            let decoder = Mp3Decoder::new(response, Some(frame_tx)).unwrap();
+            let content_type = response
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .map(String::from);
+            let decoder = StreamDecoder::new(response, content_type.as_deref(), None).unwrap();
 
             {
                 let sink = sink.lock().unwrap();
