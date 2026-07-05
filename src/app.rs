@@ -16,7 +16,9 @@ use tunein_cli::os_media_controls::{self, OsMediaControls};
 
 use crate::{
     decoder::Frame as AudioFrame,
+    eq_ui::EqPopup,
     extract::get_currently_playing,
+    help_ui::{HelpPopup, Shortcut},
     input::stream_to_matrix,
     play::SinkCommand,
     tui,
@@ -25,6 +27,30 @@ use crate::{
         Dimension, DisplayMode, GraphConfig,
     },
 };
+
+/// Shortcut table shown by the `?` popup in the player TUI.
+const PLAYER_SHORTCUTS: &[Shortcut] = &[
+    ("space", "Play / pause"),
+    (
+        "tab",
+        "Cycle visualization (oscilloscope/vectorscope/spectroscope/off)",
+    ),
+    ("↑ / ↓", "Volume up / down (also zooms the scope)"),
+    ("← / →", "Show fewer / more samples"),
+    ("e", "Open the equalizer"),
+    ("m", "Mute / unmute"),
+    ("s", "Toggle scatter mode"),
+    ("h", "Toggle the header UI"),
+    ("r", "Toggle reference lines"),
+    ("esc", "Reset zoom and samples"),
+    ("shift/ctrl/alt", "Coarser or finer adjustments"),
+    ("?", "Show this help"),
+    ("q / ctrl+c", "Quit"),
+];
+
+/// Compact status line pinned to the bottom row of the player TUI.
+const PLAYER_STATUS_LINE: &str =
+    "space play/pause • tab mode • ↑/↓ volume • e equalizer • ? help • q quit";
 
 #[derive(Debug, Default, Clone)]
 pub struct State {
@@ -145,6 +171,8 @@ pub struct App {
     vectorscope: Vectorscope,
     spectroscope: Spectroscope,
     mode: CurrentDisplayMode,
+    eq_popup: EqPopup,
+    help_popup: HelpPopup,
     frame_rx: Receiver<AudioFrame>,
     /// [`OsMediaControls`].
     os_media_controls: Option<OsMediaControls>,
@@ -201,6 +229,8 @@ impl App {
             vectorscope,
             spectroscope,
             mode,
+            eq_popup: EqPopup::new(),
+            help_popup: HelpPopup::new(PLAYER_SHORTCUTS),
             channels: source.channels as u8,
             frame_rx,
             os_media_controls,
@@ -429,6 +459,14 @@ impl App {
                 terminal
                     .draw(|f| {
                         let mut size = f.size();
+                        // Bottom row is reserved for the shortcuts status line.
+                        let footer_area = Rect {
+                            x: size.x,
+                            y: size.y + size.height.saturating_sub(1),
+                            width: size.width,
+                            height: 1,
+                        };
+                        size.height = size.height.saturating_sub(1);
                         render_frame(new_state.clone(), f);
                         if let Some(current_display) = self.current_display() {
                             if self.graph.show_ui {
@@ -455,6 +493,14 @@ impl App {
                                 .y_axis(current_display.axis(&self.graph, Dimension::Y));
                             f.render_widget(chart, size)
                         }
+                        f.render_widget(
+                            Paragraph::new(PLAYER_STATUS_LINE)
+                                .style(Style::default().fg(Color::DarkGray))
+                                .alignment(Alignment::Center),
+                            footer_area,
+                        );
+                        self.eq_popup.render(f);
+                        self.help_popup.render(f);
                     })
                     .unwrap();
 
@@ -550,6 +596,10 @@ impl App {
                     _ => {}
                 }
             }
+            // While a popup is open it captures the keyboard.
+            if self.eq_popup.handle_key(key) || self.help_popup.handle_key(key) {
+                return Ok(quit);
+            }
             let magnitude = match key.modifiers {
                 KeyModifiers::SHIFT => 10.0,
                 KeyModifiers::CONTROL => 5.0,
@@ -587,6 +637,8 @@ impl App {
                     self.os_media_controls.as_mut(),
                     sink_cmd_tx,
                 ),
+                KeyCode::Char('e') => self.eq_popup.toggle(),
+                KeyCode::Char('?') => self.help_popup.toggle(),
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,

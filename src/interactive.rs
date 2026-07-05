@@ -11,8 +11,10 @@ use tunein_cli::os_media_controls::{self, OsMediaControls};
 
 use crate::app::send_os_media_controls_command;
 use crate::audio::{AudioController, PlaybackEvent, PlaybackState};
+use crate::eq_ui::EqPopup;
 use crate::extract::get_currently_playing;
 use crate::favorites::{FavoriteStation, FavoritesStore};
+use crate::help_ui::{HelpPopup, Shortcut};
 use crate::provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider};
 use crate::tui;
 use crate::types::Station;
@@ -24,6 +26,20 @@ const MENU_OPTIONS: &[&str] = &[
     "Favourites",
     "Resume Last Station",
     "Quit",
+];
+
+/// Shortcut table shown by the `?` popup in interactive mode.
+const HUB_SHORTCUTS: &[Shortcut] = &[
+    ("↑ / ↓", "Navigate lists"),
+    ("enter", "Select menu entry / play highlighted station"),
+    ("e", "Open the equalizer"),
+    ("f", "Add or remove the highlighted station from favourites"),
+    ("d / delete", "Remove favourite (favourites screen)"),
+    ("x", "Stop playback"),
+    ("+ / -", "Volume up / down"),
+    ("esc", "Back to the menu"),
+    ("?", "Show this help"),
+    ("ctrl+c", "Quit"),
 ];
 
 const STATUS_TIMEOUT: Duration = Duration::from_secs(3);
@@ -116,6 +132,8 @@ struct HubApp {
     now_playing_station_id: Option<String>,
     next_now_playing_poll: Instant,
     os_media_controls: Option<OsMediaControls>,
+    eq_popup: EqPopup,
+    help_popup: HelpPopup,
 }
 
 impl HubApp {
@@ -144,6 +162,8 @@ impl HubApp {
             now_playing_station_id: None,
             next_now_playing_poll: Instant::now(),
             os_media_controls,
+            eq_popup: EqPopup::new(),
+            help_popup: HelpPopup::new(HUB_SHORTCUTS),
         }
     }
 
@@ -165,6 +185,8 @@ impl HubApp {
         self.render_divider(frame, areas[1]);
         self.render_main(frame, areas[2]);
         frame.render_widget(self.render_footer(), areas[3]);
+        self.eq_popup.render(frame);
+        self.help_popup.render(frame);
     }
 
     fn render_header(&self, frame: &mut Frame, area: Rect) {
@@ -614,7 +636,7 @@ impl HubApp {
     fn default_footer_hint(&self) -> String {
         match self.ui.screen {
             Screen::SearchResults => {
-                "↑/↓ navigate • Enter play • f add to favourites • x stop playback • Esc back • +/- volume"
+                "↑/↓ navigate • Enter play • f add to favourites • e equalizer • x stop playback • Esc back • +/- volume"
                     .to_string()
             }
             Screen::Favourites => {
@@ -632,7 +654,8 @@ impl HubApp {
             }
             Screen::Loading => "Please wait… • x stop playback • Esc cancel • +/- volume".to_string(),
             Screen::Menu => {
-                "↑/↓ navigate • Enter select • x stop playback • Esc back • +/- volume".to_string()
+                "↑/↓ navigate • Enter select • e equalizer • x stop playback • Esc back • +/- volume • ? help"
+                    .to_string()
             }
         }
     }
@@ -713,7 +736,24 @@ impl HubApp {
             return Ok(Action::Quit);
         }
 
+        // While a popup is open it captures the keyboard.
+        if self.eq_popup.handle_key(key) || self.help_popup.handle_key(key) {
+            return Ok(Action::None);
+        }
+
         match key.code {
+            KeyCode::Char('e')
+                if !matches!(self.ui.screen, Screen::SearchInput | Screen::PlayInput) =>
+            {
+                self.eq_popup.toggle();
+                return Ok(Action::None);
+            }
+            KeyCode::Char('?')
+                if !matches!(self.ui.screen, Screen::SearchInput | Screen::PlayInput) =>
+            {
+                self.help_popup.toggle();
+                return Ok(Action::None);
+            }
             KeyCode::Char('+') | KeyCode::Char('=') => {
                 self.adjust_volume(5.0)?;
                 return Ok(Action::None);

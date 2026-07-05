@@ -12,6 +12,8 @@ use symphonia::core::io::{MediaSourceStream, ReadOnlySource};
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
+use crate::equalizer::EqProcessor;
+
 /// A chunk of decoded interleaved samples, forwarded to the visualizer.
 #[derive(Debug, Clone)]
 pub struct Frame {
@@ -31,6 +33,7 @@ pub struct StreamDecoder {
     channels: u16,
     sample_rate: u32,
     tx: Option<Sender<Frame>>,
+    eq: EqProcessor,
 }
 
 impl StreamDecoder {
@@ -90,6 +93,7 @@ impl StreamDecoder {
             channels,
             sample_rate,
             tx,
+            eq: EqProcessor::new(),
         };
 
         // Decode the first packet so channel count and sample rate are accurate
@@ -126,6 +130,13 @@ impl StreamDecoder {
                     self.buffer.clear();
                     self.buffer.extend_from_slice(samples.samples());
                     self.offset = 0;
+
+                    // Route through the equalizer (no-op when disabled).
+                    // Done before the visualizer send so the scope shows
+                    // what is actually heard.
+                    self.channels =
+                        self.eq
+                            .process(&mut self.buffer, self.channels, self.sample_rate);
 
                     if let Some(tx) = &self.tx {
                         let frame = Frame {
