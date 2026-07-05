@@ -32,8 +32,10 @@
         craneLib = crane.mkLib pkgs;
 
         protoFilter = path: _type: builtins.match ".*proto$" path != null;
+        serviceFilter = path: _type: builtins.match ".*service$" path != null;
         protoOrCargo = path: type:
-          (protoFilter path type) || (craneLib.filterCargoSources path type);
+          (protoFilter path type) || (serviceFilter path type)
+          || (craneLib.filterCargoSources path type);
 
         src = lib.cleanSourceWith {
           src = craneLib.path ./.; # The original, unfiltered source
