@@ -48,7 +48,7 @@
           inherit src;
 
           pname = "tunein";
-          version = "0.4.2";
+          version = "0.5.0";
 
           buildInputs = [
             # Add additional build inputs here
