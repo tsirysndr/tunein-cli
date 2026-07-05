@@ -27,9 +27,29 @@
 A command line interface for [TuneIn Radio](https://tunein.com) / [Radio Browser](https://www.radio-browser.info/).<br />
 You can search for stations, play them, and see what's currently playing.
 
-<a href="https://pocketenv.io/new?repo=tangled:tsiry-sandratraina.com/tunein-cli" target="_blank"><img src="https://pocketenv.io/open-in-pocketenv.svg" alt="Open in Pocketenv" /></a>
-
 ![Made with VHS](https://vhs.charm.sh/vhs-4UhZFFRvVAuaZnapZUlp6R.gif)
+
+## 📖 Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Downloads](#-downloads)
+- [Usage](#-usage)
+- [Equalizer](#-equalizer)
+- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [Systemd Service](#-systemd-service)
+- [API Documentation](#api-documentation)
+- [License](#-license)
+
+## ✨ Features
+
+- 🔍 Search and play thousands of radio stations from [TuneIn](https://tunein.com) or [Radio Browser](https://www.radio-browser.info/)
+- 🎵 Plays all the common Icecast stream formats: **MP3, AAC/AAC+, Ogg Vorbis, FLAC and WAV** (decoded with [Symphonia](https://github.com/pdeljanov/Symphonia))
+- 🎧 Powerful DSP (**Equalizer, Bass, Treble**) based on the [Rockbox DSP](https://github.com/tsirysndr/rockboxd/tree/master/crates/rockbox-dsp) engine
+- 📻 Interactive TUI: browse categories, favourites, resume last station
+- 🌈 Real-time audio visualizations: oscilloscope, vectorscope and spectroscope
+- 🖥️ OS media controls integration (play/pause/volume from your keyboard's media keys)
+- 🛰️ Built-in gRPC server, installable as a systemd service
 
 ## 🚚 Installation
 
@@ -149,6 +169,58 @@ tunein play "alternativeradio.us"
 # Or by station ID
 tunein play s221580
 ```
+
+## 🎧 Equalizer
+
+TuneIn CLI ships a powerful DSP (Equalizer, Bass, Treble) based on the [Rockbox DSP](https://github.com/tsirysndr/rockboxd/tree/master/crates/rockbox-dsp) engine. Press `e` while playing (or anywhere in interactive mode) to open the equalizer popup: a **10-band graphic equalizer** plus **Bass** and **Treble** shelf controls.
+
+| Key       | Action                                               |
+| --------- | ---------------------------------------------------- |
+| `e`       | Open / close the equalizer                           |
+| `←` / `→` | Select a band (or Bass / Treble)                     |
+| `↑` / `↓` | Adjust the selected gain (`Shift` for coarse steps)  |
+| `Space`   | Toggle the equalizer on / off                        |
+| `0`       | Reset all gains to 0 dB                              |
+| `Esc`     | Close the popup                                      |
+
+### Bass & Treble
+
+The Bass and Treble columns control Rockbox-style shelf filters (±24 dB, in whole-dB steps). Following Rockbox semantics they are **independent of the equalizer on/off switch**: any non-zero value is applied even when the band EQ is off. The shelf cutoffs default to 200 Hz (bass) and 3.5 kHz (treble) and can be changed in the settings file.
+
+### Settings
+
+Every change is saved immediately to `settings.toml` in the config directory (`~/Library/Application Support/io.tunein-cli.tunein-cli/` on macOS, `~/.config/tunein-cli/` on Linux). The schema matches Rockbox's `settings.toml`, so EQ presets round-trip between the two:
+
+```toml
+eq_enabled = true
+bass = 4        # dB, shelf filter, independent of eq_enabled
+treble = -2     # dB
+bass_cutoff = 0   # Hz, 0 = default (200)
+treble_cutoff = 0 # Hz, 0 = default (3500)
+
+[[eq_band_settings]]
+cutoff = 32 # Hz
+q = 7       # Q × 10 (0.7)
+gain = 30   # dB × 10 (+3.0 dB)
+
+# … 9 more [[eq_band_settings]] entries (63, 125, 250, 500, 1k, 2k, 4k, 8k, 16k)
+```
+
+## 🎹 Keyboard Shortcuts
+
+Press `?` in either UI to see every available shortcut with a description. Highlights:
+
+| Key            | Player              | Interactive mode       |
+| -------------- | ------------------- | ---------------------- |
+| `Space`        | Play / pause        | Toggle EQ (in popup)   |
+| `Tab`          | Cycle visualization | —                      |
+| `↑` / `↓`      | Volume              | Navigate lists         |
+| `e`            | Equalizer           | Equalizer              |
+| `f`            | —                   | Add / remove favourite |
+| `x`            | —                   | Stop playback          |
+| `+` / `-`      | —                   | Volume                 |
+| `?`            | Help                | Help                   |
+| `q` / `Ctrl+C` | Quit                | Quit (`Ctrl+C`)        |
 
 ## 🧙 Systemd Service
 
