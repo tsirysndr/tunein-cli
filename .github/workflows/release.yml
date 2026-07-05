@@ -3,10 +3,14 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         target:
           - aarch64-unknown-linux-gnu
@@ -26,11 +30,116 @@ jobs:
         env:
           TAG: ${{ env.RELEASE_VERSION }}
           TARGET: ${{ matrix.target }}
+
+      # Map the Rust target onto the Debian/RPM arch names used under
+      # dist/. armv7 has no packaging metadata, so it ships tarball-only.
+      - name: Set package arch
+        shell: bash
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64-unknown-linux-gnu)  echo "PKG_ARCH=amd64" >> "$GITHUB_ENV"; echo "RPM_TARGET=x86_64" >> "$GITHUB_ENV" ;;
+            aarch64-unknown-linux-gnu) echo "PKG_ARCH=arm64" >> "$GITHUB_ENV"; echo "RPM_TARGET=aarch64" >> "$GITHUB_ENV" ;;
+            *)                         echo "PKG_ARCH="      >> "$GITHUB_ENV" ;;
+          esac
+
+      - name: Install rpmbuild
+        if: env.PKG_ARCH != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      - name: Extract binary
+        if: env.PKG_ARCH != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/staging
+          tar -xzf "tunein_${RELEASE_VERSION}_${{ matrix.target }}.tar.gz" -C dist/staging
+          file dist/staging/tunein
+
+      - name: Build .deb
+        if: env.PKG_ARCH != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_no_v="${RELEASE_VERSION#v}"
+          pkg_root="dist/debian/${PKG_ARCH}"
+          mkdir -p "$pkg_root/usr/bin"
+          install -m 0755 dist/staging/tunein "$pkg_root/usr/bin/tunein"
+          sed -i "s/^Version: .*/Version: ${version_no_v}/" "$pkg_root/DEBIAN/control"
+          dpkg-deb --build --root-owner-group "$pkg_root" "dist/tunein-cli_${version_no_v}_${PKG_ARCH}.deb"
+
+      - name: Build .rpm
+        if: env.PKG_ARCH != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_no_v="${RELEASE_VERSION#v}"
+          src_root="dist/rpm/${PKG_ARCH}"
+          mkdir -p "${src_root}/usr/bin"
+          install -m 0755 dist/staging/tunein "${src_root}/usr/bin/tunein"
+          sed -i "s/^Version:        .*/Version:        ${version_no_v}/" "${src_root}/tunein.spec"
+
+          rpm_top="$(pwd)/dist/rpmbuild"
+          mkdir -p "${rpm_top}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cp -r "${src_root}" "${rpm_top}/SOURCES/${PKG_ARCH}"
+          rpmbuild --define "_topdir ${rpm_top}" \
+                   --define "_sourcedir ${rpm_top}/SOURCES" \
+                   --target "${RPM_TARGET}" \
+                   -bb "${src_root}/tunein.spec"
+          find "${rpm_top}/RPMS" -name '*.rpm' -exec mv {} dist/ \;
+
+      - name: Checksum packages
+        if: env.PKG_ARCH != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          for f in *.deb *.rpm; do
+            [ -e "$f" ] || continue
+            shasum -a 256 "$f" > "$f.sha256"
+          done
+          ls -lh
+
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz
             tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
+            dist/*.deb
+            dist/*.deb.sha256
+            dist/*.rpm
+            dist/*.rpm.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Gemfury secrets
+        id: gemfury
+        if: env.PKG_ARCH != ''
+        env:
+          FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+          FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
+        run: |
+          if [ -n "$FURY_TOKEN" ] && [ -n "$FURY_ACCOUNT" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Gemfury secrets not set; skipping push"
+          fi
+
+      - name: Push .deb and .rpm to Gemfury
+        if: env.PKG_ARCH != '' && steps.gemfury.outputs.available == 'true'
+        env:
+          FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+          FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for pkg in dist/*.deb dist/*.rpm; do
+            echo "Pushing $pkg to Gemfury (${FURY_ACCOUNT})"
+            curl -fsS -F package=@"${pkg}" \
+              "https://${FURY_TOKEN}@push.fury.io/${FURY_ACCOUNT}/"
+            echo
+          done
