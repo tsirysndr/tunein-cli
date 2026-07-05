@@ -1,0 +1,23 @@
+when:
+  - event: ["push", "pull_request"]
+    branch: ["main"]
+
+engine: microvm
+image: nixos
+
+dependencies:
+  - cargo
+  - rustc
+  - rustfmt
+  - gcc
+  - pkg-config
+  - alsa-lib
+  - cachix
+
+steps:
+  - name: nix build
+    command: |
+      cachix use tsirysndr
+      XDG_CACHE_HOME=/tmp/nix-cache nix --extra-experimental-features 'nix-command flakes' build .#default --print-build-logs
+      ls -l result/bin
+
