@@ -5,6 +5,9 @@ when:
 engine: microvm
 image: nixos
 
+caches:
+  https://tsirysndr.cachix.org: "tsirysndr.cachix.org-1:fbGYj/T8+9oqrF2c3EaQ33lMqZdb5n81Mk2jRE+C4wA="
+
 dependencies:
   - cargo
   - rustc
@@ -12,12 +15,10 @@ dependencies:
   - gcc
   - pkg-config
   - alsa-lib
-  - cachix
 
 steps:
   - name: nix build
     command: |
-      cachix use tsirysndr
       XDG_CACHE_HOME=/tmp/nix-cache nix --extra-experimental-features 'nix-command flakes' build .#default --print-build-logs
       ls -l result/bin
 
