@@ -33,17 +33,18 @@ jobs:
 
       # Map the Rust target onto the Debian/RPM arch names used under
       # dist/. armv7 has no packaging metadata, so it ships tarball-only.
+      # RPM_TARGET stays empty on aarch64: only a .deb is built there.
       - name: Set package arch
         shell: bash
         run: |
           case "${{ matrix.target }}" in
             x86_64-unknown-linux-gnu)  echo "PKG_ARCH=amd64" >> "$GITHUB_ENV"; echo "RPM_TARGET=x86_64" >> "$GITHUB_ENV" ;;
-            aarch64-unknown-linux-gnu) echo "PKG_ARCH=arm64" >> "$GITHUB_ENV"; echo "RPM_TARGET=aarch64" >> "$GITHUB_ENV" ;;
+            aarch64-unknown-linux-gnu) echo "PKG_ARCH=arm64" >> "$GITHUB_ENV" ;;
             *)                         echo "PKG_ARCH="      >> "$GITHUB_ENV" ;;
           esac
 
       - name: Install rpmbuild
-        if: env.PKG_ARCH != ''
+        if: env.RPM_TARGET != ''
         run: |
           sudo apt-get update
           sudo apt-get install -y rpm
@@ -70,7 +71,7 @@ jobs:
           dpkg-deb --build --root-owner-group "$pkg_root" "dist/tunein-cli_${version_no_v}_${PKG_ARCH}.deb"
 
       - name: Build .rpm
-        if: env.PKG_ARCH != ''
+        if: env.RPM_TARGET != ''
         shell: bash
         run: |
           set -euo pipefail
