@@ -170,10 +170,7 @@ mod tests {
     pub async fn test_get_station() {
         let (mut server, provider) = mock_provider().await;
         let name = "AlternativeRadio.us";
-        let body = serde_json::json!([station_json(
-            "964da563-0601-11e8-ae97-52543be04c81",
-            name
-        )]);
+        let body = serde_json::json!([station_json("964da563-0601-11e8-ae97-52543be04c81", name)]);
         let mock = server
             .mock("GET", "/json/stations/search")
             .match_query(Matcher::AllOf(vec![
