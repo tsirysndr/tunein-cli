@@ -14,7 +14,7 @@ jobs:
       - name: Install build dependencies
         run: |
             sudo apt-get update
-            sudo apt-get install -y build-essential libasound2-dev
+            sudo apt-get install -y build-essential libasound2-dev libdbus-1-dev pkg-config
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
