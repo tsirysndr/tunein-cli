@@ -89,7 +89,10 @@
 
           outputHashMode = "recursive";
           outputHashAlgo = "sha256";
-          outputHash = "sha256-yeZqlyo/0FJkfPNNB4ri9aYcyciOZ0ACLvZELzb40Ng=";
+          outputHash = {
+            x86_64-linux = "sha256-yeZqlyo/0FJkfPNNB4ri9aYcyciOZ0ACLvZELzb40Ng=";
+            aarch64-darwin = "sha256-6MAEYjk01JbCJC4m6q9rf2iePtxKMTClBB5YAuvubYA=";
+          };
         };
 
         # Build the React SPA. The resulting `dist/` is embedded into the
