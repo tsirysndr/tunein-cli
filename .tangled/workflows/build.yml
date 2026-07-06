@@ -15,8 +15,16 @@ dependencies:
   - gcc
   - pkg-config
   - alsa-lib
+  - bun
+  - nodejs
 
 steps:
+  - name: build webui
+    command: |
+      cd web
+      bun install --frozen-lockfile
+      bun run build
+
   - name: nix build
     command: |
       XDG_CACHE_HOME=/tmp/nix-cache nix --extra-experimental-features 'nix-command flakes' build .#default --print-build-logs --fallback

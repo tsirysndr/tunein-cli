@@ -77,7 +77,7 @@ A simple CLI to listen to radio stations"#,
         .subcommand(
             Command::new("web")
                 .about("Start the web UI & GraphQL API server")
-                .arg(arg!([port] "The port to listen on").default_value("8091")),
+                .arg(arg!([port] "The port to listen on").default_value("8881")),
         )
         .subcommand(
             Command::new("service")

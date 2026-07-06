@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
         // Override the target with TUNEIN_API_URL, or point the client
         // elsewhere entirely with VITE_API_URL.
         '/graphql': {
-          target: env.TUNEIN_API_URL ?? 'http://localhost:8091',
+          target: env.TUNEIN_API_URL ?? 'http://localhost:8881',
           changeOrigin: true,
         },
       },

@@ -42,6 +42,80 @@
           filter = protoOrCargo;
         };
 
+        # node_modules for the web UI SPA. `bun install` needs the network,
+        # so dependency resolution lives in a fixed-output derivation. The
+        # hash pins the resolved tree across bun.lock.
+        #
+        # Updating: change package.json/bun.lock, run `nix build`, copy the
+        # hash Nix reports on mismatch into `outputHash` below.
+        webuiNodeModules = pkgs.stdenv.mkDerivation {
+          pname = "tunein-webui-node-modules";
+          version = "0.5.0";
+
+          src = lib.fileset.toSource {
+            root = ./web;
+            fileset = lib.fileset.unions [
+              ./web/package.json
+              ./web/bun.lock
+            ];
+          };
+
+          nativeBuildInputs = [ pkgs.bun ];
+
+          dontConfigure = true;
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME=$(mktemp -d)
+            bun install --frozen-lockfile --no-progress
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mv node_modules $out
+            runHook postInstall
+          '';
+
+          dontFixup = true;
+
+          outputHashMode = "recursive";
+          outputHashAlgo = "sha256";
+          outputHash = "sha256-6MAEYjk01JbCJC4m6q9rf2iePtxKMTClBB5YAuvubYA=";
+        };
+
+        # Build the React SPA. The resulting `dist/` is embedded into the
+        # tunein binary at compile time via rust-embed.
+        webui = pkgs.stdenv.mkDerivation {
+          pname = "tunein-webui";
+          version = "0.5.0";
+
+          src = ./web;
+
+          nativeBuildInputs = [ pkgs.bun pkgs.nodejs ];
+
+          configurePhase = ''
+            runHook preConfigure
+            cp -r ${webuiNodeModules} node_modules
+            chmod -R u+w node_modules
+            patchShebangs node_modules
+            export HOME=$(mktemp -d)
+            runHook postConfigure
+          '';
+
+          buildPhase = ''
+            runHook preBuild
+            bun run build
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            cp -r dist $out
+            runHook postInstall
+          '';
+        };
+
         # Common arguments can be set here to avoid repeating them later
         commonArgs = {
           inherit src;
@@ -62,8 +136,16 @@
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
-            pkgs.darwin.Security
           ];
+
+          # rust-embed reads web/dist at compile time. The source filter
+          # strips the web directory, so we drop the pre-built SPA back
+          # in before cargo runs.
+          preBuild = ''
+            mkdir -p web
+            cp -r ${webui} web/dist
+            chmod -R u+w web/dist
+          '';
 
           # Additional environment variables can be set directly
           # MY_CUSTOM_VAR = "some value";
@@ -135,6 +217,7 @@
 
         packages = {
           default = tunein;
+          inherit webui;
           tunein-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
