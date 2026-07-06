@@ -17,6 +17,8 @@ dependencies:
   - alsa-lib
   - bun
   - nodejs
+  - dbus
+  - protobuf
 
 steps:
   - name: build webui
