@@ -131,8 +131,9 @@
             pkgs.gnumake
             pkgs.perl
             pkgs.protobuf
-            pkgs.alsa-lib.dev
             pkgs.dbus
+          ] ++ lib.optionals pkgs.stdenv.isLinux [
+            pkgs.alsa-lib.dev
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
