@@ -46,8 +46,16 @@
         # so dependency resolution lives in a fixed-output derivation. The
         # hash pins the resolved tree across bun.lock.
         #
+        # bun installs platform-specific binaries into node_modules, so the
+        # output differs per system and the hash is keyed accordingly.
+        #
         # Updating: change package.json/bun.lock, run `nix build`, copy the
-        # hash Nix reports on mismatch into `outputHash` below.
+        # hash Nix reports on mismatch into the entry for your system below.
+        webuiNodeModulesHashes = {
+          x86_64-linux = "sha256-yeZqlyo/0FJkfPNNB4ri9aYcyciOZ0ACLvZELzb40Ng=";
+          aarch64-darwin = "sha256-6MAEYjk01JbCJC4m6q9rf2iePtxKMTClBB5YAuvubYA=";
+        };
+
         webuiNodeModules = pkgs.stdenv.mkDerivation {
           pname = "tunein-webui-node-modules";
           version = "0.6.0";
