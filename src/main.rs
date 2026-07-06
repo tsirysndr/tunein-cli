@@ -28,6 +28,7 @@ mod tags;
 mod tui;
 mod types;
 mod visualization;
+mod webserver;
 
 fn cli() -> Command<'static> {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
@@ -72,6 +73,11 @@ A simple CLI to listen to radio stations"#,
             Command::new("server")
                 .about("Start the server")
                 .arg(arg!([port] "The port to listen on").default_value("8090")),
+        )
+        .subcommand(
+            Command::new("web")
+                .about("Start the web UI & GraphQL API server")
+                .arg(arg!([port] "The port to listen on").default_value("8091")),
         )
         .subcommand(
             Command::new("service")
@@ -145,6 +151,11 @@ async fn main() -> Result<(), Error> {
             let port = args.value_of("port").unwrap();
             let port = port.parse::<u16>().unwrap();
             server::exec(port).await?;
+        }
+        Some(("web", args)) => {
+            let port = args.value_of("port").unwrap();
+            let port = port.parse::<u16>().unwrap();
+            webserver::exec(port).await?;
         }
         Some(("service", sub_m)) => match sub_m.subcommand() {
             Some(("install", _)) => service::install()?,

@@ -27,7 +27,11 @@ lto = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-cors = "0.7"
+actix-web = "4"
 anyhow = "1.0.69"
+async-graphql = "7"
+async-graphql-actix-web = "7"
 async-trait = "0.1.85"
 clap = "3.2.20"
 cpal = "0.14.0"
@@ -43,6 +47,7 @@ hyper = { version = "0.14.23", features = [
   "http2",
 ] }
 m3u = "1.0.0"
+mime_guess = "2"
 owo-colors = "3.5.0"
 directories = "5.0.1"
 pls = "0.2.2"
@@ -53,6 +58,7 @@ radiobrowser = { version = "0.6.1", features = [
 ratatui = "0.26.1"
 regex = "1.11.1"
 rockbox-dsp = "0.2"
+rust-embed = "8"
 reqwest = { version = "0.11.14", features = [
   "blocking",
   "rustls-tls",
