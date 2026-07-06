@@ -37,6 +37,7 @@ You can search for stations, play them, and see what's currently playing.
 - [Usage](#-usage)
 - [Equalizer](#-equalizer)
 - [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [Web UI & GraphQL API](#-web-ui--graphql-api)
 - [Systemd Service](#-systemd-service)
 - [API Documentation](#api-documentation)
 - [License](#-license)
@@ -50,6 +51,7 @@ You can search for stations, play them, and see what's currently playing.
 - 🌈 Real-time audio visualizations: oscilloscope, vectorscope and spectroscope
 - 🖥️ OS media controls integration (play/pause/volume from your keyboard's media keys)
 - 🛰️ Built-in gRPC server, installable as a systemd service
+- 🌐 Embedded web UI with a GraphQL API (`tunein web`) — search, browse and listen from your browser
 
 ## 🚚 Installation
 
@@ -151,6 +153,7 @@ SUBCOMMANDS:
     search    Search for a radio station
     server    Start the server
     service   Manage systemd service for tunein-cli server
+    web       Start the web UI & GraphQL API server
 ```
 
 Search for a radio station:
@@ -221,6 +224,20 @@ Press `?` in either UI to see every available shortcut with a description. Highl
 | `+` / `-`      | —                   | Volume                 |
 | `?`            | Help                | Help                   |
 | `q` / `Ctrl+C` | Quit                | Quit (`Ctrl+C`)        |
+
+## 🌐 Web UI & GraphQL API
+
+TuneIn CLI ships a modern dark-themed web interface — an internet radio player and browser — served together with a GraphQL API from a single embedded [Actix](https://actix.rs) server:
+
+```bash
+tunein web          # listens on http://localhost:8881
+tunein web 3000     # custom port
+```
+
+- **Web UI**: [http://localhost:8881](http://localhost:8881) — instant search, category browsing, provider switching (TuneIn / Radio Browser) and a persistent player with live "now playing" metadata.
+- **GraphQL playground**: [http://localhost:8881/graphql](http://localhost:8881/graphql) (GraphiQL); POST your queries to the same endpoint.
+
+The frontend lives in [`web/`](./web) and is embedded into the binary at compile time — see [web/README.md](./web/README.md) for the stack, development workflow and GraphQL API reference.
 
 ## 🧙 Systemd Service
 

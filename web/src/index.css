@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@theme {
+  --animate-eq-1: eq 1s ease-in-out -0.2s infinite;
+  --animate-eq-2: eq 1.3s ease-in-out -0.6s infinite;
+  --animate-eq-3: eq 0.8s ease-in-out -0.4s infinite;
+
+  @keyframes eq {
+    0%,
+    100% {
+      transform: scaleY(0.3);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-300 antialiased;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(217, 70, 239, 0.08), transparent);
+  background-attachment: fixed;
+}
+
+::selection {
+  @apply bg-violet-500/40 text-white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-zinc-800;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Volume slider */
+input[type='range'] {
+  @apply h-1 w-full cursor-pointer appearance-none rounded-full bg-zinc-700;
+}
+input[type='range']::-webkit-slider-thumb {
+  @apply size-3 appearance-none rounded-full bg-violet-300;
+}
+input[type='range']::-moz-range-thumb {
+  @apply size-3 rounded-full border-0 bg-violet-300;
+}

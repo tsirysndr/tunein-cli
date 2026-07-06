@@ -1,4 +1,8 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // rust-embed requires the folder to exist at compile time; the web UI
+    // may not have been built yet (e.g. plain `cargo build`).
+    std::fs::create_dir_all("web/dist")?;
+
     tonic_build::configure()
         .out_dir("src/api")
         .file_descriptor_set_path("src/api/descriptor.bin")
