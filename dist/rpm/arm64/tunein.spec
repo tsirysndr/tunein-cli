@@ -1,6 +1,6 @@
 
 Name:           tunein-cli
-Version:        0.5.0
+Version:        0.6.0
 Release:        1%{?dist}
 Summary:        CLI for listening to internet radio stations
 

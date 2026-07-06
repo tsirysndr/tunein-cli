@@ -50,7 +50,7 @@
         # hash Nix reports on mismatch into `outputHash` below.
         webuiNodeModules = pkgs.stdenv.mkDerivation {
           pname = "tunein-webui-node-modules";
-          version = "0.5.0";
+          version = "0.6.0";
 
           src = lib.fileset.toSource {
             root = ./web;
@@ -88,7 +88,7 @@
         # tunein binary at compile time via rust-embed.
         webui = pkgs.stdenv.mkDerivation {
           pname = "tunein-webui";
-          version = "0.5.0";
+          version = "0.6.0";
 
           src = ./web;
 
@@ -121,7 +121,7 @@
           inherit src;
 
           pname = "tunein";
-          version = "0.5.0";
+          version = "0.6.0";
 
           buildInputs = [
             # Add additional build inputs here
