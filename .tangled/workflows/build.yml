@@ -5,9 +5,6 @@ when:
 engine: microvm
 image: nixos
 
-caches:
-  https://tsirysndr.cachix.org: "tsirysndr.cachix.org-1:fbGYj/T8+9oqrF2c3EaQ33lMqZdb5n81Mk2jRE+C4wA="
-
 dependencies:
   - cargo
   - rustc
