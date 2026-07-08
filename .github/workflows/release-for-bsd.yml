@@ -45,10 +45,6 @@ jobs:
             pkg install -y rust protobuf alsa-lib pkgconf dbus
           run: |
             set -ex
-            # nix 0.23 (via cpal -> alsa) predates the FreeBSD 12 kevent
-            # ABI; force the FreeBSD 11 ABI, which libc links through the
-            # versioned FBSD_1.0 compat symbols still shipped today.
-            export RUST_LIBC_UNSTABLE_FREEBSD_VERSION=11
             cargo build --release
             tar czf "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz" -C target/release tunein
             rm -rf target
