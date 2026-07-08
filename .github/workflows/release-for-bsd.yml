@@ -1,0 +1,110 @@
+name: release-for-bsd
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to upload assets to (e.g. v0.6.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  freebsd:
+    name: release ${{ matrix.arch }}-unknown-freebsd
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+    env:
+      RELEASE_VERSION: ${{ github.event.inputs.tag }}
+      ASSET_TARGET: ${{ matrix.arch }}-unknown-freebsd
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      # Bun is not available on the BSDs, so the web UI is built on the
+      # host and synced into the VM alongside the sources.
+      - name: Build web UI
+        working-directory: web
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+      - name: Build in FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "14.3"
+          arch: ${{ matrix.arch }}
+          usesh: true
+          envs: "RELEASE_VERSION ASSET_TARGET"
+          prepare: |
+            pkg install -y rust protobuf alsa-lib pkgconf
+          run: |
+            set -ex
+            cargo build --release
+            tar czf "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz" -C target/release tunein
+            rm -rf target
+      - name: Checksum
+        run: shasum -a 256 "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz" > "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz.sha256"
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          files: |
+            tunein_${{ env.RELEASE_VERSION }}_${{ env.ASSET_TARGET }}.tar.gz
+            tunein_${{ env.RELEASE_VERSION }}_${{ env.ASSET_TARGET }}.tar.gz.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  netbsd:
+    name: release ${{ matrix.arch }}-unknown-netbsd
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+    env:
+      RELEASE_VERSION: ${{ github.event.inputs.tag }}
+      ASSET_TARGET: ${{ matrix.arch }}-unknown-netbsd
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Build web UI
+        working-directory: web
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+      - name: Build in NetBSD VM
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: "10.1"
+          arch: ${{ matrix.arch }}
+          usesh: true
+          envs: "RELEASE_VERSION ASSET_TARGET"
+          prepare: |
+            /usr/sbin/pkg_add rust protobuf alsa-lib pkgconf
+          run: |
+            set -ex
+            export PATH="/usr/pkg/bin:/usr/pkg/sbin:$PATH"
+            export PKG_CONFIG=pkgconf
+            cargo build --release
+            tar czf "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz" -C target/release tunein
+            rm -rf target
+      - name: Checksum
+        run: shasum -a 256 "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz" > "tunein_${RELEASE_VERSION}_${ASSET_TARGET}.tar.gz.sha256"
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          files: |
+            tunein_${{ env.RELEASE_VERSION }}_${{ env.ASSET_TARGET }}.tar.gz
+            tunein_${{ env.RELEASE_VERSION }}_${{ env.ASSET_TARGET }}.tar.gz.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
