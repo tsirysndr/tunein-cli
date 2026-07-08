@@ -1,5 +1,8 @@
-name: release-for-bsd
+name: release-for-bsd-aarch64
 
+# The aarch64 BSD VMs run under QEMU emulation and take much longer than
+# the x86_64 ones, so they live in their own workflow and never hold up
+# the rest of a release.
 on:
   workflow_dispatch:
     inputs:
@@ -12,11 +15,11 @@ permissions:
 
 jobs:
   freebsd:
-    name: release x86_64-unknown-freebsd
+    name: release aarch64-unknown-freebsd
     runs-on: ubuntu-latest
     env:
       RELEASE_VERSION: ${{ github.event.inputs.tag }}
-      ASSET_TARGET: x86_64-unknown-freebsd
+      ASSET_TARGET: aarch64-unknown-freebsd
     steps:
       - uses: actions/checkout@v4
       - name: Setup Bun
@@ -32,7 +35,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           release: "14.3"
-          arch: x86_64
+          arch: aarch64
           usesh: true
           envs: "RELEASE_VERSION ASSET_TARGET"
           prepare: |
@@ -55,11 +58,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   netbsd:
-    name: release x86_64-unknown-netbsd
+    name: release aarch64-unknown-netbsd
     runs-on: ubuntu-latest
     env:
       RELEASE_VERSION: ${{ github.event.inputs.tag }}
-      ASSET_TARGET: x86_64-unknown-netbsd
+      ASSET_TARGET: aarch64-unknown-netbsd
     steps:
       - uses: actions/checkout@v4
       - name: Setup Bun
@@ -73,7 +76,7 @@ jobs:
         uses: vmactions/netbsd-vm@v1
         with:
           release: "10.1"
-          arch: x86_64
+          arch: aarch64
           usesh: true
           envs: "RELEASE_VERSION ASSET_TARGET"
           prepare: |
