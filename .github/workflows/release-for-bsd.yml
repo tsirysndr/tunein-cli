@@ -13,7 +13,7 @@ permissions:
 jobs:
   freebsd:
     name: release ${{ matrix.arch }}-unknown-freebsd
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +62,7 @@ jobs:
 
   netbsd:
     name: release ${{ matrix.arch }}-unknown-netbsd
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
