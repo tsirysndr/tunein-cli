@@ -47,6 +47,9 @@ hyper = { version = "0.14.23", features = [
   "http2",
 ] }
 m3u = "1.0.0"
+# libc 0.2.178 changed NetBSD's kevent.udata to *mut c_void, which breaks
+# mio 0.8 (crossterm, no fixed release) and mio 1.0.3 on the NetBSD builds.
+libc = "=0.2.177"
 mime_guess = "2"
 owo-colors = "3.5.0"
 directories = "5.0.1"
