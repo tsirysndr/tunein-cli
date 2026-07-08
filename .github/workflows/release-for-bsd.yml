@@ -42,7 +42,7 @@ jobs:
           usesh: true
           envs: "RELEASE_VERSION ASSET_TARGET"
           prepare: |
-            pkg install -y rust protobuf alsa-lib pkgconf
+            pkg install -y rust protobuf alsa-lib pkgconf dbus
           run: |
             set -ex
             cargo build --release
@@ -89,7 +89,7 @@ jobs:
           usesh: true
           envs: "RELEASE_VERSION ASSET_TARGET"
           prepare: |
-            /usr/sbin/pkg_add rust protobuf alsa-lib pkgconf
+            /usr/sbin/pkg_add rust protobuf alsa-lib pkgconf dbus
           run: |
             set -ex
             export PATH="/usr/pkg/bin:/usr/pkg/sbin:$PATH"
