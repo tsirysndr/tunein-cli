@@ -18,15 +18,22 @@ use crate::{
     decoder::Frame as AudioFrame,
     eq_ui::EqPopup,
     extract::get_currently_playing,
+    fzf_ui::{FzfOutcome, FzfPopup},
     help_ui::{HelpPopup, Shortcut},
     input::stream_to_matrix,
     play::SinkCommand,
+    provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
     tui,
+    types::Station,
     visualization::{
         oscilloscope::Oscilloscope, spectroscope::Spectroscope, vectorscope::Vectorscope,
         Dimension, DisplayMode, GraphConfig,
     },
 };
+
+/// How long the fuzzy finder waits after the last keystroke before it fires
+/// a provider search, so fast typing doesn't hammer the network.
+const FZF_DEBOUNCE: Duration = Duration::from_millis(180);
 
 /// Shortcut table shown by the `?` popup in the player TUI.
 const PLAYER_SHORTCUTS: &[Shortcut] = &[
@@ -38,6 +45,7 @@ const PLAYER_SHORTCUTS: &[Shortcut] = &[
     ("↑ / ↓", "Volume up / down (also zooms the scope)"),
     ("← / →", "Show fewer / more samples"),
     ("e", "Open the equalizer"),
+    ("/", "Search stations and switch"),
     ("m", "Mute / unmute"),
     ("s", "Toggle scatter mode"),
     ("h", "Toggle the header UI"),
@@ -50,7 +58,7 @@ const PLAYER_SHORTCUTS: &[Shortcut] = &[
 
 /// Compact status line pinned to the bottom row of the player TUI.
 const PLAYER_STATUS_LINE: &str =
-    "space play/pause • tab mode • ↑/↓ volume • e equalizer • ? help • q quit";
+    "space play/pause • tab mode • ↑/↓ volume • / search • e equalizer • ? help • q quit";
 
 #[derive(Debug, Default, Clone)]
 pub struct State {
@@ -130,6 +138,7 @@ impl Default for Volume {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum CurrentDisplayMode {
     Oscilloscope,
     Vectorscope,
@@ -173,6 +182,15 @@ pub struct App {
     mode: CurrentDisplayMode,
     eq_popup: EqPopup,
     help_popup: HelpPopup,
+    /// `/` fuzzy finder for searching and switching stations.
+    fzf_popup: FzfPopup,
+    /// The finder's query changed and a search is due once it settles.
+    fzf_dirty: bool,
+    /// When the finder's query was last edited (for debouncing).
+    fzf_last_edit: Instant,
+    /// Set when the user picks a station in the finder; [`Self::run`] returns
+    /// it so the caller can reload playback.
+    next_station: Option<Station>,
     frame_rx: Receiver<AudioFrame>,
     /// [`OsMediaControls`].
     os_media_controls: Option<OsMediaControls>,
@@ -231,6 +249,10 @@ impl App {
             mode,
             eq_popup: EqPopup::new(),
             help_popup: HelpPopup::new(PLAYER_SHORTCUTS),
+            fzf_popup: FzfPopup::new(),
+            fzf_dirty: false,
+            fzf_last_edit: Instant::now(),
+            next_station: None,
             channels: source.channels as u8,
             frame_rx,
             os_media_controls,
@@ -359,14 +381,26 @@ fn render_line(label: &str, value: &str, area: Rect, frame: &mut Frame) {
 }
 
 impl App {
-    /// runs the application's main loop until the user quits
+    /// runs the application's main loop until the user quits or picks a new
+    /// station in the fuzzy finder.
+    ///
+    /// Returns `Some(station)` when the user chose a different station to play
+    /// (the caller reloads playback with it) or `None` when the user quit.
     pub async fn run(
         &mut self,
         terminal: &mut tui::Tui,
         mut cmd_rx: UnboundedReceiver<State>,
         mut sink_cmd_tx: UnboundedSender<SinkCommand>,
         id: &str,
-    ) {
+        provider_name: &str,
+    ) -> Option<Station> {
+        // Provider used by the fuzzy finder to search and to resolve stream URLs.
+        let provider: Option<Box<dyn Provider>> = match provider_name {
+            "tunein" => Some(Box::new(Tunein::new())),
+            "radiobrowser" => Some(Box::new(Radiobrowser::new().await)),
+            _ => None,
+        };
+
         let new_state = cmd_rx.recv().await.unwrap();
 
         let now_playing = new_state.now_playing.clone();
@@ -427,7 +461,7 @@ impl App {
             } else {
                 let Ok(audio_frame) = self.frame_rx.recv() else {
                     // other thread has closed so application has closed
-                    return;
+                    return None;
                 };
                 Some(stream_to_matrix(
                     audio_frame.data.iter().cloned(),
@@ -501,6 +535,7 @@ impl App {
                         );
                         self.eq_popup.render(f);
                         self.help_popup.render(f);
+                        self.fzf_popup.render(f);
                     })
                     .unwrap();
 
@@ -532,7 +567,7 @@ impl App {
                 .and_then(|os_media_controls| os_media_controls.try_recv_os_event())
             {
                 if self.process_os_media_control_event(event, &new_state, &mut sink_cmd_tx) {
-                    return;
+                    return None;
                 }
             }
 
@@ -550,11 +585,35 @@ impl App {
                     .process_events(event.clone(), new_state.clone(), &mut sink_cmd_tx)
                     .unwrap()
                 {
-                    return;
+                    // Either the user quit (`next_station` is `None`) or picked
+                    // a station in the finder (`Some`).
+                    return self.next_station.take();
                 }
-                if let Some(current_display) = self.current_display_mut() {
-                    current_display.handle(event);
+                // The finder swallows keys while open; don't also feed them to
+                // the visualization.
+                if !self.fzf_popup.is_visible() {
+                    if let Some(current_display) = self.current_display_mut() {
+                        current_display.handle(event);
+                    }
                 }
+            }
+
+            // Debounced fuzzy-finder search: once the query settles, ask the
+            // provider and feed the popup fresh candidates.
+            if self.fzf_popup.is_visible()
+                && self.fzf_dirty
+                && self.fzf_last_edit.elapsed() >= FZF_DEBOUNCE
+            {
+                self.fzf_dirty = false;
+                let query = self.fzf_popup.query().trim().to_string();
+                if !query.is_empty() {
+                    if let Some(provider) = &provider {
+                        self.fzf_popup.set_searching(true);
+                        let results = provider.search(query).await.unwrap_or_default();
+                        self.fzf_popup.set_results(results);
+                    }
+                }
+                self.fzf_popup.set_searching(false);
             }
         }
     }
@@ -595,6 +654,22 @@ impl App {
                     KeyCode::Char('c') | KeyCode::Char('q') | KeyCode::Char('w') => quit = true,
                     _ => {}
                 }
+            }
+            // The fuzzy finder captures the whole keyboard while it is open.
+            if self.fzf_popup.is_visible() {
+                match self.fzf_popup.handle_key(key) {
+                    FzfOutcome::QueryChanged => {
+                        self.fzf_dirty = true;
+                        self.fzf_last_edit = Instant::now();
+                    }
+                    FzfOutcome::Submit(station) => {
+                        // Break the loop; `run` returns this station to play.
+                        self.next_station = Some(station);
+                        return Ok(true);
+                    }
+                    FzfOutcome::Close | FzfOutcome::Consumed | FzfOutcome::Ignored => {}
+                }
+                return Ok(quit);
             }
             // While a popup is open it captures the keyboard.
             if self.eq_popup.handle_key(key) || self.help_popup.handle_key(key) {
@@ -639,6 +714,10 @@ impl App {
                 ),
                 KeyCode::Char('e') => self.eq_popup.toggle(),
                 KeyCode::Char('?') => self.help_popup.toggle(),
+                KeyCode::Char('/') => {
+                    self.fzf_popup.open(Vec::new());
+                    self.fzf_dirty = false;
+                }
                 KeyCode::Char('s') => self.graph.scatter = !self.graph.scatter,
                 KeyCode::Char('h') => self.graph.show_ui = !self.graph.show_ui,
                 KeyCode::Char('r') => self.graph.references = !self.graph.references,
