@@ -13,6 +13,7 @@ mod eq_ui;
 mod equalizer;
 mod extract;
 mod favorites;
+mod fzf_ui;
 mod help_ui;
 mod input;
 mod interactive;

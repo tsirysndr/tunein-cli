@@ -89,6 +89,7 @@ tokio = { version = "1.36.0", features = [
   "macros",
   "rt",
   "rt-multi-thread",
+  "time",
 ] }
 tonic = "0.12.3"
 tonic-reflection = "0.12.3"

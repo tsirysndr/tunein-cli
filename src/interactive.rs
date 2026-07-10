@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -14,6 +16,7 @@ use crate::audio::{AudioController, PlaybackEvent, PlaybackState};
 use crate::eq_ui::EqPopup;
 use crate::extract::get_currently_playing;
 use crate::favorites::{FavoriteStation, FavoritesStore};
+use crate::fzf_ui::{FzfOutcome, FzfPopup};
 use crate::help_ui::{HelpPopup, Shortcut};
 use crate::provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider};
 use crate::tui;
@@ -37,6 +40,7 @@ const HUB_SHORTCUTS: &[Shortcut] = &[
     ("d / delete", "Remove favourite (favourites screen)"),
     ("x", "Stop playback"),
     ("+ / -", "Volume up / down"),
+    ("/", "Open the fuzzy finder"),
     ("esc", "Back to the menu"),
     ("?", "Show this help"),
     ("ctrl+c", "Quit"),
@@ -44,9 +48,19 @@ const HUB_SHORTCUTS: &[Shortcut] = &[
 
 const STATUS_TIMEOUT: Duration = Duration::from_secs(3);
 const NOW_PLAYING_POLL_INTERVAL: Duration = Duration::from_secs(10);
+/// How long the fuzzy finder waits after the last keystroke before it fires
+/// a provider search, so fast typing doesn't hammer the network.
+const FZF_DEBOUNCE: Duration = Duration::from_millis(180);
 
 enum HubMessage {
     NowPlaying(String),
+}
+
+/// A debounce timer for the fuzzy finder fired: run the provider search for
+/// this `(generation, query)` unless a newer keystroke has superseded it.
+struct FzfSearchRequest {
+    generation: usize,
+    query: String,
 }
 
 pub async fn run(provider_name: &str) -> Result<(), Error> {
@@ -54,6 +68,7 @@ pub async fn run(provider_name: &str) -> Result<(), Error> {
     let (audio, mut audio_events) = AudioController::new()?;
     let favorites = FavoritesStore::load()?;
     let (metadata_tx, mut metadata_rx) = mpsc::unbounded_channel::<HubMessage>();
+    let (fzf_tx, mut fzf_rx) = mpsc::unbounded_channel::<FzfSearchRequest>();
 
     let mut terminal = tui::init()?;
 
@@ -75,6 +90,7 @@ pub async fn run(provider_name: &str) -> Result<(), Error> {
         audio,
         favorites,
         metadata_tx,
+        fzf_tx,
         os_media_controls,
     );
 
@@ -94,6 +110,9 @@ pub async fn run(provider_name: &str) -> Result<(), Error> {
             }
             Some(message) = metadata_rx.recv() => {
                 app.handle_metadata(message);
+            }
+            Some(request) = fzf_rx.recv() => {
+                app.run_fzf_search(request).await;
             }
         }
 
@@ -134,6 +153,11 @@ struct HubApp {
     os_media_controls: Option<OsMediaControls>,
     eq_popup: EqPopup,
     help_popup: HelpPopup,
+    fzf_popup: FzfPopup,
+    fzf_tx: mpsc::UnboundedSender<FzfSearchRequest>,
+    /// Monotonic tag for the newest fuzzy-finder search; lets in-flight
+    /// searches for stale queries cancel themselves and be discarded.
+    fzf_generation: Arc<AtomicUsize>,
 }
 
 impl HubApp {
@@ -143,6 +167,7 @@ impl HubApp {
         audio: AudioController,
         favorites: FavoritesStore,
         metadata_tx: mpsc::UnboundedSender<HubMessage>,
+        fzf_tx: mpsc::UnboundedSender<FzfSearchRequest>,
         os_media_controls: Option<OsMediaControls>,
     ) -> Self {
         let mut ui = UiState::default();
@@ -164,6 +189,9 @@ impl HubApp {
             os_media_controls,
             eq_popup: EqPopup::new(),
             help_popup: HelpPopup::new(HUB_SHORTCUTS),
+            fzf_popup: FzfPopup::new(),
+            fzf_tx,
+            fzf_generation: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -187,6 +215,7 @@ impl HubApp {
         frame.render_widget(self.render_footer(), areas[3]);
         self.eq_popup.render(frame);
         self.help_popup.render(frame);
+        self.fzf_popup.render(frame);
     }
 
     fn render_header(&self, frame: &mut Frame, area: Rect) {
@@ -654,7 +683,7 @@ impl HubApp {
             }
             Screen::Loading => "Please wait… • x stop playback • Esc cancel • +/- volume".to_string(),
             Screen::Menu => {
-                "↑/↓ navigate • Enter select • e equalizer • x stop playback • Esc back • +/- volume • ? help"
+                "↑/↓ navigate • Enter select • / search • e equalizer • x stop • Esc back • +/- volume • ? help"
                     .to_string()
             }
         }
@@ -736,8 +765,23 @@ impl HubApp {
             return Ok(Action::Quit);
         }
 
+        // The fuzzy finder captures the whole keyboard while it is open.
+        if self.fzf_popup.is_visible() {
+            return self.handle_fzf_key(key);
+        }
+
         // While a popup is open it captures the keyboard.
         if self.eq_popup.handle_key(key) || self.help_popup.handle_key(key) {
+            return Ok(Action::None);
+        }
+
+        // `/` opens the fuzzy finder from anywhere except a text field, where
+        // it is a literal character.
+        if key.code == KeyCode::Char('/')
+            && !key.modifiers.contains(KeyModifiers::CONTROL)
+            && !matches!(self.ui.screen, Screen::SearchInput | Screen::PlayInput)
+        {
+            self.open_fzf();
             return Ok(Action::None);
         }
 
@@ -787,6 +831,96 @@ impl HubApp {
             Screen::BrowseStations { .. } => self.handle_station_list_keys(key, ListKind::Browse),
             Screen::Favourites => self.handle_favourites_keys(key),
             Screen::Loading => Ok(Action::None),
+        }
+    }
+
+    /// Open the fuzzy finder, seeding it with whatever list is most relevant
+    /// to the current screen so `enter` is useful before any typing.
+    fn open_fzf(&mut self) {
+        let seed = match &self.ui.screen {
+            Screen::SearchResults => self.ui.search_results.clone(),
+            Screen::BrowseStations { .. } => self.ui.browse_results.clone(),
+            _ => self
+                .favorites
+                .all()
+                .iter()
+                .map(|fav| Station {
+                    id: fav.id.clone(),
+                    name: fav.name.clone(),
+                    codec: String::new(),
+                    bitrate: 0,
+                    stream_url: String::new(),
+                    playing: None,
+                })
+                .collect(),
+        };
+        self.fzf_popup.open(seed);
+    }
+
+    /// Route a key to the fuzzy finder and act on its outcome. Any selected
+    /// result — favourite, search hit or browse entry — is played directly.
+    fn handle_fzf_key(&mut self, key: KeyEvent) -> Result<Action, Error> {
+        match self.fzf_popup.handle_key(key) {
+            FzfOutcome::QueryChanged => {
+                self.schedule_fzf_search();
+                Ok(Action::None)
+            }
+            FzfOutcome::Submit(station) => {
+                Ok(Action::Task(PendingTask::PlayStation(StationRecord {
+                    provider: self.provider_name.clone(),
+                    station,
+                })))
+            }
+            FzfOutcome::Close | FzfOutcome::Consumed | FzfOutcome::Ignored => Ok(Action::None),
+        }
+    }
+
+    /// Arm a debounce timer for the finder's current query. When it elapses
+    /// (and no newer keystroke has landed) the timer wakes the main loop to
+    /// run the actual search — the provider isn't `Send`, so it can't run in
+    /// the spawned task itself.
+    fn schedule_fzf_search(&mut self) {
+        let query = self.fzf_popup.query().trim().to_string();
+        if query.is_empty() {
+            self.fzf_popup.set_searching(false);
+            return;
+        }
+
+        let generation = self.fzf_generation.fetch_add(1, Ordering::SeqCst) + 1;
+        self.fzf_popup.set_searching(true);
+
+        let tx = self.fzf_tx.clone();
+        let latest = self.fzf_generation.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(FZF_DEBOUNCE).await;
+            // A newer keystroke superseded this one; don't hit the network.
+            if latest.load(Ordering::SeqCst) == generation {
+                let _ = tx.send(FzfSearchRequest { generation, query });
+            }
+        });
+    }
+
+    /// Run a debounced fuzzy-finder search and feed the results back to the
+    /// popup, ignoring stale generations and a finder that has since closed.
+    async fn run_fzf_search(&mut self, request: FzfSearchRequest) {
+        if !self.fzf_popup.is_visible()
+            || request.generation != self.fzf_generation.load(Ordering::SeqCst)
+        {
+            return;
+        }
+
+        let results = self
+            .provider
+            .search(request.query)
+            .await
+            .unwrap_or_default();
+
+        // Guard again: the query may have moved on while we awaited the network.
+        if self.fzf_popup.is_visible()
+            && request.generation == self.fzf_generation.load(Ordering::SeqCst)
+        {
+            self.fzf_popup.set_results(results);
+            self.fzf_popup.set_searching(false);
         }
     }
 
