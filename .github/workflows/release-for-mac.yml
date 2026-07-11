@@ -1,6 +1,12 @@
 on:
   release:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and upload assets to (e.g. v0.7.0)"
+        required: true
+        type: string
 
 jobs:
   release:
@@ -41,7 +47,12 @@ jobs:
         if: matrix.target == 'aarch64-apple-darwin'
         run: rustup target add aarch64-apple-darwin
       - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "RELEASE_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          fi
       - name: Packaging final binary
         shell: bash
         run: |
@@ -52,6 +63,7 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.RELEASE_VERSION }}
           files: |
             tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz
             tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
