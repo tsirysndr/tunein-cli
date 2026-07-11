@@ -1,5 +1,5 @@
 [package]
-authors = ["Tsiry Sandratraina <tsiry.sndr@fluentci.io>"]
+authors = ["Tsiry Sandratraina <tsiry.sndr@rocksky.app>"]
 categories = ["command-line-utilities"]
 description = "Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨"
 edition = "2021"

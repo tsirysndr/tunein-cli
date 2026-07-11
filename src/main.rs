@@ -35,7 +35,7 @@ fn cli() -> Command<'static> {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
     Command::new("tunein")
         .version(VESRION)
-        .author("Tsiry Sandratraina <tsiry.sndr@fluentci.io>")
+        .author("Tsiry Sandratraina <tsiry.sndr@rocksky.app>")
         .about(
             r#"
         ______              ____       _______   ____
