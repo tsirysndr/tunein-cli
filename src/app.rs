@@ -42,7 +42,7 @@ const PLAYER_SHORTCUTS: &[Shortcut] = &[
         "tab",
         "Cycle visualization (oscilloscope/vectorscope/spectroscope/off)",
     ),
-    ("↑ / ↓", "Volume up / down (also zooms the scope)"),
+    ("↑ / ↓", "Volume up / down"),
     ("← / →", "Show fewer / more samples"),
     ("e", "Open the equalizer"),
     ("/", "Search stations and switch"),
@@ -683,13 +683,11 @@ impl App {
             };
             match key.code {
                 KeyCode::Up => {
-                    // inverted to act as zoom
-                    update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
+                    // Volume only — must not touch the scope scale, or changing
+                    // the volume would visibly rescale the visualization.
                     raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Down => {
-                    // inverted to act as zoom
-                    update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
                     lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Right => update_value_i(
