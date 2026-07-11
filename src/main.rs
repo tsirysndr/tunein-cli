@@ -2,7 +2,14 @@ use std::time::Duration;
 
 use anyhow::Error;
 use app::CurrentDisplayMode;
-use clap::{arg, builder::ValueParser, Command};
+use clap::{
+    arg,
+    builder::{
+        styling::{Color, RgbColor, Style, Styles},
+        ValueParser,
+    },
+    Command,
+};
 
 mod app;
 mod audio;
@@ -26,14 +33,34 @@ mod server;
 mod service;
 mod settings;
 mod tags;
+mod theme;
 mod tui;
 mod types;
 mod visualization;
 mod webserver;
 
-fn cli() -> Command<'static> {
+// Shared color palette for the --help output.
+const PRIMARY: Color = Color::Rgb(RgbColor(0, 232, 198)); // flags & subcommands
+const ACCENT: Color = Color::Rgb(RgbColor(130, 100, 255)); // section headers
+const SKY: Color = Color::Rgb(RgbColor(0, 210, 255)); // value placeholders
+const HIGHLIGHT: Color = Color::Rgb(RgbColor(100, 232, 130)); // valid
+const ERROR: Color = Color::Rgb(RgbColor(255, 100, 100)); // errors
+
+fn glow_styles() -> Styles {
+    Styles::styled()
+        .header(Style::new().bold().fg_color(Some(ACCENT)))
+        .usage(Style::new().bold().fg_color(Some(PRIMARY)))
+        .literal(Style::new().fg_color(Some(PRIMARY)))
+        .placeholder(Style::new().fg_color(Some(SKY)))
+        .error(Style::new().bold().fg_color(Some(ERROR)))
+        .valid(Style::new().bold().fg_color(Some(HIGHLIGHT)))
+        .invalid(Style::new().bold().fg_color(Some(ERROR)))
+}
+
+fn cli() -> Command {
     const VESRION: &str = env!("CARGO_PKG_VERSION");
     Command::new("tunein")
+        .styles(glow_styles())
         .version(VESRION)
         .author("Tsiry Sandratraina <tsiry.sndr@rocksky.app>")
         .about(
@@ -46,7 +73,7 @@ fn cli() -> Command<'static> {
 A simple CLI to listen to radio stations"#,
         )
         .arg(
-            arg!(-p --provider "The radio provider to use, can be 'tunein' or 'radiobrowser'. Default is 'tunein'").default_value("tunein")
+            arg!(-p --provider <PROVIDER> "The radio provider to use, can be 'tunein' or 'radiobrowser'. Default is 'tunein'").default_value("tunein")
         )
         .subcommand(
             Command::new("search")
@@ -57,7 +84,7 @@ A simple CLI to listen to radio stations"#,
             Command::new("play")
                 .about("Play a radio station")
                 .arg(arg!(<station> "The station to play"))
-                .arg(arg!(--volume "Set the initial volume (as a percent)").default_value("100"))
+                .arg(arg!(--volume <VOLUME> "Set the initial volume (as a percent)").default_value("100"))
                 .arg(clap::Arg::new("display-mode").long("display-mode").help("Set the display mode to start with").default_value("Spectroscope"))
                 .arg(clap::Arg::new("enable-os-media-controls").long("enable-os-media-controls").help("Should enable OS media controls?").default_value("true").value_parser(ValueParser::bool()))
                 .arg(clap::Arg::new("poll-events-every").long("poll-events-every").help("Poll for events every specified milliseconds.").default_value("16"))
@@ -67,8 +94,8 @@ A simple CLI to listen to radio stations"#,
             Command::new("browse")
                 .about("Browse radio stations")
                 .arg(arg!([category] "The category (category name or id) to browse"))
-                .arg(arg!(--offset "The offset to start from").default_value("0"))
-                .arg(arg!(--limit "The number of results to show").default_value("100")),
+                .arg(arg!(--offset <OFFSET> "The offset to start from").default_value("0"))
+                .arg(arg!(--limit <LIMIT> "The number of results to show").default_value("100")),
         )
         .subcommand(
             Command::new("server")
@@ -101,26 +128,34 @@ A simple CLI to listen to radio stations"#,
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let matches = cli().get_matches();
-    let provider = matches.value_of("provider").unwrap().to_string();
+    let provider = matches.get_one::<String>("provider").unwrap().to_string();
 
     match matches.subcommand() {
         Some(("search", args)) => {
-            let query = args.value_of("query").unwrap();
+            let query = args.get_one::<String>("query").unwrap();
             search::exec(query, provider.as_str()).await?;
         }
         Some(("play", args)) => {
-            let station = args.value_of("station").unwrap();
-            let volume = args.value_of("volume").unwrap().parse::<f32>().unwrap();
+            let station = args.get_one::<String>("station").unwrap();
+            let volume = args
+                .get_one::<String>("volume")
+                .unwrap()
+                .parse::<f32>()
+                .unwrap();
             let display_mode = args
-                .value_of("display-mode")
+                .get_one::<String>("display-mode")
                 .unwrap()
                 .parse::<CurrentDisplayMode>()
                 .unwrap();
             let enable_os_media_controls = args.get_one("enable-os-media-controls").unwrap();
-            let poll_events_every =
-                Duration::from_millis(args.value_of("poll-events-every").unwrap().parse().unwrap());
+            let poll_events_every = Duration::from_millis(
+                args.get_one::<String>("poll-events-every")
+                    .unwrap()
+                    .parse()
+                    .unwrap(),
+            );
             let poll_events_every_while_paused = Duration::from_millis(
-                args.value_of("poll-events-every-while-paused")
+                args.get_one::<String>("poll-events-every-while-paused")
                     .unwrap()
                     .parse()
                     .unwrap(),
@@ -137,9 +172,9 @@ async fn main() -> Result<(), Error> {
             .await?;
         }
         Some(("browse", args)) => {
-            let category = args.value_of("category");
-            let offset = args.value_of("offset").unwrap();
-            let limit = args.value_of("limit").unwrap();
+            let category = args.get_one::<String>("category").map(|s| s.as_str());
+            let offset = args.get_one::<String>("offset").unwrap();
+            let limit = args.get_one::<String>("limit").unwrap();
             browse::exec(
                 category,
                 offset.parse::<u32>()?,
@@ -149,12 +184,12 @@ async fn main() -> Result<(), Error> {
             .await?;
         }
         Some(("server", args)) => {
-            let port = args.value_of("port").unwrap();
+            let port = args.get_one::<String>("port").unwrap();
             let port = port.parse::<u16>().unwrap();
             server::exec(port).await?;
         }
         Some(("web", args)) => {
-            let port = args.value_of("port").unwrap();
+            let port = args.get_one::<String>("port").unwrap();
             let port = port.parse::<u16>().unwrap();
             webserver::exec(port).await?;
         }

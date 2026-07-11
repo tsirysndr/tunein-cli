@@ -23,7 +23,7 @@ use crate::{
     input::stream_to_matrix,
     play::SinkCommand,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
-    tui,
+    theme, tui,
     types::Station,
     visualization::{
         oscilloscope::Oscilloscope, spectroscope::Spectroscope, vectorscope::Vectorscope,
@@ -220,7 +220,7 @@ impl App {
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
-            labels_color: Color::Cyan,
+            labels_color: theme::PRIMARY,
             palette: vec![Color::Red, Color::Yellow, Color::Green, Color::Magenta],
             scale: ui.scale as f64,
             width: source.buffer, // TODO also make bit depth customizable
@@ -371,7 +371,7 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
 }
 
 fn render_line(label: &str, value: &str, area: Rect, frame: &mut Frame) {
-    let span1 = Span::styled(label, Style::new().fg(Color::LightBlue));
+    let span1 = Span::styled(label, Style::new().fg(theme::SKY));
     let span2 = Span::raw(value);
 
     let line = Line::from(vec![span1, span2]);

@@ -19,6 +19,7 @@ use crate::favorites::{FavoriteStation, FavoritesStore};
 use crate::fzf_ui::{FzfOutcome, FzfPopup};
 use crate::help_ui::{HelpPopup, Shortcut};
 use crate::provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider};
+use crate::theme;
 use crate::tui;
 use crate::types::Station;
 
@@ -345,7 +346,7 @@ impl HubApp {
     }
 
     fn render_labeled_line(&self, frame: &mut Frame, area: Rect, y: u16, label: &str, value: &str) {
-        let span_label = Span::styled(label, Style::default().fg(Color::LightBlue));
+        let span_label = Span::styled(label, Style::default().fg(theme::SKY));
         let span_value = Span::raw(value);
         let line = Line::from(vec![span_label, span_value]);
         frame.render_widget(
@@ -414,7 +415,7 @@ impl HubApp {
                     .highlight_symbol("➜ ")
                     .highlight_style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(theme::ACCENT)
                             .add_modifier(Modifier::BOLD),
                     );
                 frame.render_stateful_widget(list, area, &mut self.ui.search_results_state);
@@ -426,7 +427,7 @@ impl HubApp {
                     .highlight_symbol("➜ ")
                     .highlight_style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(theme::ACCENT)
                             .add_modifier(Modifier::BOLD),
                     );
                 frame.render_stateful_widget(list, area, &mut self.ui.categories_state);
@@ -442,7 +443,7 @@ impl HubApp {
                     .highlight_symbol("➜ ")
                     .highlight_style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(theme::ACCENT)
                             .add_modifier(Modifier::BOLD),
                     );
                 frame.render_stateful_widget(list, area, &mut self.ui.browse_state);
@@ -454,7 +455,7 @@ impl HubApp {
                     .highlight_symbol("➜ ")
                     .highlight_style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(theme::ACCENT)
                             .add_modifier(Modifier::BOLD),
                     );
                 frame.render_stateful_widget(list, area, &mut self.ui.favourites_state);
@@ -523,7 +524,7 @@ impl HubApp {
             .block(Block::default().borders(Borders::ALL).title("Main Menu"))
             .highlight_style(
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(theme::ACCENT)
                     .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol("➜ ");
