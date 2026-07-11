@@ -1,5 +1,5 @@
 Package: tunein-cli
-Version: 0.7.0
+Version: 0.7.1
 Section: user/multimedia
 Priority: optional
 Architecture: amd64

@@ -44,7 +44,7 @@
 
         webuiNodeModules = pkgs.stdenv.mkDerivation {
           pname = "tunein-webui-node-modules";
-          version = "0.7.0";
+          version = "0.7.1";
 
           src = lib.fileset.toSource {
             root = ./web;
@@ -87,7 +87,7 @@
         # tunein binary at compile time via rust-embed.
         webui = pkgs.stdenv.mkDerivation {
           pname = "tunein-webui";
-          version = "0.7.0";
+          version = "0.7.1";
 
           src = ./web;
 
@@ -120,7 +120,7 @@
           inherit src;
 
           pname = "tunein";
-          version = "0.7.0";
+          version = "0.7.1";
 
           nativeBuildInputs = lib.optionals pkgs.stdenv.isDarwin [
             # coreaudio-sys generates its CoreAudio bindings with bindgen at
