@@ -16,6 +16,7 @@ use ratatui::{
 
 use crate::equalizer::Equalizer;
 use crate::settings::EQ_BANDS;
+use crate::theme;
 
 /// Gain range in dB the vertical sliders map onto (± this many dB).
 const RANGE_DB: i32 = 24;
@@ -133,7 +134,7 @@ impl EqPopup {
             .title(title)
             .title_alignment(Alignment::Center)
             .border_style(if enabled {
-                Style::default().fg(Color::Cyan)
+                Style::default().fg(theme::PRIMARY)
             } else {
                 Style::default().fg(Color::DarkGray)
             });
@@ -238,9 +239,9 @@ impl<'a> Widget for EqSliders<'a> {
             let bar_color = if column.dimmed {
                 Color::DarkGray
             } else if is_sel {
-                Color::Yellow
+                theme::ACCENT
             } else {
-                Color::Cyan
+                theme::PRIMARY
             };
 
             // Zero-dB axis through every column so the user can eyeball
@@ -266,7 +267,7 @@ impl<'a> Widget for EqSliders<'a> {
 
             let label_style = if is_sel {
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(theme::ACCENT)
                     .add_modifier(Modifier::BOLD)
             } else if column.dimmed {
                 Style::default().fg(Color::DarkGray)

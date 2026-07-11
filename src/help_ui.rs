@@ -2,6 +2,7 @@
 //! current UI. Shared by the `play` TUI and interactive mode, which each
 //! pass their own shortcut table.
 
+use crate::theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Rect},
@@ -75,7 +76,7 @@ impl HelpPopup {
             .borders(Borders::ALL)
             .title(" Keyboard Shortcuts ")
             .title_alignment(Alignment::Center)
-            .border_style(Style::default().fg(Color::Cyan));
+            .border_style(Style::default().fg(theme::PRIMARY));
         let inner = block.inner(area);
         frame.render_widget(block, area);
 
@@ -85,7 +86,7 @@ impl HelpPopup {
                 Span::styled(
                     format!(" {:>key_width$}  ", key),
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(theme::ACCENT)
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw(*description),

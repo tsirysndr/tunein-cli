@@ -1,5 +1,5 @@
 [package]
-authors = ["Tsiry Sandratraina <tsiry.sndr@fluentci.io>"]
+authors = ["Tsiry Sandratraina <tsiry.sndr@rocksky.app>"]
 categories = ["command-line-utilities"]
 description = "Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨"
 edition = "2021"
@@ -33,7 +33,7 @@ anyhow = "1.0.69"
 async-graphql = "7"
 async-graphql-actix-web = "7"
 async-trait = "0.1.85"
-clap = "3.2.20"
+clap = "4.6"
 crossterm = "0.27.0"
 derive_more = "0.99.17"
 futures = "0.3.26"

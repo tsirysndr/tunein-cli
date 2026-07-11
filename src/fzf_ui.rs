@@ -16,6 +16,7 @@ use ratatui::{
     Frame,
 };
 
+use crate::theme;
 use crate::types::Station;
 
 /// Braille spinner frames shown while a provider search is in flight.
@@ -215,7 +216,7 @@ impl FzfPopup {
             .borders(Borders::ALL)
             .title(" 🔍 Fuzzy Finder ")
             .title_alignment(Alignment::Center)
-            .border_style(Style::default().fg(Color::Cyan));
+            .border_style(Style::default().fg(theme::PRIMARY));
         let inner = block.inner(area);
         frame.render_widget(block, area);
         if inner.height < 3 || inner.width < 4 {
@@ -235,7 +236,7 @@ impl FzfPopup {
         let mut prompt = vec![Span::styled(
             "❯ ",
             Style::default()
-                .fg(Color::Cyan)
+                .fg(theme::PRIMARY)
                 .add_modifier(Modifier::BOLD),
         )];
         if self.query.is_empty() {
@@ -296,7 +297,7 @@ impl FzfPopup {
         };
         let list = List::new(items).highlight_symbol("❯ ").highlight_style(
             Style::default()
-                .fg(Color::Yellow)
+                .fg(theme::ACCENT)
                 .add_modifier(Modifier::BOLD),
         );
         frame.render_stateful_widget(list, chunks[2], &mut self.state);
@@ -342,7 +343,7 @@ fn make_span(text: &str, matched: bool) -> Span<'static> {
         Span::styled(
             text.to_string(),
             Style::default()
-                .fg(Color::Cyan)
+                .fg(theme::PRIMARY)
                 .add_modifier(Modifier::BOLD),
         )
     } else {

@@ -23,7 +23,7 @@ use crate::{
     input::stream_to_matrix,
     play::SinkCommand,
     provider::{radiobrowser::Radiobrowser, tunein::Tunein, Provider},
-    tui,
+    theme, tui,
     types::Station,
     visualization::{
         oscilloscope::Oscilloscope, spectroscope::Spectroscope, vectorscope::Vectorscope,
@@ -42,7 +42,7 @@ const PLAYER_SHORTCUTS: &[Shortcut] = &[
         "tab",
         "Cycle visualization (oscilloscope/vectorscope/spectroscope/off)",
     ),
-    ("↑ / ↓", "Volume up / down (also zooms the scope)"),
+    ("↑ / ↓", "Volume up / down"),
     ("← / →", "Show fewer / more samples"),
     ("e", "Open the equalizer"),
     ("/", "Search stations and switch"),
@@ -220,7 +220,7 @@ impl App {
     ) -> Self {
         let graph = GraphConfig {
             axis_color: Color::DarkGray,
-            labels_color: Color::Cyan,
+            labels_color: theme::PRIMARY,
             palette: vec![Color::Red, Color::Yellow, Color::Green, Color::Magenta],
             scale: ui.scale as f64,
             width: source.buffer, // TODO also make bit depth customizable
@@ -371,7 +371,7 @@ fn render_frame(state: Arc<Mutex<State>>, frame: &mut Frame) {
 }
 
 fn render_line(label: &str, value: &str, area: Rect, frame: &mut Frame) {
-    let span1 = Span::styled(label, Style::new().fg(Color::LightBlue));
+    let span1 = Span::styled(label, Style::new().fg(theme::SKY));
     let span2 = Span::raw(value);
 
     let line = Line::from(vec![span1, span2]);
@@ -683,13 +683,11 @@ impl App {
             };
             match key.code {
                 KeyCode::Up => {
-                    // inverted to act as zoom
-                    update_value_f(&mut self.graph.scale, 0.01, magnitude, 0.0..10.0);
+                    // Volume only — must not touch the scope scale, or changing
+                    // the volume would visibly rescale the visualization.
                     raise_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Down => {
-                    // inverted to act as zoom
-                    update_value_f(&mut self.graph.scale, -0.01, magnitude, 0.0..10.0);
                     lower_volume(&state, self.os_media_controls.as_mut(), sink_cmd_tx);
                 }
                 KeyCode::Right => update_value_i(
