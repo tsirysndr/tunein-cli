@@ -14,8 +14,6 @@ jobs:
           - aarch64-apple-darwin
 
     steps:
-      - name: Setup Fluent CI CLI
-        uses: fluentci-io/setup-fluentci@v5
       - name: Installing needed dependencies
         run: brew install protobuf llvm@15
       - name: Installing Rust toolchain
