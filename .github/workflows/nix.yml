@@ -17,4 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v17
+        with:
+          name: tsirysndr
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix build
