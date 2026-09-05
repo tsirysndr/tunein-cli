@@ -84,6 +84,18 @@ Using Bash:
 curl -fsSL https://cdn.jsdelivr.net/gh/tsirysndr/tunein-cli@ab6a1ab/install.sh | bash
 ```
 
+Using [npm](https://www.npmjs.com/package/tunein-cli):
+
+```bash
+npm install -g tunein-cli
+```
+
+Or run it directly with [npx](https://docs.npmjs.com/cli/commands/npx), no install needed:
+
+```bash
+npx tunein-cli search "BBC Radio 1"
+```
+
 Using [Homebrew](https://brew.sh):
 
 ```bash

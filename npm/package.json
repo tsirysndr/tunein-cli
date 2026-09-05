@@ -1,0 +1,48 @@
+{
+  "name": "tunein-cli",
+  "version": "0.7.1",
+  "description": "Browse and listen to thousands of radio stations across the globe right from your terminal 🌎 📻 🎵✨",
+  "license": "MIT",
+  "author": "Tsiry Sandratraina <tsiry.sndr@rocksky.app>",
+  "homepage": "https://github.com/tsirysndr/tunein-cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsirysndr/tunein-cli.git",
+    "directory": "npm"
+  },
+  "bugs": {
+    "url": "https://github.com/tsirysndr/tunein-cli/issues"
+  },
+  "keywords": [
+    "tunein",
+    "radio",
+    "radio-browser",
+    "music",
+    "audio",
+    "player",
+    "streaming",
+    "cli",
+    "tui",
+    "terminal"
+  ],
+  "bin": {
+    "tunein": "run.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "install.js",
+    "run.js",
+    "README.md"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "freebsd",
+    "netbsd"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}
