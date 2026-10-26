@@ -1,0 +1,7 @@
+# Keep an empty environment boundary for Dagger; application credentials stay outside.
+!.env
+bin/
+**/.spago/
+**/output/
+**/node_modules/
+**/__pycache__/
