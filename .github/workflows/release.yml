@@ -17,114 +17,34 @@ jobs:
           - armv7-unknown-linux-gnueabihf
           - x86_64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-      - run: brew install protobuf
-      - uses: fluentci-io/setup-fluentci@v5
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-      - name: Build web UI
-        working-directory: web
-        run: |
-          bun install --frozen-lockfile
-          bun run build
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Build
-        run: fluentci run . build
+      - uses: actions/checkout@v4
+
+      - name: Install Dagger
+        run: bash .dagger/install-dagger.sh
+
+      - name: Run PureScript Dagger pipeline
+        uses: ./.github/actions/dagger
         env:
-          TAG: ${{ env.RELEASE_VERSION }}
           TARGET: ${{ matrix.target }}
-
-      # Map the Rust target onto the Debian/RPM arch names used under
-      # dist/. armv7 has no packaging metadata, so it ships tarball-only.
-      # RPM_TARGET stays empty on aarch64: only a .deb is built there.
-      - name: Set package arch
-        shell: bash
-        run: |
-          case "${{ matrix.target }}" in
-            x86_64-unknown-linux-gnu)  echo "PKG_ARCH=amd64" >> "$GITHUB_ENV"; echo "RPM_TARGET=x86_64" >> "$GITHUB_ENV" ;;
-            aarch64-unknown-linux-gnu) echo "PKG_ARCH=arm64" >> "$GITHUB_ENV" ;;
-            *)                         echo "PKG_ARCH="      >> "$GITHUB_ENV" ;;
-          esac
-
-      - name: Install rpmbuild
-        if: env.RPM_TARGET != ''
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm
-
-      - name: Extract binary
-        if: env.PKG_ARCH != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p dist/staging
-          tar -xzf "tunein_${RELEASE_VERSION}_${{ matrix.target }}.tar.gz" -C dist/staging
-          file dist/staging/tunein
-
-      - name: Build .deb
-        if: env.PKG_ARCH != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          version_no_v="${RELEASE_VERSION#v}"
-          pkg_root="dist/debian/${PKG_ARCH}"
-          mkdir -p "$pkg_root/usr/bin"
-          install -m 0755 dist/staging/tunein "$pkg_root/usr/bin/tunein"
-          sed -i "s/^Version: .*/Version: ${version_no_v}/" "$pkg_root/DEBIAN/control"
-          dpkg-deb --build --root-owner-group "$pkg_root" "dist/tunein-cli_${version_no_v}_${PKG_ARCH}.deb"
-
-      - name: Build .rpm
-        if: env.RPM_TARGET != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          version_no_v="${RELEASE_VERSION#v}"
-          src_root="dist/rpm/${PKG_ARCH}"
-          mkdir -p "${src_root}/usr/bin"
-          install -m 0755 dist/staging/tunein "${src_root}/usr/bin/tunein"
-          sed -i "s/^Version:        .*/Version:        ${version_no_v}/" "${src_root}/tunein.spec"
-
-          rpm_top="$(pwd)/dist/rpmbuild"
-          mkdir -p "${rpm_top}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-          cp -r "${src_root}" "${rpm_top}/SOURCES/${PKG_ARCH}"
-          rpmbuild --define "_topdir ${rpm_top}" \
-                   --define "_sourcedir ${rpm_top}/SOURCES" \
-                   --target "${RPM_TARGET}" \
-                   -bb "${src_root}/tunein.spec"
-          find "${rpm_top}/RPMS" -name '*.rpm' -exec mv {} dist/ \;
-
-      - name: Checksum packages
-        if: env.PKG_ARCH != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd dist
-          for f in *.deb *.rpm; do
-            [ -e "$f" ] || continue
-            shasum -a 256 "$f" > "$f.sha256"
-          done
-          ls -lh
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+          VERSION: ${{ github.ref_name }}
         with:
-          files: |
-            tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz
-            tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
-            dist/*.deb
-            dist/*.deb.sha256
-            dist/*.rpm
-            dist/*.rpm.sha256
+          module: ci
+          key: release-${{ matrix.target }}
+          volumes: tunein-cli-cargo-registry,tunein-cli-cargo-git,tunein-cli-target-${{ matrix.target }},tunein-cli-bun
+          command: |
+            dagger api call -m ci linux-release --source .. --target "$TARGET" --version "$VERSION" --output ../dist
+
+      - name: Upload release with Dagger
+        working-directory: .dagger
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: dagger api call -m ci upload-release --assets ../dist --tag "$RELEASE_TAG" --token env://GH_TOKEN --run-id "$WORKFLOW_RUN"
 
       - name: Check Gemfury secrets
         id: gemfury
-        if: env.PKG_ARCH != ''
+        if: matrix.target != 'armv7-unknown-linux-gnueabihf'
         env:
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
@@ -136,18 +56,11 @@ jobs:
             echo "Gemfury secrets not set; skipping push"
           fi
 
-      - name: Push .deb and .rpm to Gemfury
-        if: env.PKG_ARCH != '' && steps.gemfury.outputs.available == 'true'
+      - name: Publish packages with Dagger
+        if: matrix.target != 'armv7-unknown-linux-gnueabihf' && steps.gemfury.outputs.available == 'true'
+        working-directory: .dagger
         env:
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          for pkg in dist/*.deb dist/*.rpm; do
-            echo "Pushing $pkg to Gemfury (${FURY_ACCOUNT})"
-            curl -fsS -F package=@"${pkg}" \
-              "https://${FURY_TOKEN}@push.fury.io/${FURY_ACCOUNT}/"
-            echo
-          done
+          WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: dagger api call -m ci publish-gemfury --assets ../dist --account env://FURY_ACCOUNT --token env://FURY_TOKEN --run-id "$WORKFLOW_RUN"

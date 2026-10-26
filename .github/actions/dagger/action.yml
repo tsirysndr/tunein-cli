@@ -1,0 +1,57 @@
+name: Cached PureScript Dagger
+description: Restore named Dagger volumes, run a pipeline, and save updated volumes.
+inputs:
+  module:
+    description: Module owning the named cache volumes
+    required: true
+  command:
+    description: Dagger command to execute from .dagger
+    required: true
+  volumes:
+    description: Comma-separated Dagger cache volume names
+    required: true
+  key:
+    description: Per-job cache partition
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache/restore@v4
+      id: cache
+      with:
+        path: ${{ runner.temp }}/dagger-volumes
+        key: dagger-v1-beta21-volumes-v1-${{ runner.os }}-${{ runner.arch }}-${{ inputs.key }}-${{ hashFiles('**/Cargo.lock', '**/bun.lock', '**/mix.lock', '**/go.sum', 'dagger.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          dagger-v1-beta21-volumes-v1-${{ runner.os }}-${{ runner.arch }}-${{ inputs.key }}-
+    - name: Restore Dagger cache volumes
+      if: steps.cache.outputs.cache-matched-key != ''
+      shell: bash
+      working-directory: .dagger
+      env:
+        CACHE_MODULE: ${{ inputs.module }}
+        CACHE_VOLUMES: ${{ inputs.volumes }}
+        CACHE_DIRECTORY: ${{ runner.temp }}/dagger-volumes
+        CACHE_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+      run: dagger api call -m "$CACHE_MODULE" restore-caches --source "$CACHE_DIRECTORY" --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN"
+    - name: Run Dagger pipeline
+      shell: bash
+      working-directory: .dagger
+      run: ${{ inputs.command }}
+    - name: Snapshot Dagger cache volumes
+      id: snapshot
+      if: always() && !cancelled()
+      continue-on-error: true
+      shell: bash
+      working-directory: .dagger
+      env:
+        CACHE_MODULE: ${{ inputs.module }}
+        CACHE_VOLUMES: ${{ inputs.volumes }}
+        CACHE_DIRECTORY: ${{ runner.temp }}/dagger-volumes
+        CACHE_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+      run: dagger api call -m "$CACHE_MODULE" save-caches --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN" --output "$CACHE_DIRECTORY"
+    - uses: actions/cache/save@v4
+      if: always() && !cancelled() && steps.snapshot.outcome == 'success'
+      continue-on-error: true
+      with:
+        path: ${{ runner.temp }}/dagger-volumes
+        key: ${{ steps.cache.outputs.cache-primary-key }}

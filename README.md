@@ -287,3 +287,8 @@ and then use [Buf Studio](https://studio.buf.build/tsiry/tuneinserverapis?select
 
 ## 📝 License
 [MIT](LICENSE)
+
+## CI pipelines
+
+Portable GitHub Actions jobs use [PureScript Dagger modules](.dagger/README.md).
+See that guide for commands, caching, and the jobs that remain native.

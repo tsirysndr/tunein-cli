@@ -16,10 +16,32 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: DeterminateSystems/nix-installer-action@main
+
       - name: Setup Cachix
+        if: runner.os == 'macOS'
         uses: cachix/cachix-action@v17
         with:
           name: tsirysndr
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
       - run: nix build
+        if: runner.os == 'macOS'
+
+      - name: Install Dagger
+        if: runner.os == 'Linux'
+        run: bash .dagger/install-dagger.sh
+
+      - name: Run PureScript Dagger pipeline
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/dagger
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        with:
+          module: ci
+          key: nix-flake
+          volumes: tunein-cli-nix-store
+          command: |
+            dagger api call -m ci nix-build --source .. --cachix-token env://CACHIX_AUTH_TOKEN --run-id "$WORKFLOW_RUN"
