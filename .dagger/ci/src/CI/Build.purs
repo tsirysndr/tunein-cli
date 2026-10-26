@@ -1,13 +1,14 @@
 module CI.Build (buildArgs, linuxRelease, sourceArgs, test, format) where
 
 import Prelude
+import CI.Package as Package
+import CI.Cross as Cross
 import Dagger (Client)
 import Dagger.Container as Container
-import Dagger.CurrentModule as CurrentModule
 import Dagger.Directory as Directory
 import Dagger.Modules as Module
 import Dagger.Query as Query
-import Dagger.Types (Container, Directory, Platform(..))
+import Dagger.Types (Container, Directory)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
@@ -20,9 +21,6 @@ buildArgs = ado
   target <- Module.argument "target"
   version <- Module.argument "version"
   in { source, target, version }
-
-scripts :: Client -> Directory
-scripts client = Query.currentModule client # CurrentModule.source # Directory.directory "scripts"
 
 withSource :: Directory -> Container -> Container
 withSource source = Container.withDirectoryWith "/src" source
@@ -54,35 +52,27 @@ linuxRelease client args = do
     "aarch64-unknown-linux-gnu" -> pure "linux-aarch64"
     "armv7-unknown-linux-gnueabihf" -> pure "linux-armhf"
     _ -> throwError (error "Unsupported Linux release target")
+  environment <- Cross.environment client args.target
   let
-    environment = Query.containerWith
-      (Query.defaultContainerOpts { platform = Just (Platform "linux/amd64") }) client
-      # Container.from "rust:1.89-bullseye"
-      # Container.withDirectory "/pipeline" (scripts client)
-      # Container.withEnvVariable "TARGET" args.target
-      # Container.withExec [ "bash", "/pipeline/cross-deps.sh" ]
-      # Container.withExec [ "rustup", "target", "add", args.target ]
     built = environment
       # withSource args.source
       # Container.withDirectory "/src/web/dist" (Container.directory "/web/dist" (web client args.source))
       # Container.withWorkdir "/src"
       # withCargoCaches client args.target
-      # Container.withExec [ "bash", "/pipeline/build-rust.sh" ]
+      -- Preserve the application's protobuf compatibility wrapper for older tags.
+      # Container.withExec [ "mv", "/usr/bin/protoc", "/usr/bin/_protoc" ]
+      # Container.withExec [ "install", "-m", "0755", "tools/protoc", "/usr/bin/protoc" ]
+      # Container.withExec [ "cargo", "build", "--release", "--locked", "--target", args.target, "--bin", "tunein" ]
       -- Cache mounts cannot be exported directly: materialize the executable.
       # Container.withExec [ "mkdir", "-p", "/binary" ]
       # Container.withExec [ "cp", "target/" <> args.target <> "/release/tunein", "/binary/tunein" ]
-    packaged = Query.container client
-      # Container.from "node:22-bookworm-slim"
-      # Container.withExec [ "sh", "-c", "apt-get update && apt-get install -y --no-install-recommends dpkg-dev rpm libdigest-sha-perl && rm -rf /var/lib/apt/lists/*" ]
-      # Container.withDirectory "/pipeline" (scripts client)
-      # withSource args.source
-      # Container.withFile "/src/target/tunein" (Container.file "/binary/tunein" built)
-      # Container.withWorkdir "/src"
-      # Container.withEnvVariable "VERSION" args.version
-      # Container.withEnvVariable "TARGET" args.target
-      # Container.withEnvVariable "LABEL" label
-      # Container.withExec [ "bash", "/pipeline/package.sh" ]
-  pure $ Container.directory "/out" packaged
+  Package.packageRelease client
+    { source: args.source
+    , binary: Container.file "/binary/tunein" built
+    , target: args.target
+    , label
+    , version: args.version
+    }
 
 type SourceArgs = { source :: Directory }
 
@@ -97,7 +87,8 @@ test client args = do
   void $ Container.sync ui
   void $ Container.sync $ Query.container client
     # Container.from "rust:bookworm"
-    # Container.withExec [ "sh", "-c", "apt-get update && apt-get install -y --no-install-recommends libasound2-dev libdbus-1-dev pkg-config protobuf-compiler && rm -rf /var/lib/apt/lists/*" ]
+    # Container.withExec [ "apt-get", "update" ]
+    # Container.withExec [ "apt-get", "install", "-y", "--no-install-recommends", "libasound2-dev", "libdbus-1-dev", "pkg-config", "protobuf-compiler" ]
     # withSource args.source
     # Container.withDirectory "/src/web/dist" (Container.directory "/web/dist" ui)
     # Container.withWorkdir "/src"

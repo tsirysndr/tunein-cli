@@ -3,9 +3,11 @@ module CI.Cache (cacheArgs, restoreArgs, saveCaches, restoreCaches) where
 import Prelude
 import Dagger (Client)
 import Dagger.Container as Container
+import Dagger.Directory as Directory
+import Dagger.Types (Directory, ExistsType(..))
+import Data.Maybe (Maybe(..))
 import Dagger.Modules as Module
 import Dagger.Query as Query
-import Dagger.Types (Directory)
 import Data.Foldable (all, foldM)
 import Data.String (Pattern(..), contains, split)
 import Effect.Aff (Aff, throwError)
@@ -54,8 +56,12 @@ restoreCaches client args = do
         # Container.from "node:22-bookworm-slim"
         # Container.withDirectory "/snapshot" args.source
         # Container.withEnvVariable "CACHE_RESTORE" args.runId
-  restored <- foldM (\container name -> pure $ container
-    # Container.withMountedCache "/cache" (Query.cacheVolume name client)
-    # Container.withExec [ "sh", "-c", "if [ -d \"$1\" ]; then cp -a \"$1/.\" /cache/; fi", "restore", "/snapshot/" <> name ]) base names
+  restored <- foldM (\container name -> do
+    exists <- Directory.existsWith name
+      (Directory.defaultExistsOpts { expectedType = Just ExistsTypeDirectoryType }) args.source
+    pure $ if exists then container
+      # Container.withMountedCache "/cache" (Query.cacheVolume name client)
+      # Container.withExec [ "cp", "-a", "/snapshot/" <> name <> "/.", "/cache/" ]
+      else container) base names
   void $ Container.sync restored
   pure "Dagger cache volumes restored"
