@@ -8,9 +8,9 @@ import tempfile
 
 here = Path(__file__).resolve().parent
 root = here.parent
-cli = os.environ.get("DAGGER_CLI_BIN", str(here / "bin/dagger"))
+cli = os.environ.get("DAGGER_CLI_BIN", "dagger")
 if not Path(cli).is_file() and not shutil.which(cli):
-    raise SystemExit("Run .dagger/install-dagger.sh first, or set DAGGER_CLI_BIN")
+    raise SystemExit("Install Dagger v1.0.0-beta.21 first, or set DAGGER_CLI_BIN")
 
 with tempfile.TemporaryDirectory(prefix="tunein-cli-dagger-codegen-") as temporary:
     workspace = Path(temporary)

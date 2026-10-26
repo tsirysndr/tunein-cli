@@ -31,7 +31,9 @@ jobs:
 
       - name: Install Dagger
         if: runner.os == 'Linux'
-        run: bash .dagger/install-dagger.sh
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77
+        with:
+          version: v1.0.0-beta.21
 
       - name: Run PureScript Dagger pipeline
         if: runner.os == 'Linux'

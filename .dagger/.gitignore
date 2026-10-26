@@ -5,3 +5,5 @@ bin/
 **/output/
 **/node_modules/
 **/__pycache__/
+# Keep pipeline documentation and vendored SDK provenance despite the root *.md rule.
+!*.md
