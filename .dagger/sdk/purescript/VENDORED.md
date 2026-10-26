@@ -17,3 +17,6 @@ Regression coverage: `.dagger/tests/transport.test.mjs`. Preserve this patch
 when refreshing the vendored SDK until it is incorporated upstream.
 
 Snapshot and transport patch copied from Rocksky commit 85042e1e.
+
+Local runtime patch: use Node 24 (`node:24-bookworm-slim`) for SDK compilation
+and module execution. Preserve this image choice when refreshing the SDK.

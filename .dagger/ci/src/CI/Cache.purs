@@ -32,7 +32,7 @@ saveCaches :: Client -> CacheArgs -> Aff Directory
 saveCaches client args = do
   names <- cacheNames args.volumes
   let base = Query.container client
-        # Container.from "node:22-bookworm-slim"
+        # Container.from "node:24-bookworm-slim"
         # Container.withEnvVariable "CACHE_SNAPSHOT" args.runId
   snapshot <- foldM (\container name -> pure $ container
     # Container.withMountedCache "/cache" (Query.cacheVolume name client)
@@ -53,7 +53,7 @@ restoreCaches :: Client -> RestoreArgs -> Aff String
 restoreCaches client args = do
   names <- cacheNames args.volumes
   let base = Query.container client
-        # Container.from "node:22-bookworm-slim"
+        # Container.from "node:24-bookworm-slim"
         # Container.withDirectory "/snapshot" args.source
         # Container.withEnvVariable "CACHE_RESTORE" args.runId
   restored <- foldM (\container name -> do

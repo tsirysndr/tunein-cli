@@ -36,7 +36,7 @@ withCargoCaches client target container = container
 
 web :: Client -> Directory -> Container
 web client source = Query.container client
-  # Container.from "node:22-bookworm-slim"
+  # Container.from "node:24-bookworm-slim"
   # Container.withFile "/usr/local/bin/bun" (Query.container client # Container.from "oven/bun:1.4.2" # Container.file "/usr/local/bin/bun")
   # Container.withMountedCache "/root/.bun/install/cache" (Query.cacheVolume "tunein-cli-bun" client)
   # Container.withDirectoryWith "/web" (Directory.directory "web" source)

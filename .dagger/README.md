@@ -61,13 +61,13 @@ dagger api call -m ci format --source ..
 Linux releases retain the Fluent CI pipeline's Rust 1.89/Bullseye baseline,
 ARM sysroots, target library dependencies and the application’s existing protobuf compatibility wrapper. The new pipeline
 uses `--locked` and selects target pkg-config directories explicitly. The web UI
-build runs in Node 22 with Bun 1.4.2, then its output is embedded by Rust.
+build runs in Node 24 with Bun 1.4.2, then its output is embedded by Rust.
 The old `.fluentci` entry points remain available but Linux workflows no longer
 invoke them. macOS, BSD, FlakeHub and Flakestry/OIDC jobs are left as they were.
 
 ## Develop the pipeline
 
-Dagger installs Node 22, PureScript 0.15.16 and Spago 1.0.5 **inside the SDK
+Dagger installs Node 24, PureScript 0.15.16 and Spago 1.0.5 **inside the SDK
 runtime container**, under `/usr/local`; Spago's dependency cache is under
 `/root/.cache/spago-nodejs`. Module compilation happens under `/src`. You only
 need the Dagger CLI and a supported engine/container runtime on the host.

@@ -26,7 +26,7 @@ releaseArgs = ado
 
 publisher :: Client -> Container
 publisher client = Query.container client
-  # Container.from "node:22-bookworm-slim"
+  # Container.from "node:24-bookworm-slim"
   # Container.withExec [ "apt-get", "update" ]
   # Container.withExec [ "apt-get", "install", "-y", "--no-install-recommends", "gh", "ca-certificates" ]
 
