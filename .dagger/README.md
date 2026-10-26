@@ -40,18 +40,20 @@ attaches assets. Gemfury uploads run only when both secrets are configured.
 
 ## Cache volumes in GitHub Actions
 
-`.github/actions/dagger/action.yml` restores explicit named volumes, calls the
-build, snapshots them with `save-caches`, and saves that snapshot through
-`actions/cache`. `restore-caches` and builds use the same module because Dagger
-cache volumes are scoped to their owning module. Keys separate jobs, target
-architectures and runner architectures; restored dependencies can survive new
-lockfiles through the prefix fallback. Snapshot failures do not hide build failures.
+`.github/actions/dagger/action.yml` restores existing named-volume snapshots
+and runs the build. **Snapshotting and saving updated volumes are disabled**:
+`Snapshot Dagger cache volumes` has `if: ${{ false }}`, and the dependent
+`actions/cache/save` step only runs after a successful snapshot.
+
+Existing GitHub cache entries can still be restored until they expire or are
+evicted. Dagger's own caching remains enabled within the engine. The PureScript
+`save-caches` and `restore-caches` functions remain available for manual use.
 
 Cargo registry, Git and target directories are cached; web builds also cache Bun
 packages. Nix builds cache `/nix`, seeded from the pinned Nix image on a cold run.
 These caches do not contain registry publishing credentials. GitHub cache quotas
 and eviction still apply. SDK bootstrap/compiler caches remain in the Dagger
-engine; the workflow snapshots only the explicitly listed application volumes.
+engine; manual snapshots include only the explicitly listed application volumes.
 
 ```sh
 dagger api call -m ci test --source ..

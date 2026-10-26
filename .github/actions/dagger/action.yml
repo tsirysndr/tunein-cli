@@ -1,5 +1,5 @@
 name: Cached PureScript Dagger
-description: Restore named Dagger volumes, run a pipeline, and save updated volumes.
+description: Restore existing named Dagger volumes and run a pipeline. Snapshot saving is disabled.
 inputs:
   module:
     description: Module owning the named cache volumes
@@ -39,7 +39,8 @@ runs:
       run: ${{ inputs.command }}
     - name: Snapshot Dagger cache volumes
       id: snapshot
-      if: always() && !cancelled()
+      # Disabled by request; the dependent cache-save step also stays skipped.
+      if: ${{ false }}
       continue-on-error: true
       shell: bash
       working-directory: .dagger
