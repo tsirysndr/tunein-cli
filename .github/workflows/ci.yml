@@ -26,4 +26,4 @@ jobs:
           key: test
           volumes: tunein-cli-cargo-registry,tunein-cli-cargo-git,tunein-cli-target-test,tunein-cli-bun
           command: |
-            dagger api call -m ci test --source ..
+            dagger --progress logs -v api call -m ci test --source ..

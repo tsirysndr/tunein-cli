@@ -32,7 +32,7 @@ runs:
         CACHE_VOLUMES: ${{ inputs.volumes }}
         CACHE_DIRECTORY: ${{ runner.temp }}/dagger-volumes
         CACHE_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-      run: dagger api call -m "$CACHE_MODULE" restore-caches --source "$CACHE_DIRECTORY" --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN"
+      run: dagger --progress logs -v api call -m "$CACHE_MODULE" restore-caches --source "$CACHE_DIRECTORY" --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN"
     - name: Run Dagger pipeline
       shell: bash
       working-directory: .dagger
@@ -49,7 +49,7 @@ runs:
         CACHE_VOLUMES: ${{ inputs.volumes }}
         CACHE_DIRECTORY: ${{ runner.temp }}/dagger-volumes
         CACHE_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-      run: dagger api call -m "$CACHE_MODULE" save-caches --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN" --output "$CACHE_DIRECTORY"
+      run: dagger --progress logs -v api call -m "$CACHE_MODULE" save-caches --volumes "$CACHE_VOLUMES" --run-id "$CACHE_RUN" --output "$CACHE_DIRECTORY"
     - uses: actions/cache/save@v4
       if: always() && !cancelled() && steps.snapshot.outcome == 'success'
       continue-on-error: true

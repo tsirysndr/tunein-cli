@@ -19,4 +19,4 @@ jobs:
 
       - name: Check formatting with Dagger
         working-directory: .dagger
-        run: dagger api call -m ci format --source ..
+        run: dagger --progress logs -v api call -m ci format --source ..
