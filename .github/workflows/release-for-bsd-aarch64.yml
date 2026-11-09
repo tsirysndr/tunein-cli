@@ -22,10 +22,16 @@ jobs:
       ASSET_TARGET: aarch64-unknown-freebsd
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-      # Bun is not available on the BSDs, so the web UI is built on the
-      # host and synced into the VM alongside the sources.
+      - name: Checkout FluentCI tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tooling
+      - uses: fluentci-io/setup-fluentci@next
+      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - name: Set up bun
+        run: fluentci run setup-bun setup --version 1.4.3 | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
       - name: Build web UI
         working-directory: web
         run: |
@@ -57,6 +63,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    defaults:
+      run:
+        shell: bash
   netbsd:
     name: release aarch64-unknown-netbsd
     runs-on: ubuntu-latest
@@ -65,8 +74,16 @@ jobs:
       ASSET_TARGET: aarch64-unknown-netbsd
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Checkout FluentCI tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tooling
+      - uses: fluentci-io/setup-fluentci@next
+      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - name: Set up bun
+        run: fluentci run setup-bun setup --version 1.4.3 | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
       - name: Build web UI
         working-directory: web
         run: |
@@ -99,3 +116,6 @@ jobs:
             tunein_${{ env.RELEASE_VERSION }}_${{ env.ASSET_TARGET }}.tar.gz.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash

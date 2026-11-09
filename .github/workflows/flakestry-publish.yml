@@ -17,14 +17,23 @@ jobs:
       id-token: "write"
       contents: "read"
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Fluent CI
-        uses: fluentci-io/setup-fluentci@v5
+      - uses: actions/checkout@v4
+      - name: Checkout FluentCI tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tooling
+      - uses: fluentci-io/setup-fluentci@next
+      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - name: Set up determinate-nix
+        run: fluentci run setup-determinate-nix setup --sudo --extra-conf '["experimental-features = nix-command flakes"]' | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
       - name: Publish flake
-        run: fluentci run --wasm flakestry publish
+        run: fluentci run nix-publish flakestry --project . --run-dir "${{ runner.temp }}/flakestry-${{ github.run_id }}-${{ github.run_attempt }}" --version "$VERSION" --ref "$REF"
         env:
           VERSION: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
           REF: ${{ github.sha }}
+    defaults:
+      run:
+        shell: bash

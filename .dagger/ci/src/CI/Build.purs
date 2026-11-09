@@ -25,7 +25,7 @@ buildArgs = ado
 withSource :: Directory -> Container -> Container
 withSource source = Container.withDirectoryWith "/src" source
   (Container.defaultWithDirectoryOpts
-    { exclude = Just [ ".git", ".dagger", ".source", ".fluentci", "target", "**/node_modules", "**/.env", "**/.env.*", "result", "result-*", "dist/*.tar.gz*", "dist/*.deb*", "dist/*.rpm*", "dist/staging", "dist/rpmbuild", "*.db*", "covers", "smolsonic.toml" ] })
+    { exclude = Just [ ".ci-tooling", ".fluentci", ".git", ".dagger", ".source", ".fluentci", "target", "**/node_modules", "**/.env", "**/.env.*", "result", "result-*", "dist/*.tar.gz*", "dist/*.deb*", "dist/*.rpm*", "dist/staging", "dist/rpmbuild", "*.db*", "covers", "smolsonic.toml" ] })
 
 withCargoCaches :: Client -> String -> Container -> Container
 withCargoCaches client target container = container
@@ -40,7 +40,7 @@ web client source = Query.container client
   # Container.withFile "/usr/local/bin/bun" (Query.container client # Container.from "oven/bun:1.4.2" # Container.file "/usr/local/bin/bun")
   # Container.withMountedCache "/root/.bun/install/cache" (Query.cacheVolume "tunein-cli-bun" client)
   # Container.withDirectoryWith "/web" (Directory.directory "web" source)
-      (Container.defaultWithDirectoryOpts { exclude = Just [ "node_modules", "dist", ".env", ".env.*" ] })
+      (Container.defaultWithDirectoryOpts { exclude = Just [ ".ci-tooling", ".fluentci", "node_modules", "dist", ".env", ".env.*" ] })
   # Container.withWorkdir "/web"
   # Container.withExec [ "bun", "install", "--frozen-lockfile" ]
   # Container.withExec [ "bun", "run", "build" ]

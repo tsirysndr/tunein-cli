@@ -22,27 +22,28 @@ jobs:
     steps:
       - name: Installing needed dependencies
         run: brew install protobuf llvm@15
-      - name: Installing Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
+      - name: Set up rust
+        run: fluentci run setup-rust setup --toolchain stable --targets '${{ matrix.target }}' | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
       - name: Checking out sources
-        uses: actions/checkout@v1
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: actions/checkout@v4
+      - name: Checkout FluentCI tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tooling
+      - uses: fluentci-io/setup-fluentci@next
+      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - name: Set up bun
+        run: fluentci run setup-bun setup --version 1.4.3 | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
       - name: Build web UI
         working-directory: web
         run: |
           bun install --frozen-lockfile
           bun run build
       - name: Running cargo build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          toolchain: stable
-          args: --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Install aarch64-apple-darwin toolchain
         if: matrix.target == 'aarch64-apple-darwin'
         run: rustup target add aarch64-apple-darwin
@@ -61,7 +62,7 @@ jobs:
           shasum -a 256 ../../../tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz > ../../../tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
           cd ../../../ && rm -rf target
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
           files: |
@@ -69,3 +70,6 @@ jobs:
             tunein_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash

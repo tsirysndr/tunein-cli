@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -19,13 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dagger
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77
+      - name: Checkout FluentCI tooling
+        uses: actions/checkout@v4
         with:
-          version: v1.0.0-beta.21
-
-      - name: Run PureScript Dagger pipeline
-        uses: ./.github/actions/dagger
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tooling
+      - uses: fluentci-io/setup-fluentci@next
+      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - name: Set up the pinned Dagger beta with FluentCI
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci setup-dagger
+        shell: bash
+      - name: Run container pipeline with FluentCI
+        uses: ./.ci-tooling/.github/actions/dagger
         env:
           TARGET: ${{ matrix.target }}
           VERSION: ${{ github.ref_name }}
@@ -33,21 +38,25 @@ jobs:
           module: ci
           key: release-${{ matrix.target }}
           volumes: tunein-cli-cargo-registry,tunein-cli-cargo-git,tunein-cli-target-${{ matrix.target }},tunein-cli-bun
-          command: |
-            dagger --progress logs -v api call -m ci linux-release --source .. --target "$TARGET" --version "$VERSION" --output ../dist
+          command: |-
+            fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci dagger --directory "$GITHUB_WORKSPACE/.dagger" --arguments '["--progress","logs","-v","api","call","-m","ci","linux-release","--source","..","--target","$TARGET","--version","$VERSION","--output","../dist"]'
 
-      - name: Upload release with Dagger
-        working-directory: .dagger
+      - name: Upload release assets with FluentCI
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci github-assets --directory "$GITHUB_WORKSPACE/dist" --tag "$RELEASE_TAG" --create=false
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
           WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-        run: dagger --progress logs -v api call -m ci upload-release --assets ../dist --tag "$RELEASE_TAG" --token env://GH_TOKEN --run-id "$WORKFLOW_RUN"
-
-      - name: Publish packages with Dagger
-        working-directory: .dagger
-        env:
+      - name: Set up gemfury
+        run: fluentci run setup-gemfury setup --sudo | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
+        shell: bash
+        env: &id001
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
           WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-        run: dagger --progress logs -v api call -m ci publish-gemfury --assets ../dist --account env://FURY_ACCOUNT --token env://FURY_TOKEN --run-id "$WORKFLOW_RUN"
+      - name: Publish packages with FluentCI
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci gemfury --directory "$GITHUB_WORKSPACE/dist"
+        env: *id001
+    defaults:
+      run:
+        shell: bash

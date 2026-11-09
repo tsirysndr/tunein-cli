@@ -1,54 +1,38 @@
-# Rust Pipeline
+# FluentCI workflow entrypoints
 
-[![fluentci pipeline](https://img.shields.io/badge/dynamic/json?label=pkg.fluentci.io&labelColor=%23000&color=%23460cf1&url=https%3A%2F%2Fapi.fluentci.io%2Fv1%2Fpipeline%2Frust_pipeline&query=%24.version)](https://pkg.fluentci.io/rust_pipeline)
-[![deno module](https://shield.deno.dev/x/rust_pipeline)](https://deno.land/x/rust_pipeline)
-![deno compatibility](https://shield.deno.dev/deno/^1.37)
-[![](https://img.shields.io/codecov/c/gh/fluent-ci-templates/rust-pipeline)](https://codecov.io/gh/fluent-ci-templates/rust-pipeline)
+GitHub installs `fluentci-io/setup-fluentci@next`, then calls published setup
+modules for toolchains. Local PureScript components run artifact discovery,
+release uploads, Gemfury credential handling, Cachix operations, and FlakeHub
+publishing with literal argv. No new shell scripts implement pipeline logic.
 
-A ready-to-use CI/CD Pipeline for your Rust projects.
-## 🚀 Usage
+The existing typed `.dagger/` container graphs remain the build backend for jobs
+that already used them, preserving cross-compilation sysroots, glibc baselines,
+Android SDK mounts, and packaging. The `dagger` entrypoint expands environment
+references once in PureScript; it never evaluates a shell command. Existing
+native and BSD VM build commands remain in their original environments.
 
-Run the following command in your Rust Project:
+Workflows check out tooling at `github.workflow_sha` into `.ci-tooling/`, so an
+older release source does not have to contain these modules. That tooling tree
+is excluded from container source inputs. GitHub setup results pass through the
+small `github-env.mjs` bridge to persist PATH and toolchain environment between
+CLI processes. The toolchain composite generates ignored `.sdk/` files from the installed CLI
+in a temporary workspace, then the component builds from committed npm and
+Spago lockfiles. Local source builds need the same SDK-generation step.
 
-```bash
-fluentci run rust_pipeline
+```sh
+fluentci run ci --help
+fluentci run ci dagger --directory . --arguments '["version"]'
+fluentci run ci github-assets --directory dist --tag v1.0.0 --create=false
 ```
 
-Or if you want to run specific jobs:
+Publishing commands are real writes. They run only in the corresponding release
+workflows. GitHub reads `GH_TOKEN`; Gemfury reads `FURY_TOKEN` and `FURY_ACCOUNT`;
+Cachix pushes read `CACHIX_AUTH_TOKEN`. Missing Gemfury/Cachix tokens skip pushes.
+FlakeHub keeps the workflow OIDC permission and selected visibility/output flags.
+Disabled workflows remain untouched. Legacy `.dagger/check.py` workflow migration
+assertions are retired; graph tests and module compilation remain available.
 
-```bash
-fluentci run rust_pipeline test build
-```
-
-
-if you want to use it as a template:
-
-```bash
-fluentci init -t rust
-```
-
-This will create a `.fluentci` folder in your project.
-
-Now you can run the pipeline with:
-
-```bash
-fluentci run .
-```
-
-## Jobs
-
-| Job   | Description        |
-| ----- | ------------------ |
-| build | build your project |
-| test  | Run your tests     |
-
-## Programmatic usage
-
-You can also use this pipeline programmatically:
-
-```ts
-import { build, test } from "https://pkg.fluentci.io/rust_pipeline@v0.6.1/mod.ts";
-
-await test();
-await build();
-```
+The pinned Dagger `1.0.0-beta.21` CLI uses the local PureScript `setup-dagger`
+function: this beta is distributed by `dl.dagger.io`, while the shared setup
+module looks for GitHub Releases. The installer verifies the original four
+platform SHA-256 pins before extraction and persists PATH for later steps.
