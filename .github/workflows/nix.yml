@@ -32,25 +32,18 @@ jobs:
         env:
           CACHIX_AUTH_TOKEN: "${{ secrets.CACHIX_AUTH_TOKEN }}"
         if: runner.os == 'macOS'
-      - run: nix build
+      - run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci nix-build --source "$GITHUB_WORKSPACE" --target ".#default" --cache tsirysndr
         if: runner.os == 'macOS'
 
-      - name: Set up the pinned Dagger beta with FluentCI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci setup-dagger
-        shell: bash
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Run native PureScript CI
         if: runner.os == 'Linux'
-      - name: Run container pipeline with FluentCI
-        if: runner.os == 'Linux'
-        uses: ./.ci-tooling/.github/actions/dagger
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
           WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-        with:
-          module: ci
-          key: nix-flake
-          volumes: tunein-cli-nix-store
-          command: |-
-            fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci dagger --directory "$GITHUB_WORKSPACE/.dagger" --arguments '["--progress","logs","-v","api","call","-m","ci","nix-build","--source","..","--cachix-token","env://CACHIX_AUTH_TOKEN","--run-id","$WORKFLOW_RUN"]'
+        run: |-
+          fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci nix-build --source "$GITHUB_WORKSPACE/.dagger/.." --target ".#default" --cache tsirysndr
       - name: Push result to Cachix
         run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci cachix --directory "$GITHUB_WORKSPACE" --operation push --cache tsirysndr
         env:

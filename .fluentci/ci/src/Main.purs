@@ -1,19 +1,17 @@
-module Main (dagger, githubAssets, gemfury, flakehub, cachix, importNix, check, python, setupDagger) where
+module Main (containerCheck, nixBuild, nixPackage, nixConsume, linuxRelease, test, format, githubAssets, gemfury, flakehub, cachix, check, python) where
 
+import CI.Nix as Nix
+import Native.Engine as Engine
+import Native.Types (Directory(..))
+import CI.Build as Build
+import CI.ContainerCheck as ContainerCheck
 import Prelude
 import CI.Support as S
-import CI.Dagger as Dagger
 import CI.Gemfury as Gemfury
 import Data.Array as A
 import Data.String as String
 import Effect (Effect)
 import Effect.Exception (throw)
-
--- | Run an existing typed container graph without changing its build environment.
--- | @param directory Directory for relative Dagger module/source paths.
--- | @param arguments Literal argv; environment references expand once in PureScript.
-dagger :: { directory :: String, arguments :: Array String } -> Effect Unit
-dagger = S.dagger
 
 -- | Upload release assets; optionally create a release with generated notes.
 -- | @param directory Directory containing release assets.
@@ -56,22 +54,6 @@ cachix args = do
     token <- S.env "CACHIX_AUTH_TOKEN" ""
     when (String.trim token /= "") (S.runIn args.directory [ command <> [ "push", args.cache, "./result" ] ])
 
--- | Import a container-built Nix closure and optionally push all its store paths.
--- | @param directory Exported closure directory containing store and store-paths.
--- | @param cache Cachix cache name.
-importNix :: { directory :: String, cache :: String } -> Effect Unit
-importNix args = do
-  paths <- S.files args.directory
-  when (A.elem (args.directory <> "/store-paths") paths) do
-    contents <- S.readText (args.directory <> "/store-paths")
-    let stores = A.filter (_ /= "") (map String.trim (String.split (String.Pattern "\n") contents))
-    unless (A.null stores) do
-      directory <- S.absolute args.directory
-      S.run ([ "nix", "copy", "--from", "file://" <> directory <> "/store" ] <> stores)
-      token <- S.env "CACHIX_AUTH_TOKEN" ""
-      when (String.trim token /= "") do
-        S.run ([ "nix", "run", "--no-write-lock-file", "--inputs-from", ".", "nixpkgs#cachix", "--", "push", args.cache ] <> stores)
-
 -- | Verify literal argv expansion and lint every GitHub workflow.
 -- | @param directory Repository checkout whose workflows should be linted.
 check :: { directory :: String } -> Effect Unit
@@ -98,6 +80,28 @@ python args = do
   previous <- S.readText destination
   S.writeText destination (previous <> "PATH=" <> prefix <> "/bin:" <> path <> "\nVIRTUAL_ENV=" <> prefix <> "\n")
 
--- | Install the repository-pinned Dagger beta with verified upstream checksums.
-setupDagger :: Effect Unit
-setupDagger = Dagger.setup
+
+-- Native PureScript jobs; commands are literal argument vectors.
+linuxRelease :: { source :: String, target :: String, version :: String, output :: String } -> Effect Unit
+linuxRelease args = Engine.runJob do
+  result <- Build.linuxRelease unit { source: LocalDirectory args.source, target: args.target, version: args.version }
+  Engine.exportDirectory args.output result
+
+test :: { source :: String } -> Effect Unit
+test args = Engine.runJob (void (Build.test unit { source: LocalDirectory args.source }))
+
+format :: { source :: String } -> Effect Unit
+format args = Engine.runJob (void (Build.format unit { source: LocalDirectory args.source }))
+
+nixBuild :: { source :: String, target :: String, cache :: String } -> Effect Unit
+nixBuild = Nix.build
+
+nixPackage :: { source :: String, cache :: String } -> Effect Unit
+nixPackage = Nix.package
+
+nixConsume :: { ref :: String } -> Effect Unit
+nixConsume = Nix.consume
+
+
+containerCheck :: Effect Unit
+containerCheck = ContainerCheck.check
