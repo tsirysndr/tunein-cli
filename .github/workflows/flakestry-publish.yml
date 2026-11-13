@@ -1,39 +1,38 @@
-name: "Publish a flake to flakestry"
+name: Publish tags to Flakestry
 on:
   push:
-    tags:
-      - "v?[0-9]+.[0-9]+.[0-9]+"
-      - "v?[0-9]+.[0-9]+"
+    tags: ["v*", "[0-9]*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "The existing tag to publish"
-        type: "string"
+        description: Existing release tag to publish
+        type: string
         required: true
+permissions:
+  id-token: write
+  contents: read
 jobs:
-  publish-flake:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: "write"
-      contents: "read"
+  publish:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout FluentCI tooling
-        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
+        with:
+          version: v0.17.3
       - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Set up determinate-nix
-        run: fluentci run setup-determinate-nix setup --sudo --extra-conf '["experimental-features = nix-command flakes"]' | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-        shell: bash
-      - name: Publish flake
-        run: fluentci run nix-publish flakestry --project . --run-dir "${{ runner.temp }}/flakestry-${{ github.run_id }}-${{ github.run_attempt }}" --version "$VERSION" --ref "$REF"
+      - name: Publish the selected checkout using nix-publish
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci flakestry-from-env
         env:
-          VERSION: ${{ inputs.tag || github.ref_name }}
+          SOURCE_DIRECTORY: ${{ github.workspace }}
+          RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
-          REF: ${{ github.sha }}
-    defaults:
-      run:
-        shell: bash
+          GITHUB_TOKEN: ${{ github.token }}

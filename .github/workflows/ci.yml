@@ -1,29 +1,39 @@
-name: ci
+name: CI
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  tests:
+  check:
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
-
-      - name: Checkout FluentCI tooling
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
+        with:
+          version: v0.17.3
       - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Run native PureScript CI
+      - name: Workflow validation
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci check --directory "$GITHUB_WORKSPACE/.ci-tooling"
+      - name: PureScript policy regression tests
+        working-directory: .ci-tooling/.fluentci/ci
+        run: npm test
+      - name: Rust formatting
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci format --source "$GITHUB_WORKSPACE"
+      - name: Web and Rust tests
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci test --source "$GITHUB_WORKSPACE"
         env:
           CI: "true"
-        run: |-
-          fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci test --source "$GITHUB_WORKSPACE/.dagger/.."
-    defaults:
-      run:
-        shell: bash

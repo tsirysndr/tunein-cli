@@ -1,53 +1,35 @@
-name: release
+name: Linux release
 on:
   release:
     types: [created]
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - aarch64-unknown-linux-gnu
-          - armv7-unknown-linux-gnueabihf
-          - x86_64-unknown-linux-gnu
+        target: [aarch64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, x86_64-unknown-linux-gnu]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
-
-      - name: Checkout FluentCI tooling
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
+        with:
+          version: v0.17.3
       - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Run native PureScript CI
+      - name: Build, package and publish using typed components
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci linux-release-from-env
         env:
+          SOURCE_DIRECTORY: ${{ github.workspace }}
           TARGET: ${{ matrix.target }}
-          VERSION: ${{ github.ref_name }}
-        run: |-
-          fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci linux-release --source "$GITHUB_WORKSPACE/.dagger/.." --target "$TARGET" --version "$VERSION" --output "$GITHUB_WORKSPACE/dist"
-      - name: Upload release assets with FluentCI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci github-assets --directory "$GITHUB_WORKSPACE/dist" --tag "$RELEASE_TAG" --create=false
-        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-          WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-      - name: Set up gemfury
-        run: fluentci run setup-gemfury setup --sudo | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-        shell: bash
-        env: &id001
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           FURY_ACCOUNT: ${{ secrets.FURY_ACCOUNT }}
-          WORKFLOW_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
-      - name: Publish packages with FluentCI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci gemfury --directory "$GITHUB_WORKSPACE/dist"
-        env: *id001
-    defaults:
-      run:
-        shell: bash

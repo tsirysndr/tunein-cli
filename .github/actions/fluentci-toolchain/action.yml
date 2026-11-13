@@ -1,27 +1,22 @@
 name: FluentCI PureScript toolchain
-description: Install the tools needed to compile the local native Wasm component.
+description: Bootstrap the published PureScript toolchain and the local typed CI component.
 runs:
   using: composite
   steps:
-    - name: Set up Node
+    - name: Cache versioned compiler tools and package downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/fluentci/node/24.22.2
+          ~/.local/share/fluentci/bun/1.4.3
+          ~/.local/share/fluentci/purescript/0.15.16
+          ~/.cache/spago
+          ~/Library/Caches/spago
+        key: tunein-fluentci-v1-${{ runner.os }}-${{ runner.arch }}-node24.22.2-bun1.4.3-purs0.15.16-spago1.0.5
+    - name: Install published PureScript, Node and Bun toolchain
       shell: bash
-      run: fluentci run setup-node setup --version 24.13.1 | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-    - name: Set up Bun
+      working-directory: .ci-tooling
+      run: fluentci run --frozen-lockfile setup-purescript setup --version 0.15.16 --node-version 24.22.2 --bun-version 1.4.3 --spago-version 1.0.5 --npm-version 10.9.2
+    - name: Prepare the SDK and component
       shell: bash
-      run: fluentci run setup-bun setup --version 1.4.3 | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-    - name: Set up PureScript and Spago
-      shell: bash
-      run: >-
-        fluentci run setup-purescript setup --version 0.15.16
-        --node-version 24.13.1 --bun-version 1.4.3 --spago-version 1.0.5
-        | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-    - name: Prepare SDK workspace
-      shell: bash
-      run: mkdir -p "$RUNNER_TEMP/fluentci-sdk"
-    - name: Generate the SDK bundled with FluentCI
-      shell: bash
-      working-directory: ${{ runner.temp }}/fluentci-sdk
-      run: fluentci init ci --sdk purescript --runtime component
-    - name: Install generated SDK beside the local component
-      shell: bash
-      run: cp -R "$RUNNER_TEMP/fluentci-sdk/.fluentci/ci/.sdk" "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/ci/"
+      run: node .ci-tooling/.fluentci/ci/bootstrap.mjs

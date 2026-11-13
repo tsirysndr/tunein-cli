@@ -1,42 +1,38 @@
-name: "Publish tags to FlakeHub"
+name: Publish tags to FlakeHub
 on:
   push:
-    tags:
-      - "v?[0-9]+.[0-9]+.[0-9]+*"
+    tags: ["v*", "[0-9]*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "The existing tag to publish to FlakeHub"
-        type: "string"
+        description: Existing release tag to publish
+        type: string
         required: true
+permissions:
+  id-token: write
+  contents: read
 jobs:
-  flakehub-publish:
-    runs-on: "ubuntu-latest"
-    permissions:
-      id-token: "write"
-      contents: "read"
+  publish:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
         with:
-          ref: "${{ (inputs.tag != null) && format('refs/tags/{0}', inputs.tag) || '' }}"
-      - name: Checkout FluentCI tooling
-        uses: actions/checkout@v4
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
+        with:
+          version: v0.17.3
       - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Set up determinate-nix
-        run: fluentci run setup-determinate-nix setup --sudo --trusted-users '["runner"]' --extra-conf '["experimental-features = nix-command flakes"]' | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-        shell: bash
-      - name: Set up flakehub-push
-        run: fluentci run setup-flakehub-push setup | node "$GITHUB_WORKSPACE/.ci-tooling/.fluentci/github-env.mjs"
-        shell: bash
-      - name: Publish flake with FluentCI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci flakehub --name tsirysndr/tunein-cli --tag "$FLUENTCI_FLAKE_TAG" --visibility public --include-output-paths=false --rolling=false
+      - name: Publish the selected checkout using nix-publish
+        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci flakehub-from-env
         env:
+          SOURCE_DIRECTORY: ${{ github.workspace }}
+          RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
-          FLUENTCI_FLAKE_TAG: "${{ inputs.tag }}"
-    defaults:
-      run:
-        shell: bash
