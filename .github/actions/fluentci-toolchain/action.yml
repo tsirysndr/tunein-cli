@@ -3,16 +3,16 @@ description: Bootstrap the published PureScript toolchain and the local typed CI
 runs:
   using: composite
   steps:
-    - name: Cache versioned compiler tools and package downloads
+    - name: Cache PureScript tools and Spago downloads
       uses: actions/cache@v4
+      # setup-purescript@0.2.0 embeds the old Node/Bun cached-prefix probes.
+      # Do not restore those installation directories before this bootstrap.
       with:
         path: |
-          ~/.local/share/fluentci/node/24.22.2
-          ~/.local/share/fluentci/bun/1.4.3
           ~/.local/share/fluentci/purescript/0.15.16
           ~/.cache/spago
           ~/Library/Caches/spago
-        key: tunein-fluentci-v1-${{ runner.os }}-${{ runner.arch }}-node24.22.2-bun1.4.3-purs0.15.16-spago1.0.5
+        key: tunein-fluentci-v2-${{ runner.os }}-${{ runner.arch }}-node24.22.2-bun1.4.3-purs0.15.16-spago1.0.5
     - name: Install published PureScript, Node and Bun toolchain
       shell: bash
       run: fluentci run --frozen-lockfile setup-purescript setup --version 0.15.16 --node-version 24.22.2 --bun-version 1.4.3 --spago-version 1.0.5 --npm-version 10.9.2

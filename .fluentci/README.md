@@ -114,3 +114,10 @@ bootstrap installations. The published setup 0.2.0 cached-directory probes can
 misread a trailing newline; when installation is needed, TuneIn passes a fresh
 per-invocation prefix to the shared setup component. Existing cached prefixes
 are never overwritten. The selected executable is verified again after setup.
+
+The GitHub toolchain cache deliberately excludes managed Node/Bun installation
+directories. `setup-purescript@0.2.0` embeds the same old archive probes and runs
+before the local component can check versions. Cache generation v2 retains only
+the PureScript toolchain and Spago downloads, preventing old Node/Bun prefixes
+from being restored ahead of bootstrap. No cache directories are deleted by the
+pipeline; the fresh job installs Node/Bun once and later steps verify/reuse them.
