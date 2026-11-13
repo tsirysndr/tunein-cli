@@ -290,5 +290,7 @@ and then use [Buf Studio](https://studio.buf.build/tsiry/tuneinserverapis?select
 
 ## CI pipelines
 
-Portable GitHub Actions jobs use [PureScript Dagger modules](.dagger/README.md).
-See that guide for commands, caching, and the jobs that remain native.
+GitHub Actions jobs use [typed PureScript FluentCI modules](.fluentci/README.md).
+Shared setup, packaging, and publishing components are pinned in `fluentci.lock`;
+project-specific logic and workflow declarations live under `.fluentci/`.
+Linux release binaries use Debian Trixie.

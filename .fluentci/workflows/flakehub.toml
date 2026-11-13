@@ -1,0 +1,13 @@
+id = "flakehub"
+name = "Publish to FlakeHub"
+description = "Publish the checkout selected by SOURCE_DIRECTORY and RELEASE_VERSION using GitHub OIDC"
+enabled = true
+
+[on]
+manual = true
+
+[[steps]]
+name = "Publish to FlakeHub"
+module = "ci"
+command = "flakehub-from-env"
+wasm = true

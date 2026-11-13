@@ -12,3 +12,13 @@
 # FluentCI generated dependency bindings
 .fluentci/**/.fluentci/
 .fluentci/**/fluentci_modules/
+
+/.fluentci/out/
+
+/.fluentci/workflows/.lock
+
+/fluentci_modules/
+
+/fluentci.lock.guard
+
+.DS_Store

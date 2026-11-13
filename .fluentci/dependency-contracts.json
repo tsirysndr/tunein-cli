@@ -1,0 +1,1130 @@
+{
+  "setup-node": {
+    "version": "0.2.0",
+    "sha256": "223a3dfde1c216ad12e1ea05eecb8c49ebf35be2a1a78e0679912227dbf6afb9",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify node, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-bun": {
+    "version": "0.2.0",
+    "sha256": "4ccd777c1ecb2b28a5076a1075f600c40c8d0e4ee54a89864abe92ec62594fc9",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify bun, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "baseline",
+            "type": "option<bool>",
+            "description": "Use Bun\u2019s baseline CPU build; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "libc",
+            "type": "option<string>",
+            "description": "Linux C library variant: auto, gnu, or musl.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-purescript": {
+    "version": "0.2.0",
+    "sha256": "3b4af288d28e01afde19b3bc11cddb5903c5694eada08592a3a7f73078c01adf",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify purescript, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "node-version",
+            "type": "option<string>",
+            "description": "Node.js release or channel to install for the PureScript toolchain.",
+            "required": false
+          },
+          {
+            "name": "bun-version",
+            "type": "option<string>",
+            "description": "Bun release to install for the PureScript toolchain.",
+            "required": false
+          },
+          {
+            "name": "npm-version",
+            "type": "option<string>",
+            "description": "npm release to install for the PureScript toolchain.",
+            "required": false
+          },
+          {
+            "name": "spago-version",
+            "type": "option<string>",
+            "description": "Spago release to install for the PureScript toolchain.",
+            "required": false
+          },
+          {
+            "name": "node-package-name",
+            "type": "option<string>",
+            "description": "Native Node.js package selector for BSD toolchain installation.",
+            "required": false
+          },
+          {
+            "name": "bun-package-name",
+            "type": "option<string>",
+            "description": "Native Bun package selector for BSD toolchain installation.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-rust": {
+    "version": "0.2.2",
+    "sha256": "e416bd36fa1f07227c4da40eb37d644bcddbe2650f5204664e37f2265977c96e",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify rust, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "toolchain",
+            "type": "option<string>",
+            "description": "Rustup toolchain channel or exact release; alias for version. Both must agree when provided.",
+            "required": false
+          },
+          {
+            "name": "components",
+            "type": "option<string>",
+            "description": "Comma-separated Rustup components to install, such as rustfmt,clippy; omitted or blank values add no components.",
+            "required": false
+          },
+          {
+            "name": "targets",
+            "type": "option<string>",
+            "description": "Comma-separated Rust target triples to install, such as wasm32-wasip2,wasm32-unknown-unknown; omitted or blank values add no targets.",
+            "required": false
+          },
+          {
+            "name": "profile",
+            "type": "option<string>",
+            "description": "Rustup installation profile: minimal (default), default, or complete.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-gh": {
+    "version": "0.2.0",
+    "sha256": "06bf034b4d12110c54db7d205b2dda903819222fbaf2da82b0c7e79661c9763d",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify gh, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-go": {
+    "version": "0.2.0",
+    "sha256": "5865af5d6256a17036a931bd6688f994a769ea0bdddb5a09880d64c8e77dc029",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify go, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-cachix": {
+    "version": "0.2.2",
+    "sha256": "3c93182bd068767f79f4e12ae2769b29f1fcbbc30103c0f3052e8cd13adbe154",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify cachix, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Expected Cachix version from the configured nixpkgs registry entry; latest accepts the packaged version. An explicit version mismatch fails setup.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "cache",
+            "type": "option<string>",
+            "description": "Cachix cache name to enable with cachix use after installation; omit for CLI-only setup. Public caches need no token; private caches use inherited CACHIX_AUTH_TOKEN.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-determinate-nix": {
+    "version": "0.2.1",
+    "sha256": "c7c8a3b1db9980ed719008c7ac49effab3b49e3bf3a30ac92e92f3218218829d",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify determinate-nix, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          },
+          {
+            "name": "init",
+            "type": "option<string>",
+            "description": "Determinate Nix service integration: systemd or none.",
+            "required": false
+          },
+          {
+            "name": "trusted-users",
+            "type": "option<list<string>>",
+            "description": "Additional trusted Nix users or @groups; root is retained. Only set on trusted machines.",
+            "required": false
+          },
+          {
+            "name": "extra-conf",
+            "type": "option<list<string>>",
+            "description": "Additional single-line Nix key=value settings passed literally to the installer.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "setup-flakehub-push": {
+    "version": "0.2.0",
+    "sha256": "79d41d7d9bf458dd64e0cedf3ee325ab9905a8cdeec648eaa00a0f37516dc45a",
+    "functions": [
+      {
+        "name": "setup",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Install and verify flakehub-push, select its version, and publish its environment for subsequent tasks.",
+        "args": [
+          {
+            "name": "version",
+            "type": "option<string>",
+            "description": "Tool release or supported channel to install; omitted values use the documented default.",
+            "required": false
+          },
+          {
+            "name": "install-dir",
+            "type": "option<string>",
+            "description": "Absolute per-user installation prefix; omit for native package installations.",
+            "required": false
+          },
+          {
+            "name": "package-name",
+            "type": "option<string>",
+            "description": "Native package or port selector overriding the default repository package name.",
+            "required": false
+          },
+          {
+            "name": "sudo",
+            "type": "option<bool>",
+            "description": "Use noninteractive sudo for native package or system installation; defaults to false.",
+            "required": false
+          }
+        ],
+        "returnType": "setup-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "dpkg": {
+    "version": "0.1.0",
+    "sha256": "7fc49736bbebc5476ad6b4656616bb75df602868bd37a80a4d567646d2870497",
+    "functions": [
+      {
+        "name": "build",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "directory",
+            "type": "string"
+          },
+          {
+            "name": "arch",
+            "type": "string"
+          },
+          {
+            "name": "output",
+            "type": "option<string>",
+            "required": false
+          }
+        ],
+        "returnType": "list<string>",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "validate",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "directory",
+            "type": "string"
+          },
+          {
+            "name": "arch",
+            "type": "string"
+          },
+          {
+            "name": "output",
+            "type": "option<string>",
+            "required": false
+          }
+        ],
+        "returnType": "bool",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "rpmbuild": {
+    "version": "0.1.0",
+    "sha256": "d5b1fcc3012b662f9c506e514603afd449b99e3d3092ce05cbe47f229c6cc6f0",
+    "functions": [
+      {
+        "name": "build",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "directory",
+            "type": "string"
+          },
+          {
+            "name": "arch",
+            "type": "string"
+          },
+          {
+            "name": "output",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "spec",
+            "type": "string"
+          }
+        ],
+        "returnType": "list<string>",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "validate",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "directory",
+            "type": "string"
+          },
+          {
+            "name": "arch",
+            "type": "string"
+          },
+          {
+            "name": "output",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "spec",
+            "type": "string"
+          }
+        ],
+        "returnType": "bool",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "gh-artifacts": {
+    "version": "0.1.0",
+    "sha256": "256c142d6c599824d5724284726eb4788d7d506aa043c4910200439fabe2af9a",
+    "functions": [
+      {
+        "name": "download",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "repo",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "dir",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "name",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-id",
+            "type": "string"
+          }
+        ],
+        "returnType": "download-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "release-download",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "repo",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "dir",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "pattern",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "tag",
+            "type": "string"
+          }
+        ],
+        "returnType": "release-download-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "release-upload",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "repo",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "clobber",
+            "type": "option<bool>",
+            "required": false
+          },
+          {
+            "name": "tag",
+            "type": "string"
+          },
+          {
+            "name": "files",
+            "type": "string"
+          }
+        ],
+        "returnType": "release-upload-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "run",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "arguments",
+            "type": "string"
+          }
+        ],
+        "returnType": "run-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "upload",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "root-directory",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "retention-days",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "files",
+            "type": "string"
+          }
+        ],
+        "returnType": "upload-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "version",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string"
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<string>",
+            "required": false
+          }
+        ],
+        "returnType": "version-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "gemfury": {
+    "version": "0.1.0",
+    "sha256": "ac94cc665f05ac82c23067e48d2fa380eb3978360e69644073d71bb8783b7c19",
+    "functions": [
+      {
+        "name": "upload",
+        "wasmParams": [],
+        "wasmResults": [],
+        "args": [
+          {
+            "name": "files",
+            "type": "string"
+          }
+        ],
+        "returnType": "upload-result",
+        "inputFormat": "wit"
+      }
+    ]
+  },
+  "nix-publish": {
+    "version": "0.2.0",
+    "sha256": "6a996e19c4bc350a15c4398d039cda11f02ee76711a29d1284e9c4d6745e4566",
+    "functions": [
+      {
+        "name": "check",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Evaluate and build flake checks without modifying flake.lock.",
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "description": "Working directory containing the source checkout; defaults to the current directory. Default: \".\".",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string",
+            "description": "Fresh directory for this invocation\u2019s execution report and task logs; must not already exist."
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "description": "Native CLI executable name or absolute path; defaults to this operation\u2019s tool.",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "description": "Maximum task duration in milliseconds; defaults to 900000. Default: 900000.",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<list<string>>",
+            "description": "Output artifacts to collect as NAME=PATH entries; names must be unique.",
+            "required": false
+          },
+          {
+            "name": "flake",
+            "type": "option<string>",
+            "description": "Local flake path or reference to inspect; defaults to the selected project checkout. Default: \".\".",
+            "required": false
+          }
+        ],
+        "returnType": "check-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "flakehub",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Publish the checked-out flake release to FlakeHub using GitHub OIDC.",
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "description": "Working directory containing the source checkout; defaults to the current directory. Default: \".\".",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string",
+            "description": "Fresh directory for this invocation\u2019s execution report and task logs; must not already exist."
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "description": "Native CLI executable name or absolute path; defaults to this operation\u2019s tool.",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "description": "Maximum task duration in milliseconds; defaults to 900000. Default: 900000.",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<list<string>>",
+            "description": "Output artifacts to collect as NAME=PATH entries; names must be unique.",
+            "required": false
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "FlakeHub flake name as OWNER/REPOSITORY; no repository name is hardcoded."
+          },
+          {
+            "name": "version",
+            "type": "string",
+            "description": "Release tag to publish, such as v1.2.3."
+          },
+          {
+            "name": "visibility",
+            "type": "option<string>",
+            "description": "Flake visibility: public, unlisted, or private. Default: \"public\". Allowed values: public, unlisted, private.",
+            "required": false
+          }
+        ],
+        "returnType": "flakehub-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "flakestry",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Publish locked flake metadata and outputs to Flakestry using GitHub OIDC.",
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "description": "Working directory containing the source checkout; defaults to the current directory. Default: \".\".",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string",
+            "description": "Fresh directory for this invocation\u2019s execution report and task logs; must not already exist."
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "description": "Native CLI executable name or absolute path; defaults to this operation\u2019s tool.",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "description": "Maximum task duration in milliseconds; defaults to 900000. Default: 900000.",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<list<string>>",
+            "description": "Output artifacts to collect as NAME=PATH entries; names must be unique.",
+            "required": false
+          },
+          {
+            "name": "version",
+            "type": "string",
+            "description": "Release version or tag to publish, such as v1.2.3."
+          },
+          {
+            "name": "ref",
+            "type": "string",
+            "description": "Git commit SHA corresponding to the selected release and checkout."
+          },
+          {
+            "name": "readme",
+            "type": "option<string>",
+            "description": "Repository-relative README filename used by the Flakestry registry. Default: \"README.md\".",
+            "required": false
+          },
+          {
+            "name": "url",
+            "type": "option<string>",
+            "description": "HTTPS Flakestry registry origin; also used as the GitHub OIDC audience. Default: \"https://flakestry.dev\".",
+            "required": false
+          },
+          {
+            "name": "ignore-conflicts",
+            "type": "option<bool>",
+            "description": "Treat HTTP 409 for an existing release as success; other HTTP errors still fail. Default: false.",
+            "required": false
+          }
+        ],
+        "returnType": "flakestry-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "metadata",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Inspect locked flake metadata as JSON without modifying flake.lock.",
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "description": "Working directory containing the source checkout; defaults to the current directory. Default: \".\".",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string",
+            "description": "Fresh directory for this invocation\u2019s execution report and task logs; must not already exist."
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "description": "Native CLI executable name or absolute path; defaults to this operation\u2019s tool.",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "description": "Maximum task duration in milliseconds; defaults to 900000. Default: 900000.",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<list<string>>",
+            "description": "Output artifacts to collect as NAME=PATH entries; names must be unique.",
+            "required": false
+          },
+          {
+            "name": "flake",
+            "type": "option<string>",
+            "description": "Local flake path or reference to inspect; defaults to the selected project checkout. Default: \".\".",
+            "required": false
+          }
+        ],
+        "returnType": "metadata-result",
+        "inputFormat": "wit"
+      },
+      {
+        "name": "outputs",
+        "wasmParams": [],
+        "wasmResults": [],
+        "description": "Inspect flake outputs for every supported system as JSON.",
+        "args": [
+          {
+            "name": "project",
+            "type": "option<string>",
+            "description": "Working directory containing the source checkout; defaults to the current directory. Default: \".\".",
+            "required": false
+          },
+          {
+            "name": "run-dir",
+            "type": "string",
+            "description": "Fresh directory for this invocation\u2019s execution report and task logs; must not already exist."
+          },
+          {
+            "name": "executable",
+            "type": "option<string>",
+            "description": "Native CLI executable name or absolute path; defaults to this operation\u2019s tool.",
+            "required": false
+          },
+          {
+            "name": "timeout-ms",
+            "type": "option<s32>",
+            "description": "Maximum task duration in milliseconds; defaults to 900000. Default: 900000.",
+            "required": false
+          },
+          {
+            "name": "artifacts",
+            "type": "option<list<string>>",
+            "description": "Output artifacts to collect as NAME=PATH entries; names must be unique.",
+            "required": false
+          },
+          {
+            "name": "flake",
+            "type": "option<string>",
+            "description": "Local flake path or reference to inspect; defaults to the selected project checkout. Default: \".\".",
+            "required": false
+          }
+        ],
+        "returnType": "outputs-result",
+        "inputFormat": "wit"
+      }
+    ]
+  }
+}

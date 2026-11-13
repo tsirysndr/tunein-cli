@@ -1,0 +1,13 @@
+id = "flakestry"
+name = "Publish to Flakestry"
+description = "Publish the checked-out commit and RELEASE_VERSION using GitHub OIDC"
+enabled = true
+
+[on]
+manual = true
+
+[[steps]]
+name = "Publish to Flakestry"
+module = "ci"
+command = "flakestry-from-env"
+wasm = true

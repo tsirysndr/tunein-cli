@@ -1,5 +1,76 @@
+# Project modules and pinned, published components. Custom logic lives in .fluentci/.
 [[modules]]
 name = "ci"
 path = ".fluentci/ci"
 sdk = "purescript"
+runtime = "component"
+
+[[modules]]
+name = "dpkg"
+package = "dpkg@0.1.0"
+runtime = "component"
+
+[[modules]]
+name = "gemfury"
+package = "gemfury@0.1.0"
+runtime = "component"
+
+[[modules]]
+name = "gh-artifacts"
+package = "gh-artifacts@0.1.0"
+runtime = "component"
+
+[[modules]]
+name = "nix-publish"
+package = "nix-publish@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "rpmbuild"
+package = "rpmbuild@0.1.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-bun"
+package = "setup-bun@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-cachix"
+package = "setup-cachix@0.2.2"
+runtime = "component"
+
+[[modules]]
+name = "setup-determinate-nix"
+package = "setup-determinate-nix@0.2.1"
+runtime = "component"
+
+[[modules]]
+name = "setup-flakehub-push"
+package = "setup-flakehub-push@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-gh"
+package = "setup-gh@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-go"
+package = "setup-go@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-node"
+package = "setup-node@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-purescript"
+package = "setup-purescript@0.2.0"
+runtime = "component"
+
+[[modules]]
+name = "setup-rust"
+package = "setup-rust@0.2.2"
 runtime = "component"

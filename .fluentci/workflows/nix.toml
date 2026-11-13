@@ -1,0 +1,13 @@
+id = "nix"
+name = "Nix build"
+description = "Build the locked flake and push authenticated Cachix results"
+enabled = true
+
+[on]
+manual = true
+
+[[steps]]
+name = "Nix build"
+module = "ci"
+command = "nix-build --source . --cache tsirysndr"
+wasm = true

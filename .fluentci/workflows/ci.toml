@@ -1,0 +1,30 @@
+id = "ci"
+name = "Continuous integration"
+description = "Validate workflow definitions, Rust formatting, web UI and Rust tests"
+enabled = true
+env = ["CI=true"]
+
+[on]
+manual = true
+[on.push]
+branches = ["main"]
+[on.pull_request]
+branches = ["main"]
+
+[[steps]]
+name = "Workflow validation"
+module = "ci"
+command = "check --directory ."
+wasm = true
+
+[[steps]]
+name = "Rust formatting"
+module = "ci"
+command = "format --source ."
+wasm = true
+
+[[steps]]
+name = "Web and Rust tests"
+module = "ci"
+command = "test --source ."
+wasm = true

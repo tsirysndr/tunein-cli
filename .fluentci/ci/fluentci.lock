@@ -1,0 +1,397 @@
+{
+  "lockfileVersion": 1,
+  "modules": {
+    "dependency::dpkg": "dpkg@0.1.0",
+    "dependency::gemfury": "gemfury@0.1.0",
+    "dependency::gh-artifacts": "gh-artifacts@0.1.0",
+    "dependency::nix-publish": "nix-publish@0.2.0",
+    "dependency::rpmbuild": "rpmbuild@0.1.0",
+    "dependency::setup-bun": "setup-bun@0.2.0",
+    "dependency::setup-cachix": "setup-cachix@0.2.2",
+    "dependency::setup-determinate-nix": "setup-determinate-nix@0.2.1",
+    "dependency::setup-flakehub-push": "setup-flakehub-push@0.2.0",
+    "dependency::setup-gh": "setup-gh@0.2.0",
+    "dependency::setup-go": "setup-go@0.2.0",
+    "dependency::setup-node": "setup-node@0.2.0",
+    "dependency::setup-rust": "setup-rust@0.2.2"
+  },
+  "packages": {
+    "dpkg@0.1.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "dpkg",
+      "version": "0.1.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/dpkg/v0.1.0/dpkg.wasm",
+      "sha256": "7fc49736bbebc5476ad6b4656616bb75df602868bd37a80a4d567646d2870497",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/dpkg-0.1.0",
+      "cid": "bafyreigocplhugml2vuvjklgiqi7m6rx2oxrqghepbq5elglftknlm4qwq",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "dpkg",
+        "debian",
+        "deb",
+        "linux",
+        "packaging",
+        "build",
+        "ci-cd",
+        "automation"
+      ],
+      "os": [
+        "linux"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/packaging/dpkg/README.md"
+    },
+    "gemfury@0.1.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "gemfury",
+      "version": "0.1.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/gemfury/v0.1.0/gemfury.wasm",
+      "sha256": "ac94cc665f05ac82c23067e48d2fa380eb3978360e69644073d71bb8783b7c19",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/gemfury-0.1.0",
+      "cid": "bafyreib6esazteuvktxkhpwr3vyey43n6lfxyey7cs346z45p2snfyxrsi",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "gemfury",
+        "package-publishing",
+        "linux-packages",
+        "deb",
+        "rpm",
+        "artifacts",
+        "ci-cd",
+        "automation"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/publishing/gemfury/README.md"
+    },
+    "gh-artifacts@0.1.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "gh-artifacts",
+      "version": "0.1.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/gh-artifacts/v0.1.0/gh-artifacts.wasm",
+      "sha256": "256c142d6c599824d5724284726eb4788d7d506aa043c4910200439fabe2af9a",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/gh-artifacts-0.1.0",
+      "cid": "bafyreici3iq533m56isin7ykgeazuktm3hoc6ecdgl5fn3lyjmxot5wh34",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "github",
+        "github-actions",
+        "artifacts",
+        "releases",
+        "file-upload",
+        "ci-cd",
+        "automation"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/artifacts/gh-artifacts/README.md"
+    },
+    "nix-publish@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "nix-publish",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/nix-publish/v0.2.0/nix-publish.wasm",
+      "sha256": "6a996e19c4bc350a15c4398d039cda11f02ee76711a29d1284e9c4d6745e4566",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/nix-publish-0.2.0",
+      "cid": "bafyreif66ytzeokr2mbxrzl7d5ng5bsjog3mkr5vzlehdjtoy2pmrqgepu",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "publish",
+        "nix",
+        "flakehub",
+        "flakestry"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/publishing/nix-publish/README.md"
+    },
+    "rpmbuild@0.1.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "rpmbuild",
+      "version": "0.1.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/rpmbuild/v0.1.0/rpmbuild.wasm",
+      "sha256": "d5b1fcc3012b662f9c506e514603afd449b99e3d3092ce05cbe47f229c6cc6f0",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/rpmbuild-0.1.0",
+      "cid": "bafyreiev7lnv6vsewn3nok2lofrmtnvqjxoj3zz73yr37qlao5u3tdcfy4",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "rpmbuild",
+        "rpm",
+        "linux",
+        "packaging",
+        "fedora",
+        "rhel",
+        "ci-cd",
+        "automation"
+      ],
+      "os": [
+        "linux"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/packaging/rpmbuild/README.md"
+    },
+    "setup-bun@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-bun",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-bun/v0.2.0/setup-bun.wasm",
+      "sha256": "4ccd777c1ecb2b28a5076a1075f600c40c8d0e4ee54a89864abe92ec62594fc9",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-bun-0.2.0",
+      "cid": "bafyreif5ingx3cbdp5tsmhco7odhhnycqjd32vpoo5fwqta5zalvo4hvme",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "bun",
+        "javascript",
+        "typescript",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/bun/README.md"
+    },
+    "setup-cachix@0.2.2": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-cachix",
+      "version": "0.2.2",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-cachix/v0.2.2/setup-cachix.wasm",
+      "sha256": "3c93182bd068767f79f4e12ae2769b29f1fcbbc30103c0f3052e8cd13adbe154",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-cachix-0.2.2",
+      "cid": "bafyreifyzpwovqt5zm6ojc4lpcq53bnnzq6qmvym5yrr2esggq7v7hij64",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "cachix",
+        "nix",
+        "binary-cache",
+        "setup",
+        "ci"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/cachix/README.md"
+    },
+    "setup-determinate-nix@0.2.1": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-determinate-nix",
+      "version": "0.2.1",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-determinate-nix/v0.2.1/setup-determinate-nix.wasm",
+      "sha256": "c7c8a3b1db9980ed719008c7ac49effab3b49e3bf3a30ac92e92f3218218829d",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-determinate-nix-0.2.1",
+      "cid": "bafyreicgo2t33tskdxbwkfvrkj3wc5qx76kgabz4jrzs5mor3d57qdbuzy",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "nix",
+        "determinate-nix",
+        "package-manager",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/determinate-nix/README.md"
+    },
+    "setup-flakehub-push@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-flakehub-push",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-flakehub-push/v0.2.0/setup-flakehub-push.wasm",
+      "sha256": "79d41d7d9bf458dd64e0cedf3ee325ab9905a8cdeec648eaa00a0f37516dc45a",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-flakehub-push-0.2.0",
+      "cid": "bafyreieaglo7roy3nyrnnkcs43tlowq5qn57va23jxb6jzh4sguqq5tuy4",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "flakehub",
+        "nix",
+        "flakes",
+        "publishing",
+        "setup",
+        "ci"
+      ],
+      "os": [
+        "linux",
+        "macos"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/flakehub-push/README.md"
+    },
+    "setup-gh@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-gh",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-gh/v0.2.0/setup-gh.wasm",
+      "sha256": "06bf034b4d12110c54db7d205b2dda903819222fbaf2da82b0c7e79661c9763d",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-gh-0.2.0",
+      "cid": "bafyreic5kkapfog3ra5sfesb74fhyx23oab5zxpz7tcagrtanrdmpujyce",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "github",
+        "gh",
+        "cli",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos",
+        "freebsd",
+        "netbsd",
+        "openbsd"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/gh/README.md"
+    },
+    "setup-go@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-go",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-go/v0.2.0/setup-go.wasm",
+      "sha256": "5865af5d6256a17036a931bd6688f994a769ea0bdddb5a09880d64c8e77dc029",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-go-0.2.0",
+      "cid": "bafyreibsa34dfkv4uhb426absz5quiyayzlyvz7c5necwu27dlfj6mqgfu",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "go",
+        "golang",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos",
+        "freebsd",
+        "nwtbsd",
+        "openbsd"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/go/README.md"
+    },
+    "setup-node@0.2.0": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-node",
+      "version": "0.2.0",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-node/v0.2.0/setup-node.wasm",
+      "sha256": "223a3dfde1c216ad12e1ea05eecb8c49ebf35be2a1a78e0679912227dbf6afb9",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-node-0.2.0",
+      "cid": "bafyreifelntxvkaxxrorlbpt7e3hphep7nt6vgxajqkfq2lr6buv5rntxe",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "nodejs",
+        "npm",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos",
+        "freebsd",
+        "netbsd",
+        "openbsd"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/node/README.md"
+    },
+    "setup-rust@0.2.2": {
+      "registry": "https://api.fluentci.io",
+      "name": "setup-rust",
+      "version": "0.2.2",
+      "author": "did:plc:cukdxxemtwuxspaiurk2xsfz",
+      "url": "https://modules.fluentci.io/fluentci.io/setup-rust/v0.2.2/setup-rust.wasm",
+      "sha256": "e416bd36fa1f07227c4da40eb37d644bcddbe2650f5204664e37f2265977c96e",
+      "uri": "at://did:plc:cukdxxemtwuxspaiurk2xsfz/io.fluentci.plugin/setup-rust-0.2.2",
+      "cid": "bafyreidtz4ozpi4n4cqxiwp5ciyr4k3l3scdx3wzpl6wakfo7g7nd6xl2a",
+      "repository": "https://tangled.org/fluentci.io/modules",
+      "topics": [
+        "rust",
+        "cargo",
+        "rustup",
+        "setup",
+        "ci",
+        "toolchain"
+      ],
+      "os": [
+        "linux",
+        "macos",
+        "freebsd",
+        "netbsd",
+        "openbsd"
+      ],
+      "arch": [
+        "x86_64",
+        "aarch64"
+      ],
+      "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/rust/README.md"
+    }
+  },
+  "git": {}
+}

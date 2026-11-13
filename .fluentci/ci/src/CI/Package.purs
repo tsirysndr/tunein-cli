@@ -1,97 +1,51 @@
-module CI.Package (PackageArgs, packageRelease, validVersion) where
+module CI.Package (packageRelease) where
 
-import Effect (Effect)
 import Prelude
-import CI.Assets as Assets
-import Native (Client)
-import Native.Container as Container
-import Native.Directory as Directory
-import Native.File as File
-import Native.Query as Query
-import Native.Types (Container, Directory, File)
-import Data.Array (head, last)
-import Data.Foldable (all, foldM)
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String (Pattern(..), contains, joinWith, split, stripPrefix)
-import Data.String.CodeUnits (singleton, toCharArray)
-import Effect.Exception (error, throwException)
+import CI.Dependencies as D
+import CI.Support as S
+import CI.Validation as V
+import Data.Array as A
+import Data.Either (either)
+import Data.Foldable (traverse_)
+import Data.Maybe (fromMaybe)
+import Data.String as String
+import Effect (Effect)
+import Effect.Exception (throw)
 
-validVersion :: String -> Boolean
-validVersion version =
-  let bare = fromMaybe version (stripPrefix (Pattern "v") version)
-  in case head (toCharArray bare) of
-    Just first -> first >= '0' && first <= '9' && all
-      (\c -> contains (Pattern (singleton c)) "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.+~-")
-      (toCharArray bare)
-    Nothing -> false
-
-replaceVersion :: String -> String -> String
-replaceVersion version = split (Pattern "\n") >>> map
-  (\line -> case stripPrefix (Pattern "Version:") line of
-    Just _ -> "Version:        " <> version
-    Nothing -> line) >>> joinWith "\n"
-
-type PackageArgs =
-  { source :: Directory
-  , binary :: File
-  , target :: String
-  , label :: String
-  , version :: String
-  }
-
-packageRelease :: Client -> PackageArgs -> Effect Directory
-packageRelease client { source, binary, target, label: _, version } = do
-  unless (validVersion version) $ throwException (error "Invalid package version")
-  arch <- case target of
-    "x86_64-unknown-linux-gnu" -> pure "amd64"
-    "aarch64-unknown-linux-gnu" -> pure "arm64"
-    "armv7-unknown-linux-gnueabihf" -> pure ""
-    _ -> throwException (error "Unsupported Linux release target")
-  let
-    bare = fromMaybe version (stripPrefix (Pattern "v") version)
-    archive = "tunein_" <> version <> "_" <> target <> ".tar.gz"
-    stage = Query.directory client
-      # Directory.withFile "tunein" binary
-      # Directory.withFile "README.md" (Directory.file "README.md" source)
-      # Directory.withFile "LICENSE" (Directory.file "LICENSE" source)
-
-    base = Query.container client
-      # Container.from "node:24-bookworm-slim"
-      # Container.withExec [ "apt-get", "update" ]
-      # Container.withExec [ "apt-get", "install", "-y", "--no-install-recommends", "dpkg-dev", "rpm", "libdigest-sha-perl" ]
-      # Container.withDirectory "/stage" stage
-      # Container.withExec [ "chmod", "0755", "/stage/tunein" ]
-      # Container.withExec [ "mkdir", "-p", "/out" ]
-      # Container.withExec [ "tar", "-C", "/stage", "-czf", "/out/" <> archive, "." ]
-  deb <- if arch == "" then pure base else do
-    let metadata = Directory.directory ("dist/debian/" <> arch) source
-    control <- File.contents (Directory.file "DEBIAN/control" metadata)
-    pure $ base
-      # Container.withDirectory "/debian" (metadata
-          # Directory.withNewFile "DEBIAN/control" (replaceVersion bare control)
-          # Directory.withFile "usr/bin/tunein" binary)
-      # Container.withExec [ "chmod", "0755", "/debian/usr/bin/tunein" ]
-      # Container.withExec [ "dpkg-deb", "--build", "--root-owner-group", "/debian", "/out/tunein-cli_" <> bare <> "_" <> arch <> ".deb" ]
-  rpm <- if target /= "x86_64-unknown-linux-gnu" then pure deb else do
-    let metadata = Directory.directory "dist/rpm/amd64" source
-    spec <- File.contents (Directory.file "tunein.spec" metadata)
-    let built = deb
-          # Container.withDirectory "/rpmbuild/SOURCES/amd64" (metadata
-              # Directory.withNewFile "tunein.spec" (replaceVersion bare spec)
-              # Directory.withFile "usr/bin/tunein" binary)
-          # Container.withExec [ "chmod", "0755", "/rpmbuild/SOURCES/amd64/usr/bin/tunein" ]
-          # Container.withExec ([ "mkdir", "-p" ] <> map ("/rpmbuild/" <> _) [ "BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS" ])
-          # Container.withExec [ "rpmbuild", "--define", "_topdir /rpmbuild", "--define", "_sourcedir /rpmbuild/SOURCES", "--target", "x86_64", "-bb", "/rpmbuild/SOURCES/amd64/tunein.spec" ]
-    files <- Directory.glob "**/*.rpm" (Container.directory "/rpmbuild/RPMS" built)
-    foldM (\container path -> pure $ container # Container.withFile
-      ("/out/" <> fromMaybe path (last (split (Pattern "/") path)))
-      (Container.file ("/rpmbuild/RPMS/" <> path) built)) built files
-  files <- Assets.releaseFiles (Container.directory "/out" rpm)
-  checksummed <- foldM checksum rpm files
-  pure $ Container.directory "/out" checksummed
-  where
-  checksum :: Container -> String -> Effect Container
-  checksum container name = pure $ container
-    # Container.withWorkdir "/out"
-    # Container.withExecWith [ "shasum", "-a", "256", name ]
-        (Container.defaultWithExecOpts { redirectStdout = Just ("/out/" <> name <> ".sha256") })
+-- Only TuneIn metadata and file staging are project-specific. Builders are shared components.
+packageRelease :: { source :: String, target :: String, version :: String, binary :: String, output :: String } -> Effect (Array String)
+packageRelease args = do
+  unless (V.validVersion args.version) (throw "Invalid release version")
+  info <- either throw pure (V.targetInfo args.target)
+  S.run [ "mkdir", "-p", args.output ]
+  output <- S.absolute args.output
+  stage <- S.fresh
+  let bare = fromMaybe args.version (String.stripPrefix (String.Pattern "v") args.version)
+      archive = output <> "/tunein_" <> args.version <> "_" <> args.target <> ".tar.gz"
+  S.run [ "mkdir", "-p", stage <> "/archive" ]
+  S.run [ "cp", args.binary, stage <> "/archive/tunein" ]
+  S.run [ "cp", args.source <> "/README.md", args.source <> "/LICENSE", stage <> "/archive" ]
+  S.run [ "chmod", "0755", stage <> "/archive/tunein" ]
+  S.run [ "tar", "-czf", archive, "-C", stage <> "/archive", "." ]
+  deb <- if info.deb == "" then pure [] else do
+    S.run [ "cp", "-R", args.source <> "/dist/debian/" <> info.deb, stage <> "/debian" ]
+    control <- S.readText (stage <> "/debian/DEBIAN/control")
+    S.writeText (stage <> "/debian/DEBIAN/control") (V.replaceVersion bare control)
+    S.run [ "mkdir", "-p", stage <> "/debian/usr/bin" ]
+    S.run [ "cp", args.binary, stage <> "/debian/usr/bin/tunein" ]
+    S.run [ "chmod", "0755", stage <> "/debian/usr/bin/tunein" ]
+    D.dpkg { directory: stage <> "/debian", arch: info.deb, output: output <> "/tunein-cli_" <> bare <> "_" <> info.deb <> ".deb" }
+  rpm <- if info.rpm == "" then pure [] else do
+    let root = stage <> "/rpmbuild"
+    traverse_ (\name -> S.run [ "mkdir", "-p", root <> "/" <> name ]) [ "SPECS", "SOURCES", "BUILD", "BUILDROOT", "RPMS", "SRPMS" ]
+    S.run [ "cp", "-R", args.source <> "/dist/rpm/amd64", root <> "/SOURCES/amd64" ]
+    spec <- S.readText (args.source <> "/dist/rpm/amd64/tunein.spec")
+    S.writeText (root <> "/SPECS/tunein.spec") (V.replaceVersion bare spec)
+    S.run [ "mkdir", "-p", root <> "/SOURCES/amd64/usr/bin" ]
+    S.run [ "cp", args.binary, root <> "/SOURCES/amd64/usr/bin/tunein" ]
+    S.run [ "chmod", "0755", root <> "/SOURCES/amd64/usr/bin/tunein" ]
+    D.rpmbuild { directory: root, arch: info.rpm, output, spec: "tunein.spec" }
+  let assets = [ archive ] <> deb <> rpm
+  traverse_ S.checksum assets
+  S.run [ "rm", "-rf", "--", stage ]
+  pure (assets <> map (_ <> ".sha256") assets)

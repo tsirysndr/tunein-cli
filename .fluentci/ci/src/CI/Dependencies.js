@@ -1,0 +1,28 @@
+// Only native component bindings; pipeline decisions live in PureScript.
+import { setup as node } from 'fluentci:dependency/setup-node';
+import { setup as bun } from 'fluentci:dependency/setup-bun';
+import { setup as rust } from 'fluentci:dependency/setup-rust';
+import { setup as go } from 'fluentci:dependency/setup-go';
+import { setup as gh } from 'fluentci:dependency/setup-gh';
+import { setup as nix } from 'fluentci:dependency/setup-determinate-nix';
+import { setup as cachix } from 'fluentci:dependency/setup-cachix';
+import { setup as push } from 'fluentci:dependency/setup-flakehub-push';
+import { build as deb } from 'fluentci:dependency/dpkg';
+import { build as rpm } from 'fluentci:dependency/rpmbuild';
+import { releaseUpload } from 'fluentci:dependency/gh-artifacts';
+import { upload } from 'fluentci:dependency/gemfury';
+import { flakehub as hub, flakestry as registry } from 'fluentci:dependency/nix-publish';
+export const setupNode = args => () => node(args);
+export const setupBun = args => () => bun(args);
+export const setupRust = args => () => rust(args);
+export const setupGh = () => gh({});
+export const setupNix = args => () => nix(args);
+export const setupCachix = args => () => cachix(args);
+export const setupFlakehub = () => push({});
+export const dpkg = args => () => deb(args);
+export const rpmbuild = args => () => rpm(args);
+export const uploadRelease = args => () => releaseUpload(args);
+export const uploadGemfury = args => () => upload(args);
+export const flakehub = args => () => hub(args);
+export const flakestry = args => () => registry(args);
+export const setupGo = args => () => go(args);

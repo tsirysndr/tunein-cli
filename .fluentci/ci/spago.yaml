@@ -1,5 +1,5 @@
 package:
-  name: music-player-ci
+  name: tunein-ci
   dependencies:
     - refs
     - integers
@@ -18,6 +18,9 @@ package:
     - maybe
     - prelude
     - tuples
+  test:
+    main: Test.Main
+    dependencies: []
 workspace:
   packageSet:
     registry: 81.11.0

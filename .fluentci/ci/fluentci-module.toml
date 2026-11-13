@@ -1,0 +1,23 @@
+name = "tunein-ci"
+version = "0.1.0"
+license = "MIT"
+sdk = "purescript"
+runtime = "component"
+entry = "entry.mjs"
+artifact = "dist/plugin.wasm"
+build = ["npm", "run", "build"]
+
+[dependencies]
+dpkg = "dpkg@0.1.0"
+gemfury = "gemfury@0.1.0"
+gh-artifacts = "gh-artifacts@0.1.0"
+nix-publish = "nix-publish@0.2.0"
+rpmbuild = "rpmbuild@0.1.0"
+setup-bun = "setup-bun@0.2.0"
+setup-cachix = "setup-cachix@0.2.2"
+setup-determinate-nix = "setup-determinate-nix@0.2.1"
+setup-flakehub-push = "setup-flakehub-push@0.2.0"
+setup-gh = "setup-gh@0.2.0"
+setup-go = "setup-go@0.2.0"
+setup-node = "setup-node@0.2.0"
+setup-rust = "setup-rust@0.2.2"

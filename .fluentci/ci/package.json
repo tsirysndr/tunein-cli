@@ -10,7 +10,8 @@
   "name": "fluentci-ci",
   "private": true,
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "test": "node -e \"import('./output/Test.Main/index.js').then(m => m.main())\""
   },
   "type": "module",
   "engines": {

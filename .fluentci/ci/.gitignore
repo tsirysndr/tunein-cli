@@ -1,7 +1,8 @@
-node_modules/
-dist/
-output/
+.sdk/
 .spago/
-build/
-lib/
-*.res.mjs
+output/
+dist/
+node_modules/
+.fluentci/
+fluentci_modules/
+fluentci.lock.guard

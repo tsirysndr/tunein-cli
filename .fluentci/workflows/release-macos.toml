@@ -1,0 +1,13 @@
+id = "release-macos"
+name = "macOS release"
+description = "TARGET and RELEASE_VERSION select the release; SOURCE_DIRECTORY defaults to this checkout"
+enabled = true
+
+[on]
+manual = true
+
+[[steps]]
+name = "macOS release"
+module = "ci"
+command = "macos-release-from-env"
+wasm = true
