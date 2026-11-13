@@ -1,7 +1,11 @@
-import {buildPlugin} from '@fluentci/inspection';
+import {fileURLToPath} from 'node:url';
+import {normalizePurescriptInspector} from './sdk-compat.mjs';
 import {build} from 'esbuild';
 import {mkdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
+// Patch the installed SDK before importing it; static imports would load it too early.
+normalizePurescriptInspector(fileURLToPath(new URL('./adapters/purescript.mjs', import.meta.resolve('@fluentci/inspection'))));
+const {buildPlugin} = await import('@fluentci/inspection');
 const result = spawnSync('spago',['build'],{stdio:'inherit'});
 if(result.error)throw result.error;
 if(result.status!==0)throw Error(`spago failed (${result.status})`);

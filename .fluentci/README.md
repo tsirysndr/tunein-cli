@@ -101,3 +101,10 @@ of asset paths, and GitHub/Nix publishing functions return execution report path
 Gemfury returns false for credential/package skips and true after upload.
 Record-shaped results from imported components remain internal. Native errors
 still throw and stop the workflow; they are never converted into success values.
+
+The build applies `ci/sdk-compat.mjs` before importing the pinned inspector.
+It normalizes the compiler's `ParensInType` nodes in type resolution/rendering,
+so signatures such as `Effect (Array String)` retain typed list returns. This is
+SDK build compatibility code; all CI decisions remain in PureScript. Repeated
+builds leave an already normalized adapter unchanged, and an unknown SDK layout
+fails explicitly rather than silently producing a different contract.
