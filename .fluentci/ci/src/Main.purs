@@ -5,6 +5,7 @@ import CI.Cross as Cross
 import CI.Dependencies as D
 import CI.Package as Package
 import CI.Support as S
+import CI.Toolchain as Toolchain
 import CI.Validation as V
 import Data.Array as A
 import Data.Either (either)
@@ -13,10 +14,17 @@ import Effect (Effect)
 import Effect.Exception (throw)
 import FluentCI.Plugin as P
 
+-- Reuse the pinned bootstrap tools only after checking their actual native versions.
+-- The published 0.2.0 archive installers have an untrimmed cached-path probe;
+-- isolate fallback installs so an existing cache prefix is never overwritten.
 nodeAndBun :: Effect Unit
 nodeAndBun = do
-  void (D.setupNode { version: "24.22.2" })
-  void (D.setupBun { version: "1.4.3" })
+  Toolchain.ensureExecutable "node" "v24.22.2" (S.captureIn "." [ "node", "--version" ]) do
+    prefix <- S.fresh
+    void (D.setupNode { version: "24.22.2", installDir: prefix <> "/node" })
+  Toolchain.ensureExecutable "bun" "1.4.3" (S.captureIn "." [ "bun", "--version" ]) do
+    prefix <- S.fresh
+    void (D.setupBun { version: "1.4.3", installDir: prefix <> "/bun" })
 
 requireOS :: Array String -> Effect String
 requireOS supported = do

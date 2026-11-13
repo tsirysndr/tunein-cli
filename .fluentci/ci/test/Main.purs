@@ -1,6 +1,7 @@
 module Test.Main (main) where
 import Prelude
 import CI.Validation as V
+import Test.Toolchain as Toolchain
 import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Exception (throw)
@@ -27,3 +28,4 @@ main = do
   assert "quoted CSV preserves commas, quotes and shell text" (V.csv [ "one,two", "a\"b", "$(false)" ] == "\"one,two\",\"a\"\"b\",\"$(false)\"")
   let metadata = V.replaceVersion "0.7.1" "Name: tunein-cli\nVersion: 0.6.0\nRequires: alsa-lib\n"
   assert "update only the version header" (metadata == "Name: tunein-cli\nVersion: 0.7.1\nRequires: alsa-lib\n")
+  Toolchain.run

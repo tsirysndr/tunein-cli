@@ -108,3 +108,9 @@ so signatures such as `Effect (Array String)` retain typed list returns. This is
 SDK build compatibility code; all CI decisions remain in PureScript. Repeated
 builds leave an already normalized adapter unchanged, and an unknown SDK layout
 fails explicitly rather than silently producing a different contract.
+
+Node and Bun calls first verify the pinned version on PATH and reuse matching
+bootstrap installations. The published setup 0.2.0 cached-directory probes can
+misread a trailing newline; when installation is needed, TuneIn passes a fresh
+per-invocation prefix to the shared setup component. Existing cached prefixes
+are never overwritten. The selected executable is verified again after setup.

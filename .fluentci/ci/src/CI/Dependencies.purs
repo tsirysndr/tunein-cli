@@ -5,8 +5,8 @@ import Effect (Effect)
 type Variable = { name :: String, value :: String }
 type SetupResult = { tool :: String, version :: String, binDir :: String, environment :: Array Variable }
 type ExecutionResult = { outcome :: String, runDir :: String, reportPath :: String, stdoutPath :: String, stderrPath :: String }
-foreign import setupNode :: { version :: String } -> Effect SetupResult
-foreign import setupBun :: { version :: String } -> Effect SetupResult
+foreign import setupNode :: { version :: String, installDir :: String } -> Effect SetupResult
+foreign import setupBun :: { version :: String, installDir :: String } -> Effect SetupResult
 foreign import setupRust :: { version :: String, components :: String, targets :: String } -> Effect SetupResult
 foreign import setupGo :: { version :: String } -> Effect SetupResult
 foreign import setupGh :: Effect SetupResult
