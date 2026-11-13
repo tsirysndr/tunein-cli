@@ -1,22 +1,22 @@
 {
   "lockfileVersion": 1,
   "modules": {
-    "dependency::dpkg": "dpkg@0.1.0",
-    "dependency::gemfury": "gemfury@0.1.0",
-    "dependency::gh-artifacts": "gh-artifacts@0.1.0",
-    "dependency::nix-publish": "nix-publish@0.2.0",
-    "dependency::rpmbuild": "rpmbuild@0.1.0",
-    "dependency::setup-bun": "setup-bun@0.2.0",
-    "dependency::setup-cachix": "setup-cachix@0.2.2",
-    "dependency::setup-determinate-nix": "setup-determinate-nix@0.2.1",
-    "dependency::setup-flakehub-push": "setup-flakehub-push@0.2.0",
-    "dependency::setup-gh": "setup-gh@0.2.0",
-    "dependency::setup-go": "setup-go@0.2.0",
-    "dependency::setup-node": "setup-node@0.2.0",
-    "dependency::setup-rust": "setup-rust@0.2.2"
+    "dependency::dpkg": "@fluentci.io/dpkg@0.1.0",
+    "dependency::gemfury": "@fluentci.io/gemfury@0.1.0",
+    "dependency::gh-artifacts": "@fluentci.io/gh-artifacts@0.1.0",
+    "dependency::nix-publish": "@fluentci.io/nix-publish@0.2.0",
+    "dependency::rpmbuild": "@fluentci.io/rpmbuild@0.1.0",
+    "dependency::setup-bun": "@fluentci.io/setup-bun@0.2.0",
+    "dependency::setup-cachix": "@fluentci.io/setup-cachix@0.2.2",
+    "dependency::setup-determinate-nix": "@fluentci.io/setup-determinate-nix@0.2.1",
+    "dependency::setup-flakehub-push": "@fluentci.io/setup-flakehub-push@0.2.0",
+    "dependency::setup-gh": "@fluentci.io/setup-gh@0.2.0",
+    "dependency::setup-go": "@fluentci.io/setup-go@0.2.0",
+    "dependency::setup-node": "@fluentci.io/setup-node@0.2.0",
+    "dependency::setup-rust": "@fluentci.io/setup-rust@0.2.2"
   },
   "packages": {
-    "dpkg@0.1.0": {
+    "@fluentci.io/dpkg@0.1.0": {
       "registry": "https://api.fluentci.io",
       "name": "dpkg",
       "version": "0.1.0",
@@ -45,7 +45,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/packaging/dpkg/README.md"
     },
-    "gemfury@0.1.0": {
+    "@fluentci.io/gemfury@0.1.0": {
       "registry": "https://api.fluentci.io",
       "name": "gemfury",
       "version": "0.1.0",
@@ -75,7 +75,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/publishing/gemfury/README.md"
     },
-    "gh-artifacts@0.1.0": {
+    "@fluentci.io/gh-artifacts@0.1.0": {
       "registry": "https://api.fluentci.io",
       "name": "gh-artifacts",
       "version": "0.1.0",
@@ -104,7 +104,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/artifacts/gh-artifacts/README.md"
     },
-    "nix-publish@0.2.0": {
+    "@fluentci.io/nix-publish@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "nix-publish",
       "version": "0.2.0",
@@ -130,7 +130,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/publishing/nix-publish/README.md"
     },
-    "rpmbuild@0.1.0": {
+    "@fluentci.io/rpmbuild@0.1.0": {
       "registry": "https://api.fluentci.io",
       "name": "rpmbuild",
       "version": "0.1.0",
@@ -159,7 +159,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/packaging/rpmbuild/README.md"
     },
-    "setup-bun@0.2.0": {
+    "@fluentci.io/setup-bun@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "setup-bun",
       "version": "0.2.0",
@@ -187,7 +187,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/bun/README.md"
     },
-    "setup-cachix@0.2.2": {
+    "@fluentci.io/setup-cachix@0.2.2": {
       "registry": "https://api.fluentci.io",
       "name": "setup-cachix",
       "version": "0.2.2",
@@ -214,7 +214,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/cachix/README.md"
     },
-    "setup-determinate-nix@0.2.1": {
+    "@fluentci.io/setup-determinate-nix@0.2.1": {
       "registry": "https://api.fluentci.io",
       "name": "setup-determinate-nix",
       "version": "0.2.1",
@@ -242,7 +242,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/determinate-nix/README.md"
     },
-    "setup-flakehub-push@0.2.0": {
+    "@fluentci.io/setup-flakehub-push@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "setup-flakehub-push",
       "version": "0.2.0",
@@ -270,7 +270,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/flakehub-push/README.md"
     },
-    "setup-gh@0.2.0": {
+    "@fluentci.io/setup-gh@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "setup-gh",
       "version": "0.2.0",
@@ -301,7 +301,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/gh/README.md"
     },
-    "setup-go@0.2.0": {
+    "@fluentci.io/setup-go@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "setup-go",
       "version": "0.2.0",
@@ -331,7 +331,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/go/README.md"
     },
-    "setup-node@0.2.0": {
+    "@fluentci.io/setup-node@0.2.0": {
       "registry": "https://api.fluentci.io",
       "name": "setup-node",
       "version": "0.2.0",
@@ -361,7 +361,7 @@
       ],
       "readme_url": "https://raw.githubusercontent.com/fluentci-io/modules/refs/heads/main/setup/node/README.md"
     },
-    "setup-rust@0.2.2": {
+    "@fluentci.io/setup-rust@0.2.2": {
       "registry": "https://api.fluentci.io",
       "name": "setup-rust",
       "version": "0.2.2",
