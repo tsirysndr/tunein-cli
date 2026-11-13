@@ -4,7 +4,6 @@ import Prelude
 import CI.Dependencies as D
 import CI.Support as S
 import CI.Validation as V
-import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (traverse_)
 import Data.Maybe (fromMaybe)

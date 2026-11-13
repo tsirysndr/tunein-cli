@@ -20,19 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
-      - uses: actions/checkout@v4
-        with:
           ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
+          fetch-depth: 0
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Publish the selected checkout using nix-publish
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci flakehub-from-env
+      - uses: ./.github/actions/fluentci-toolchain
+      - name: Select tagged application source
+        run: fluentci run ci checkout-release
         env:
-          SOURCE_DIRECTORY: ${{ github.workspace }}
+          RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
+      - name: Publish the selected checkout using nix-publish
+        run: fluentci run ci flakehub-from-env
+        env:
           RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}

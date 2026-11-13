@@ -1,8 +1,7 @@
 /target
 /result
 *.md
-# FluentCI generated SDKs, compiler outputs, and workflow tooling checkout
-/.ci-tooling/
+# FluentCI generated SDKs and compiler outputs
 .fluentci/**/.sdk/
 .fluentci/**/.spago/
 .fluentci/**/output/
@@ -22,3 +21,5 @@
 /fluentci.lock.guard
 
 .DS_Store
+
+/.fluentci/source/

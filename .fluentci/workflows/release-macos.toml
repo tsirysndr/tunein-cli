@@ -1,10 +1,16 @@
 id = "release-macos"
 name = "macOS release"
-description = "TARGET and RELEASE_VERSION select the release; SOURCE_DIRECTORY defaults to this checkout"
+description = "TARGET and RELEASE_VERSION select the release; SOURCE_DIRECTORY defaults to the selected .fluentci/source worktree"
 enabled = true
 
 [on]
 manual = true
+
+[[steps]]
+name = "Select tagged application source"
+module = "ci"
+command = "checkout-release"
+wasm = true
 
 [[steps]]
 name = "macOS release"

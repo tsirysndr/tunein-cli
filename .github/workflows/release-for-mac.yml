@@ -27,19 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
-      - uses: actions/checkout@v4
-        with:
           ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
+          fetch-depth: 0
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
-      - name: Build and upload macOS release
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci macos-release-from-env
+      - uses: ./.github/actions/fluentci-toolchain
+      - name: Select tagged application source
+        run: fluentci run ci checkout-release
         env:
-          SOURCE_DIRECTORY: ${{ github.workspace }}
+          RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
+      - name: Build and upload macOS release
+        run: fluentci run ci macos-release-from-env
+        env:
           TARGET: ${{ matrix.target }}
           RELEASE_VERSION: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}

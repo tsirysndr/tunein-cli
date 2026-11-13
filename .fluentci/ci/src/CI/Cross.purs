@@ -18,7 +18,7 @@ build args = do
   S.run [ "docker", "info" ]
   work <- S.fresh
   S.run ([ "tar", "-cf", work <> "/source.tar" ] <> A.concatMap (\path -> [ "--exclude=" <> path ])
-    [ ".git", ".ci-tooling", ".fluentci", "target", "web/node_modules", ".env", "*/.env", "*/.env.*", "dist/*.tar.gz*", "dist/*.deb", "dist/*.rpm" ] <> [ "-C", source, "." ])
+    [ ".git", ".fluentci", "target", "web/node_modules", ".env", "*/.env", "*/.env.*", "dist/*.tar.gz*", "dist/*.deb", "dist/*.rpm" ] <> [ "-C", source, "." ])
   id <- String.trim <$> S.captureIn "." ([ "docker", "create", "--platform", "linux/amd64"
     , "--mount", "type=volume,source=tunein-cargo-registry,target=/usr/local/cargo/registry"
     , "--mount", "type=volume,source=tunein-cargo-git,target=/usr/local/cargo/git"

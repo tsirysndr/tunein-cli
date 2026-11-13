@@ -17,32 +17,34 @@ jobs:
         shell: bash
     env:
       RELEASE_VERSION: ${{ inputs.tag }}
+      GUEST_SOURCE_DIRECTORY: .fluentci/source
       ASSET_TARGET: aarch64-unknown-freebsd
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
-      - uses: actions/checkout@v4
-        with:
           ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
+          fetch-depth: 0
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - uses: ./.github/actions/fluentci-toolchain
+      - name: Select tagged application source
+        run: fluentci run ci checkout-release
+        env:
+          RELEASE_VERSION: ${{ inputs.tag }}
       - name: Build embedded web UI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci web --source "$GITHUB_WORKSPACE"
+        run: fluentci run ci web --source "$SOURCE_DIRECTORY"
       - name: Build in freebsd using compiled PureScript
         uses: vmactions/freebsd-vm@v1
         with:
           release: "14.3"
           arch: aarch64
           usesh: true
-          envs: RELEASE_VERSION ASSET_TARGET
+          envs: RELEASE_VERSION ASSET_TARGET GUEST_SOURCE_DIRECTORY
           prepare: pkg install -y node
-          run: node .ci-tooling/.fluentci/ci/dist/bsd-guest.cjs
+          run: node .fluentci/ci/dist/bsd-guest.cjs
       - name: Upload release assets
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci github-assets --directory "$GITHUB_WORKSPACE/.fluentci/out/$ASSET_TARGET" --tag "$RELEASE_VERSION" --create
+        run: fluentci run ci github-assets --directory "$SOURCE_DIRECTORY/.fluentci/out/$ASSET_TARGET" --tag "$RELEASE_VERSION" --create
         env:
           GH_TOKEN: ${{ github.token }}
   netbsd:
@@ -53,31 +55,33 @@ jobs:
         shell: bash
     env:
       RELEASE_VERSION: ${{ inputs.tag }}
+      GUEST_SOURCE_DIRECTORY: .fluentci/source
       ASSET_TARGET: aarch64-unknown-netbsd
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
-      - uses: actions/checkout@v4
-        with:
           ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
+          fetch-depth: 0
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - uses: ./.github/actions/fluentci-toolchain
+      - name: Select tagged application source
+        run: fluentci run ci checkout-release
+        env:
+          RELEASE_VERSION: ${{ inputs.tag }}
       - name: Build embedded web UI
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci web --source "$GITHUB_WORKSPACE"
+        run: fluentci run ci web --source "$SOURCE_DIRECTORY"
       - name: Build in netbsd using compiled PureScript
         uses: vmactions/netbsd-vm@v1
         with:
           release: "10.1"
           arch: aarch64
           usesh: true
-          envs: RELEASE_VERSION ASSET_TARGET
+          envs: RELEASE_VERSION ASSET_TARGET GUEST_SOURCE_DIRECTORY
           prepare: /usr/sbin/pkg_add nodejs
-          run: /usr/pkg/bin/node .ci-tooling/.fluentci/ci/dist/bsd-guest.cjs
+          run: /usr/pkg/bin/node .fluentci/ci/dist/bsd-guest.cjs
       - name: Upload release assets
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci github-assets --directory "$GITHUB_WORKSPACE/.fluentci/out/$ASSET_TARGET" --tag "$RELEASE_VERSION" --create
+        run: fluentci run ci github-assets --directory "$SOURCE_DIRECTORY/.fluentci/out/$ASSET_TARGET" --tag "$RELEASE_VERSION" --create
         env:
           GH_TOKEN: ${{ github.token }}

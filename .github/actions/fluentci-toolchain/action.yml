@@ -15,8 +15,7 @@ runs:
         key: tunein-fluentci-v1-${{ runner.os }}-${{ runner.arch }}-node24.22.2-bun1.4.3-purs0.15.16-spago1.0.5
     - name: Install published PureScript, Node and Bun toolchain
       shell: bash
-      working-directory: .ci-tooling
       run: fluentci run --frozen-lockfile setup-purescript setup --version 0.15.16 --node-version 24.22.2 --bun-version 1.4.3 --spago-version 1.0.5 --npm-version 10.9.2
     - name: Prepare the SDK and component
       shell: bash
-      run: node .ci-tooling/.fluentci/ci/bootstrap.mjs
+      run: node .fluentci/ci/bootstrap.mjs

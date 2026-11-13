@@ -78,3 +78,13 @@ persistEnvironment = do
     when (S.contains (S.Pattern "\n") path || S.contains (S.Pattern "\r") path) (throw "Invalid PATH")
     previous <- readText destination
     writeText destination (previous <> "PATH=" <> path <> "\n")
+
+-- Publish validated single-line environment values across GitHub steps.
+publishEnvironment :: String -> String -> Effect Unit
+publishEnvironment key value = do
+  unless (A.elem key [ "SOURCE_DIRECTORY" ]) (throw "Unsupported exported environment key")
+  when (S.contains (S.Pattern "\n") value || S.contains (S.Pattern "\r") value || S.contains (S.Pattern "\x0000") value) (throw "Environment values cannot contain control line endings")
+  destination <- env "GITHUB_ENV" ""
+  when (destination /= "") do
+    previous <- readText destination
+    writeText destination (previous <> key <> "=" <> value <> "\n")

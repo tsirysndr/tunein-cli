@@ -1,1 +1,1 @@
-export {prepare, web, test, format, linuxRelease, macosRelease, githubAssets, gemfury, nixBuild, flakehub, flakestry, check, linuxReleaseFromEnv, macosReleaseFromEnv, flakehubFromEnv, flakestryFromEnv} from './output/Main/index.js';
+export {prepare, web, test, format, linuxRelease, macosRelease, githubAssets, gemfury, nixBuild, flakehub, flakestry, check, linuxReleaseFromEnv, macosReleaseFromEnv, flakehubFromEnv, flakestryFromEnv, checkoutRelease} from './output/Main/index.js';

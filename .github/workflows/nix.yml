@@ -21,15 +21,11 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - uses: ./.github/actions/fluentci-toolchain
       - name: Build the locked flake and push its result when authenticated
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci nix-build --source "$GITHUB_WORKSPACE" --cache tsirysndr
+        run: fluentci run ci nix-build --source "$GITHUB_WORKSPACE" --cache tsirysndr
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}

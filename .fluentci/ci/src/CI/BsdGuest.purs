@@ -20,6 +20,8 @@ main = do
   unless (target == expected) (throw "BSD guest architecture does not match ASSET_TARGET")
   if os == "freebsd" then H.run [ "pkg", "install", "-y", "rust", "protobuf", "alsa-lib", "pkgconf", "dbus" ]
     else H.run [ "/usr/sbin/pkg_add", "rust", "protobuf", "alsa-lib", "pkgconf", "dbus" ]
+  source <- H.env "GUEST_SOURCE_DIRECTORY"
+  when (source /= "") (H.chdir source)
   -- Node bindings inherit the VM environment; env is a literal executable, not a shell.
   H.run [ "env", "PKG_CONFIG=pkgconf", "cargo", "build", "--release", "--locked", "--bin", "tunein" ]
   let output = ".fluentci/out/" <> target

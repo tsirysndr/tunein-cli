@@ -47,7 +47,7 @@ fluentci run ci linux-release --help
 ```
 
 Release workflow environment variables are `RELEASE_VERSION`, `TARGET`, and
-optional `SOURCE_DIRECTORY` (defaults to the current checkout). For example,
+optional `SOURCE_DIRECTORY` (defaults to the selected `.fluentci/source` worktree). For example,
 `TARGET=aarch64-unknown-linux-gnu` selects the ARM64 Linux build. Manual release
 workflows can publish artifacts; they are not dry runs. Each release target writes
 to `<source>/.fluentci/out/<target>`.
@@ -81,8 +81,10 @@ packages; the PureScript `prepare` function persists environment for GitHub step
 
 Credentials stay in native environment variables and are not copied into command
 arguments. Manual release and publishing jobs check out their selected tag;
-Flakestry resolves the exact commit from that checkout. Tooling is separately
-checked out at `github.workflow_sha`, so older application tags can use the new CI.
+Flakestry resolves the exact commit from that checkout. The pipeline checkout stays at `github.workflow_sha` for release jobs. PureScript
+creates the selected tag as a detached worktree at `.fluentci/source` and exports
+`SOURCE_DIRECTORY`, so older application tags can use the current CI definitions.
+There is no separate tooling checkout.
 
 The CI job groups workflow lint, PureScript policy checks, Rust formatting, and
 web/Rust tests in one runner. New pushes cancel stale CI/Nix runs. Provider-specific
@@ -90,3 +92,12 @@ BSD VM actions remain responsible only for guest lifecycle.
 
 Runtime verification belongs to CI. No builds, tests, modules, installers, or VMs
 were executed locally during this migration.
+
+## Public return types
+
+The pinned FluentCI v0.17.3 inspector supports concrete scalar and list returns.
+Setup/check/build-status functions return booleans, release builders return lists
+of asset paths, and GitHub/Nix publishing functions return execution report paths.
+Gemfury returns false for credential/package skips and true after upload.
+Record-shaped results from imported components remain internal. Native errors
+still throw and stop the workflow; they are never converted into success values.

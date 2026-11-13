@@ -18,22 +18,18 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: .ci-tooling
       - uses: fluentci-io/setup-fluentci@next
         with:
           version: v0.17.3
-      - uses: ./.ci-tooling/.github/actions/fluentci-toolchain
+      - uses: ./.github/actions/fluentci-toolchain
       - name: Workflow validation
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci check --directory "$GITHUB_WORKSPACE/.ci-tooling"
+        run: fluentci run ci check --directory "$GITHUB_WORKSPACE"
       - name: PureScript policy regression tests
-        working-directory: .ci-tooling/.fluentci/ci
+        working-directory: .fluentci/ci
         run: npm test
       - name: Rust formatting
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci format --source "$GITHUB_WORKSPACE"
+        run: fluentci run ci format --source "$GITHUB_WORKSPACE"
       - name: Web and Rust tests
-        run: fluentci run --work-dir "$GITHUB_WORKSPACE/.ci-tooling" ci test --source "$GITHUB_WORKSPACE"
+        run: fluentci run ci test --source "$GITHUB_WORKSPACE"
         env:
           CI: "true"

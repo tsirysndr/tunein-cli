@@ -13,3 +13,4 @@ export const run = argv => () => {
 export const digest = path => () => createHash('sha256').update(readFileSync(path)).digest('hex');
 export const writeText = path => text => () => writeFileSync(path,text);
 export const setEnv = key => value => () => { process.env[key] = value; };
+export const chdir = path => () => process.chdir(path);

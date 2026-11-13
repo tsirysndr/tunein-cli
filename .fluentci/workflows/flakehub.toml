@@ -7,6 +7,12 @@ enabled = true
 manual = true
 
 [[steps]]
+name = "Select tagged application source"
+module = "ci"
+command = "checkout-release"
+wasm = true
+
+[[steps]]
 name = "Publish to FlakeHub"
 module = "ci"
 command = "flakehub-from-env"
